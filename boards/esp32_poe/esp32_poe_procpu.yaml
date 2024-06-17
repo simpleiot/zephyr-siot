@@ -1,0 +1,25 @@
+identifier: esp32_poe/esp32/procpu
+name: ESP32-POE-32D
+type: mcu
+arch: xtensa
+toolchain:
+  - zephyr
+supported:
+  - adc
+  - dac
+  - gpio
+  - i2c
+  - watchdog
+  - uart
+  - nvs
+  - pwm
+  - dac
+  - spi
+  - counter
+  - entropy
+  - input
+testing:
+  ignore_tags:
+    - net
+    - bluetooth
+vendor: olimex
