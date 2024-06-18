@@ -2,10 +2,12 @@ manifest:
   remotes:
     - name: zephyrproject-rtos
       url-base: https://github.com/zephyrproject-rtos
+    - name: zephyr-sylvio
+      url-base: https://github.com/sylvioalves
   projects:
     - name: zephyr
-      remote: zephyrproject-rtos
-      revision: main
+      remote: zephyr-sylvio
+      revision: bugfix/eth_mdio_clock_issue
       import: 
         name-allowlist:
           - hal_espressif
