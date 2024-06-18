@@ -7,7 +7,7 @@ siot_build_esp32_poe() {
 }
 
 siot_build_esp32_ethernet_kit() {
-	west build -b esp32_ethernet_kit apps/siot
+	west build -b esp32_ethernet_kit/esp32/procpu apps/siot
 }
 
 siot_build_nucleo_h743zi() {
