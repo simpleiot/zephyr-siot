@@ -11,6 +11,7 @@ that sets up to build the SIOT Zephyr application.
 - `west init -m https://github.com/simpleiot/zephyr-siot.git`
 - `west update`
 - `cd siot`
+- `. envsetup.sh` (notice leading `.`)
 - `siot_setup`
 
 ## Build
