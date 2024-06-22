@@ -14,4 +14,4 @@ manifest:
           - hal_stm32
           - cmsis
   self:
-    path: siot
+    path: zonit
