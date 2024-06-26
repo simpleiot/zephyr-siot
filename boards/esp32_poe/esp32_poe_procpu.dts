@@ -181,4 +181,5 @@
 &eth {
 	phy-handle = <&phy>;
 	phy-connection-type = "rmii";
+	ref-clk-output-gpios = <&gpio0 17 0>;
 };
