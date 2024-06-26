@@ -169,6 +169,7 @@
 &mdio {
 	pinctrl-0 = <&mdio_default>;
 	pinctrl-names = "default";
+	ref-clk-output-gpios = <&gpio0 17 0>;
 
 	phy: ethernet-phy@0 {
 		compatible = "ethernet-phy";
@@ -179,6 +180,5 @@
 
 &eth {
 	phy-handle = <&phy>;
-	ref-clk-output-gpios = <&gpio0 17 0>;
 	phy-connection-type = "rmii";
 };
