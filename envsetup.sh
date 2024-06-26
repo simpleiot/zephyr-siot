@@ -39,3 +39,11 @@ siot_peek_generated_confg() {
 siot_clean() {
 	rm -rf build
 }
+
+siot_menuconfig() {
+	west build -t menuconfig
+}
+
+siot_diff_defconfig() {
+	nvim -d build/zephyr/kconfig/defconfig apps/siot/prj.conf
+}
