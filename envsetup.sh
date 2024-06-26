@@ -44,6 +44,13 @@ siot_menuconfig() {
 	west build -t menuconfig
 }
 
-siot_diff_defconfig() {
-	nvim -d build/zephyr/kconfig/defconfig apps/siot/prj.conf
+GENERATED_DEFCONFIG=build/zephyr/kconfig/defconfig
+SAVED_DEFCONFIG=apps/siot/defconfig
+
+siot_defconfig_diff() {
+	nvim -d $GENERATED_DEFCONFIG $SAVED_DEFCONFIG
+}
+
+siot_defconfig_save() {
+	cp $GENERATED_DEFCONFIG $SAVED_DEFCONFIG
 }
