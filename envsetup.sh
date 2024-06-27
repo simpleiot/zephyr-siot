@@ -31,3 +31,26 @@ siot_flash_esp() {
 siot_flash_esp_cliff() {
 	siot_flash_esp /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
 }
+
+siot_peek_generated_confg() {
+	$EDITOR build/zephyr/include/generated/zephyr/autoconf.h
+}
+
+siot_clean() {
+	rm -rf build
+}
+
+siot_menuconfig() {
+	west build -t menuconfig
+}
+
+GENERATED_DEFCONFIG=build/zephyr/kconfig/defconfig
+SAVED_DEFCONFIG=apps/siot/defconfig
+
+siot_defconfig_diff() {
+	nvim -d $GENERATED_DEFCONFIG $SAVED_DEFCONFIG
+}
+
+siot_defconfig_save() {
+	cp $GENERATED_DEFCONFIG $SAVED_DEFCONFIG
+}
