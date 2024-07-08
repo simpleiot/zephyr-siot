@@ -14,6 +14,10 @@ siot_build_nucleo_h743zi() {
 	west build -b nucleo_h743zi apps/siot
 }
 
+siot_build_esp32_wroom() {
+	west build -b esp32_devkitc_wroom/esp32/procpu apps/siot
+}
+
 # following can be used for STM32 targets + Jlink
 siot_flash() {
 	west flash
