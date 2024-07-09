@@ -40,6 +40,10 @@ siot_peek_generated_confg() {
 	$EDITOR build/zephyr/include/generated/zephyr/autoconf.h
 }
 
+siot_peek_generated_dts() {
+	$EDITOR build/zephyr/zephyr.dts
+}
+
 siot_clean() {
 	rm -rf build
 }
