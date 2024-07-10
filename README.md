@@ -16,7 +16,14 @@ that sets up to build the SIOT Zephyr application.
 
 ## Build
 
+### ESP32-POE
+
 - `cd siot-work/siot`
 - `. envsetup.sh` (notice leading `.`)
-- `siot_build_esp32_poe` (there are also other build targets)
-- `siot_flash <serial port>` (serial port is required for ESP targets)
+- `siot_build_esp32_poe` (there are also other build targets in envsetup.sh)
+- `siot_flash_esp <serial port>` (serial port is required for ESP targets)
+
+## Applications
+
+- **[siot](apps/siot)**: Start of generic SIOT app
+- **[siggen](apps/siggen)**: Signal generator app that uses DAC output.

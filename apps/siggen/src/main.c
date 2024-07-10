@@ -14,8 +14,35 @@ LOG_MODULE_REGISTER(siot, LOG_LEVEL_DBG);
 // 		     sec_tag_list_verify_none, sizeof(sec_tag_list_verify_none));
 
 #define DAC_DEVICE_NODE DT_NODELABEL(dac1)
-#define DAC_CHANNEL     1
-#define DAC_RESOLUTION  8
+
+// The DAC works on the L432KC, but the user shell does not
+
+void gen_triangle(const struct device *dac_dev, int chan)
+{
+	const int min = 0;
+	const int max = 1241; // 1V
+	bool up = true;
+	int value = 0;
+
+	while (1) {
+		if (up) {
+			value++;
+			if (value >= max) {
+				up = false;
+			}
+		} else {
+			value--;
+			if (value <= min) {
+				up = true;
+			}
+		}
+		int ret = dac_write_value(dac_dev, chan, value);
+		if (ret != 0) {
+			LOG_ERR("Error writing to DAC: %i", ret);
+		}
+		k_msleep(1);
+	}
+}
 
 int main(void)
 {
@@ -28,14 +55,15 @@ int main(void)
 		LOG_WRN("DAC device not ready\n");
 	}
 
-	struct dac_channel_cfg dac_cfg = {.channel_id = DAC_CHANNEL, .resolution = 12};
+	const int chan = 1;
+
+	struct dac_channel_cfg dac_cfg = {.channel_id = chan, .resolution = 12};
 
 	if (dac_channel_setup(dac_dev, &dac_cfg) != 0) {
 		LOG_ERR("DAC channel setup failed\n");
 	}
 
-	int ret = dac_write_value(dac_dev, DAC_CHANNEL, 4095);
-	LOG_DBG("dac write returned: %i", ret);
+	gen_triangle(dac_dev, chan);
 
 	return 0;
 }
