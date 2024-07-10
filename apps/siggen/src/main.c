@@ -23,6 +23,9 @@ void gen_triangle(const struct device *dac_dev, int chan)
 	const int max = 1241; // 1V
 	bool up = true;
 	int value = 0;
+	const int delay = 1;
+
+	LOG_DBG("Delay is %i: ", delay);
 
 	while (1) {
 		if (up) {
@@ -40,7 +43,7 @@ void gen_triangle(const struct device *dac_dev, int chan)
 		if (ret != 0) {
 			LOG_ERR("Error writing to DAC: %i", ret);
 		}
-		k_msleep(1);
+		k_msleep(delay);
 	}
 }
 
