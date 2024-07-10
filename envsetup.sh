@@ -2,20 +2,39 @@ siot_setup() {
 	west blobs fetch hal_espressif
 }
 
+# APP is one of directories in apps/
+siot_build() {
+	BOARD=$1
+	APP=$2
+	west build -b "${BOARD}" "apps/${APP}"
+}
+
+# https://www.olimex.com/Products/IoT/ESP32/ESP32-POE/open-source-hardware
 siot_build_esp32_poe() {
 	west build -b esp32_poe/esp32/procpu apps/siot -- -DBOARD_ROOT="$(pwd)"
 }
 
+# https://docs.zephyrproject.org/latest/boards/espressif/esp32_ethernet_kit/doc/index.html
 siot_build_esp32_ethernet_kit() {
 	west build -b esp32_ethernet_kit/esp32/procpu apps/siot
 }
 
+# https://docs.zephyrproject.org/latest/boards/st/nucleo_h743zi/doc/index.html
 siot_build_nucleo_h743zi() {
-	west build -b nucleo_h743zi apps/siot
+	APP=$1
+	siot_build nucleo_h743zi "${APP}"
 }
 
+# https://docs.zephyrproject.org/latest/boards/st/nucleo_l432kc/doc/index.html
+siot_build_nucleo_l432kc() {
+	APP=$1
+	siot_build nucleo_l432kc "${APP}"
+}
+
+# https://docs.zephyrproject.org/latest/boards/espressif/esp32_devkitc_wroom/doc/index.html
 siot_build_esp32_wroom() {
-	west build -b esp32_devkitc_wroom/esp32/procpu apps/siot
+	APP=$1
+	siot_build esp32_devkitc_wroom/esp32/procpu "${APP}"
 }
 
 # following can be used for STM32 targets + Jlink
@@ -23,6 +42,7 @@ siot_flash() {
 	west flash
 }
 
+# used to flash ESP targets where serial port must be provided
 siot_flash_esp() {
 	PORT=$1
 	if [ "$PORT" = "" ]; then
