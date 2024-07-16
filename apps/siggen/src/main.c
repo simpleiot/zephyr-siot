@@ -23,7 +23,7 @@ void gen_triangle(const struct device *dac_dev, int chan)
 	const int max = 1241; // 1V
 	bool up = true;
 	int value = 0;
-	const int delay = 1;
+	const int delay = 110;
 
 	LOG_DBG("Delay is %i: ", delay);
 
