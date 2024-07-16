@@ -6,17 +6,24 @@ siot_setup() {
 siot_build() {
 	BOARD=$1
 	APP=$2
-	west build -b "${BOARD}" "apps/${APP}"
+	# see if we need to tack on board root
+	if grep -q -E "(esp32_poe)" <<<"${BOARD}"; then
+		west build -b "${BOARD}" "apps/${APP}" -- -BOARD_ROOT="$(pwd)"
+	else
+		west build -b "${BOARD}" "apps/${APP}"
+	fi
 }
 
 # https://www.olimex.com/Products/IoT/ESP32/ESP32-POE/open-source-hardware
 siot_build_esp32_poe() {
-	west build -b esp32_poe/esp32/procpu apps/siot -- -DBOARD_ROOT="$(pwd)"
+	APP=$1
+	siot_build esp32_poe/esp32/procpu apps/siot "${APP}"
 }
 
 # https://docs.zephyrproject.org/latest/boards/espressif/esp32_ethernet_kit/doc/index.html
 siot_build_esp32_ethernet_kit() {
-	west build -b esp32_ethernet_kit/esp32/procpu apps/siot
+	APP=$1
+	siot_build esp32_ethernet_kit/esp32/procpu "${APP}"
 }
 
 # https://docs.zephyrproject.org/latest/boards/st/nucleo_h743zi/doc/index.html
