@@ -1,0 +1,12 @@
+&dac1 {
+    status = "okay";
+    pinctrl-0 = <&dac1_out1_pa4>;
+    pinctrl-names = "default";
+    #io-channel-cells = <1>;
+};
+
+&pinctrl {
+    dac1_out1_pa4: dac1_out1_pa4 {
+        pinmux = <STM32_PINMUX('A', 4, ANALOG)>;
+    };
+};
