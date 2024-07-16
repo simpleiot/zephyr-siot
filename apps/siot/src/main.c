@@ -10,8 +10,7 @@ static uint8_t index_html_gz[] = {
 };
 
 static uint16_t http_service_port = 80;
-HTTP_SERVICE_DEFINE(siot_http_service, CONFIG_NET_CONFIG_MY_IPV4_ADDR, &http_service_port, 1, 10,
-		    NULL);
+HTTP_SERVICE_DEFINE(siot_http_service, "0.0.0.0", &http_service_port, 1, 10, NULL);
 
 struct http_resource_detail_static index_html_gz_resource_detail = {
 	.common =
