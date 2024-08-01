@@ -6,10 +6,12 @@ manifest:
       url-base: https://github.com/sylvioalves
     - name: zephyr-iwasz
       url-base: https://github.com/iwasz
+    - name: zephyr-cbrake
+      url-base: https://github.com/cbrake
   projects:
     - name: zephyr
-      remote: zephyr-iwasz
-      revision: initialize_ref_clk_in_mdio_esp32
+      remote: zephyr-cbrake
+      revision: cbrake/iwasz/initialize_ref_clk_in_mdio_esp32
       import: 
         name-allowlist:
           - hal_espressif
