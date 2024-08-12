@@ -17,5 +17,6 @@ manifest:
           - hal_espressif
           - hal_stm32
           - cmsis
+          - mbedtls
   self:
     path: siot
