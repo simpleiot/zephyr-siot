@@ -35,6 +35,12 @@ siot_build_nucleo_h743zi() {
 	siot_build nucleo_h743zi "${APP}"
 }
 
+# https://docs.zephyrproject.org/latest/boards/st/nucleo_l452re/doc/index.html
+siot_build_nucleo_l452re() {
+	APP=$1
+	siot_build nucleo_l452re "${APP}"
+}
+
 # https://docs.zephyrproject.org/latest/boards/st/nucleo_l432kc/doc/index.html
 siot_build_nucleo_l432kc() {
 	APP=$1
