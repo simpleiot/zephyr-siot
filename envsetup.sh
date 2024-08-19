@@ -1,4 +1,5 @@
 siot_setup() {
+	west update
 	west blobs fetch hal_espressif
 }
 
