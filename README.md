@@ -6,6 +6,8 @@ that sets up to build the SIOT Zephyr application.
 
 ## Setup
 
+- install Zephyr dependencies as outlined in the
+  [Getting Started Guide](https://docs.zephyrproject.org/latest/develop/getting_started/index.html#)
 - `mkdir zephyr-siot`
 - `cd zephyr-siot`
 - `west init -m https://github.com/simpleiot/zephyr-siot.git`
