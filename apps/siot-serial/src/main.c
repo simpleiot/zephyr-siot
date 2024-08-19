@@ -8,10 +8,5 @@ int main(void)
 {
 	LOG_INF("SIOT Zephyr Application! %s", CONFIG_BOARD_TARGET);
 
-	while (1) {
-		LOG_INF("Main loop");
-		k_msleep(1000);
-	}
-
 	return 0;
 }
