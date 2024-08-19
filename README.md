@@ -24,6 +24,14 @@ that sets up to build the SIOT Zephyr application.
 
 - `siot_flash (STM32)`
 - `siot_flash_esp <serial port>` (serial port is required for ESP targets)
+
+## Open serial console
+
+The SIOT firmware applications all have the serial shell enabled, so you can
+connect to that to interact with the system.
+
+Highly recommend the [tio](https://github.com/tio/tio) tool.
+
 - `tio /dev/serial/by-id/...`
 
 ## Applications
