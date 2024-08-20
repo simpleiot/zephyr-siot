@@ -8,7 +8,7 @@ that sets up to build the Zonit Zephyr applications.
 
 - `mkdir zephyr-zonit`
 - `cd zephyr-work`
-- `west init -m git@gitea.zonit.com:Zonit-Dev/zephyr-projects.git`
+- `west init -m git@gitea.zonit.com:Zonit-Dev/zephyr-zonit.git`
 - `west update`
 - `cd zonit`
 - `. envsetup.sh` (notice leading `.`)
