@@ -1,4 +1,5 @@
 siot_setup() {
+	west update
 	west blobs fetch hal_espressif
 }
 
@@ -16,6 +17,8 @@ siot_build() {
 	fi
 }
 
+# See https://community.tmpdir.org/t/zephyr-on-the-esp32/1310 for a comparison of ESP hardware
+
 # https://www.olimex.com/Products/IoT/ESP32/ESP32-POE/open-source-hardware
 siot_build_esp32_poe() {
 	APP=$1
@@ -29,10 +32,30 @@ siot_build_esp32_ethernet_kit() {
 	siot_build esp32_ethernet_kit/esp32/procpu "${APP}"
 }
 
+# https://docs.zephyrproject.org/latest/boards/espressif/esp32c3_devkitc/doc/index.html
+# DevKitC is the larger module
+siot_build_esp32c3_devkitc() {
+	APP=$1
+	siot_build esp32c3_devkitc "${APP}"
+}
+
+# https://docs.zephyrproject.org/latest/boards/espressif/esp32c3_devkitm/doc/index.html
+# DevKitM is the mini (smaller module)
+siot_build_esp32c3_devkitm() {
+	APP=$1
+	siot_build esp32c3_devkitm "${APP}"
+}
+
 # https://docs.zephyrproject.org/latest/boards/st/nucleo_h743zi/doc/index.html
 siot_build_nucleo_h743zi() {
 	APP=$1
 	siot_build nucleo_h743zi "${APP}"
+}
+
+# https://docs.zephyrproject.org/latest/boards/st/nucleo_l452re/doc/index.html
+siot_build_nucleo_l452re() {
+	APP=$1
+	siot_build nucleo_l452re "${APP}"
 }
 
 # https://docs.zephyrproject.org/latest/boards/st/nucleo_l432kc/doc/index.html
