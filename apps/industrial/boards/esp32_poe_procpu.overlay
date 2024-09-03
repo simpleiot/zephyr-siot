@@ -16,14 +16,20 @@
 	status = "okay";
 };
 
-// &dac {
-//     status = "okay";
-// };
+/ {
+	kbd_matrix: kbd-matrix {
+	     compatible = "gpio-kbd-matrix";
+	     row-gpios = <&gpio1 4 (GPIO_ACTIVE_LOW)>,
+	                 <&gpio1 3 (GPIO_ACTIVE_LOW)>,
+	                 <&gpio1 2 (GPIO_ACTIVE_LOW)>,
+	                 <&gpio1 1 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+	     col-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>,
+	                 <&gpio0 13 GPIO_ACTIVE_LOW>,
+	                 <&gpio0 0 GPIO_ACTIVE_LOW>,
+	                 <&gpio0 4 GPIO_ACTIVE_LOW>,
+	                 <&gpio0 16 GPIO_ACTIVE_LOW>,
+	                 <&gpio0 5 GPIO_ACTIVE_LOW>;
+	};
+};
 
-// / {
-//     zephyr,user {
-//         dac = <&dac>;
-//         dac-channel-id = <0>;  // Use 0 for GPIO25 (DAC1) or 1 for GPIO26 (DAC2)
-//         dac-resolution = <8>;  // ESP32 only supports 8-bit resolution
-//     };
-// };
+
