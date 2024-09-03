@@ -1,0 +1,12 @@
+
+&dac {
+    status = "okay";
+};
+
+/ {
+    zephyr,user {
+        dac = <&dac>;
+        dac-channel-id = <0>;  // Use 0 for GPIO25 (DAC1) or 1 for GPIO26 (DAC2)
+        dac-resolution = <8>;  // ESP32 only supports 8-bit resolution
+    };
+};
