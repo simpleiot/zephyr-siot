@@ -1,10 +1,12 @@
 
+#include "zephyr/device.h"
 #include <zephyr/net/http/server.h>
 #include <zephyr/net/http/service.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/flash.h>
 #include <zephyr/storage/flash_map.h>
 #include <zephyr/fs/nvs.h>
+#include <zephyr/drivers/gpio.h>
 
 LOG_MODULE_REGISTER(siot, LOG_LEVEL_DBG);
 
@@ -83,6 +85,27 @@ struct http_resource_detail_static index_html_gz_resource_detail = {
 HTTP_RESOURCE_DEFINE(index_html_gz_resource, siot_http_service, "/",
 		     &index_html_gz_resource_detail);
 
+int toggle_pin(int pin)
+{
+	const struct device *gpio0_dev = DEVICE_DT_GET(DT_NODELABEL(gpio0));
+	if (!device_is_ready(gpio0_dev)) {
+		LOG_ERR("gpio0 not ready");
+	}
+
+	int ret = gpio_pin_configure(gpio0_dev, pin, GPIO_OUTPUT_ACTIVE);
+	if (ret < 0) {
+		printk("Error %d: failed to configure GPIO\n", ret);
+		return 0;
+	}
+
+	LOG_DBG("Toggle pin %d", pin);
+	while (true) {
+		// Set the pin high
+		gpio_pin_toggle(gpio0_dev, pin);
+		k_msleep(500);
+	}
+}
+
 int main(void)
 {
 	int rc = 0;
@@ -93,5 +116,5 @@ int main(void)
 
 	http_server_start();
 
-	return 0;
+	// toggle_pin(0);
 }
