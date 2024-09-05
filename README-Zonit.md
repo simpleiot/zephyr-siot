@@ -17,3 +17,6 @@ that sets up to build the Zonit Zephyr applications.
 ## Build
 
 see main [README.md](/README.md)
+
+- [Industrial Monitor](apps/industrial/README.md)
+  - `siot_build_esp32_poe apps/industrial`
