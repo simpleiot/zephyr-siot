@@ -7,6 +7,7 @@
 #include <zephyr/storage/flash_map.h>
 #include <zephyr/fs/nvs.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/input/input.h>
 
 LOG_MODULE_REGISTER(siot, LOG_LEVEL_DBG);
 
@@ -105,6 +106,18 @@ int toggle_pin(int pin)
 		k_msleep(500);
 	}
 }
+
+static void keymap_callback(struct input_event *evt)
+{
+	// Handle the input event
+	if (evt->type == INPUT_EV_KEY) {
+		LOG_DBG("DC event: code=%u, value=%d", evt->code, evt->value);
+	}
+}
+
+static const struct device *const keymap_dev = DEVICE_DT_GET(DT_NODELABEL(keymap));
+
+INPUT_CALLBACK_DEFINE(keymap_dev, keymap_callback);
 
 int main(void)
 {
