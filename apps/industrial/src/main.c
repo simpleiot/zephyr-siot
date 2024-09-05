@@ -107,11 +107,25 @@ int toggle_pin(int pin)
 	}
 }
 
+typedef struct {
+	bool aon;
+	bool bon;
+	bool ona;
+	bool onb;
+} industrial;
+
+#define AON 0
+#define ONA 1
+#define BON 2
+#define ONB 3
+
+K_MSGQ_DEFINE(dc_msgq, sizeof(struct input_event), 10, 4);
+
 static void keymap_callback(struct input_event *evt)
 {
 	// Handle the input event
 	if (evt->type == INPUT_EV_KEY) {
-		LOG_DBG("DC event: code=%u, value=%d", evt->code, evt->value);
+		k_msgq_put(&dc_msgq, evt, K_MSEC(50));
 	}
 }
 
@@ -129,5 +143,47 @@ int main(void)
 
 	http_server_start();
 
-	// toggle_pin(0);
+	industrial ind_state[6];
+
+	struct input_event evt;
+
+	static const char MSG_AON[] = "AON";
+	static const char MSG_ONA[] = "ONA";
+	static const char MSG_BON[] = "BON";
+	static const char MSG_ONB[] = "ONB";
+
+	while (1) {
+		if (k_msgq_get(&dc_msgq, &evt, K_FOREVER) == 0) {
+			// Process the input event
+			int code_z = evt.code - 1;
+			int industrial = code_z / 4;
+			int ind_event = code_z % 4;
+
+			const char *msg = "unknown";
+
+			switch (ind_event) {
+			case AON:
+				msg = MSG_AON;
+				ind_state[industrial].aon = evt.value;
+				break;
+
+			case ONA:
+				msg = MSG_ONA;
+				ind_state[industrial].ona = evt.value;
+				break;
+
+			case BON:
+				msg = MSG_BON;
+				ind_state[industrial].bon = evt.value;
+				break;
+
+			case ONB:
+				msg = MSG_ONB;
+				ind_state[industrial].onb = evt.value;
+				break;
+			}
+
+			LOG_DBG("Industrial #%i: %s: %i", industrial + 1, msg, evt.value);
+		}
+	}
 }

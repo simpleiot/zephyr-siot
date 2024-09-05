@@ -2,9 +2,11 @@
 
 This application is meant to run on the ESP32-POE board from Olimex.
 
-## GPIO Mapping
+## Olimex Pin Mapping
 
-![gpio mapping](assets/z-ind-monitor-matrix-map.png)
+![Olimex pins](assets/olimex-pins.png)
+
+![DC Wiring](assets/z-ind-monitor-matrix-map.png)
 
 ## SNMP Testing
 
