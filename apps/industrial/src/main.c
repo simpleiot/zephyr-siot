@@ -107,11 +107,20 @@ int toggle_pin(int pin)
 	}
 }
 
+typedef struct {
+	bool aon;
+	bool bon;
+	bool ona;
+	bool onb;
+} industrial;
+
+K_MSGQ_DEFINE(dc_msgq, sizeof(struct input_event), 10, 4);
+
 static void keymap_callback(struct input_event *evt)
 {
 	// Handle the input event
 	if (evt->type == INPUT_EV_KEY) {
-		LOG_DBG("DC event: code=%u, value=%d", evt->code, evt->value);
+		k_msgq_put(&dc_msgq, evt, K_MSEC(50));
 	}
 }
 
@@ -129,5 +138,14 @@ int main(void)
 
 	http_server_start();
 
-	// toggle_pin(0);
+	industrial ind_state[6];
+
+	struct input_event evt;
+
+	while (1) {
+		if (k_msgq_get(&dc_msgq, &evt, K_FOREVER) == 0) {
+			// Process the input event
+			LOG_DBG("DC event: code=%u, value=%d", evt.code, evt.value);
+		}
+	}
 }
