@@ -64,12 +64,38 @@ int nvs_init()
 	return 0;
 }
 
+// ==================================================
+// Industrial states
+// FIXME this should be local data in the main loop eventually
+// need to figure out how to process a HTTP callback in the event loop
+
+typedef struct {
+	bool aon;
+	bool bon;
+	bool ona;
+	bool onb;
+} industrial;
+
+industrial ind_state[6];
+
+#define AON 0
+#define ONA 1
+#define BON 2
+#define ONB 3
+
+#define ARRAY_LENGTH(x) (sizeof(x) / sizeof((x)[0]))
+
+// ==================================================
+// HTTP Service
+static uint16_t http_service_port = 80;
+HTTP_SERVICE_DEFINE(siot_http_service, "0.0.0.0", &http_service_port, 1, 10, NULL);
+
+// ==================================================
+// index.html resource
+
 static uint8_t index_html_gz[] = {
 #include "index.html.gz.inc"
 };
-
-static uint16_t http_service_port = 80;
-HTTP_SERVICE_DEFINE(siot_http_service, "0.0.0.0", &http_service_port, 1, 10, NULL);
 
 struct http_resource_detail_static index_html_gz_resource_detail = {
 	.common =
@@ -86,39 +112,59 @@ struct http_resource_detail_static index_html_gz_resource_detail = {
 HTTP_RESOURCE_DEFINE(index_html_gz_resource, siot_http_service, "/",
 		     &index_html_gz_resource_detail);
 
-int toggle_pin(int pin)
-{
-	const struct device *gpio0_dev = DEVICE_DT_GET(DT_NODELABEL(gpio0));
-	if (!device_is_ready(gpio0_dev)) {
-		LOG_ERR("gpio0 not ready");
-	}
+// ==================================================
+// /devices resource
 
-	int ret = gpio_pin_configure(gpio0_dev, pin, GPIO_OUTPUT_ACTIVE);
-	if (ret < 0) {
-		printk("Error %d: failed to configure GPIO\n", ret);
+static uint8_t recv_buffer[1024];
+
+char *on = "<span class=\"on\"></span>";
+char *off = "<span class=\"off\"></span>";
+
+#define RENDER_ON_OFF(state) state ? on : off
+
+static int devices_handler(struct http_client_ctx *client, enum http_data_status status,
+			   uint8_t *buffer, size_t len, void *user_data)
+{
+	char *end = recv_buffer;
+
+	end += sprintf(end, "<ul>");
+	for (int i = 0; i < ARRAY_LENGTH(ind_state); i++) {
+		end += sprintf(end, "<li><b>#%i</b>: AON:%s ONA:%s BON:%s ONB:%s</li>", i,
+			       RENDER_ON_OFF(ind_state[i].aon), RENDER_ON_OFF(ind_state[i].ona),
+			       RENDER_ON_OFF(ind_state[i].bon), RENDER_ON_OFF(ind_state[i].onb));
+	}
+	end += sprintf(end, "</ul>");
+
+	static bool processed = false;
+
+	if (processed) {
+		processed = false;
 		return 0;
 	}
 
-	LOG_DBG("Toggle pin %d", pin);
-	while (true) {
-		// Set the pin high
-		gpio_pin_toggle(gpio0_dev, pin);
-		k_msleep(500);
-	}
+	/* This will echo data back to client as the buffer and recv_buffer
+	 * point to same area.
+	 */
+	processed = true;
+	return strlen(recv_buffer);
 }
 
-typedef struct {
-	bool aon;
-	bool bon;
-	bool ona;
-	bool onb;
-} industrial;
+struct http_resource_detail_dynamic devices_resource_detail = {
+	.common =
+		{
+			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET) | BIT(HTTP_POST),
+		},
+	.cb = devices_handler,
+	.data_buffer = recv_buffer,
+	.data_buffer_len = sizeof(recv_buffer),
+	.user_data = NULL,
+};
 
-#define AON 0
-#define ONA 1
-#define BON 2
-#define ONB 3
+HTTP_RESOURCE_DEFINE(devices_resource, siot_http_service, "/devices", &devices_resource_detail);
 
+// ==================================================
+// Key event handler, and message queue for passing DC events to main loop
 K_MSGQ_DEFINE(dc_msgq, sizeof(struct input_event), 10, 4);
 
 static void keymap_callback(struct input_event *evt)
@@ -142,8 +188,6 @@ int main(void)
 	nvs_init();
 
 	http_server_start();
-
-	industrial ind_state[6];
 
 	struct input_event evt;
 
@@ -185,5 +229,26 @@ int main(void)
 
 			LOG_DBG("Industrial #%i: %s: %i", industrial + 1, msg, evt.value);
 		}
+	}
+}
+
+int toggle_pin(int pin)
+{
+	const struct device *gpio0_dev = DEVICE_DT_GET(DT_NODELABEL(gpio0));
+	if (!device_is_ready(gpio0_dev)) {
+		LOG_ERR("gpio0 not ready");
+	}
+
+	int ret = gpio_pin_configure(gpio0_dev, pin, GPIO_OUTPUT_ACTIVE);
+	if (ret < 0) {
+		printk("Error %d: failed to configure GPIO\n", ret);
+		return 0;
+	}
+
+	LOG_DBG("Toggle pin %d", pin);
+	while (true) {
+		// Set the pin high
+		gpio_pin_toggle(gpio0_dev, pin);
+		k_msleep(500);
 	}
 }

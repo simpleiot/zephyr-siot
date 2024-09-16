@@ -3,21 +3,46 @@
 
 <head>
   <title>Zonit Industrial Monitor</title>
+  <script src="https://unpkg.com/htmx.org@2.0.2"
+    integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ"
+    crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css" />
+  <style>
+    .on {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      background-color: #0eff00;
+      border-radius: 50%;
+    }
+
+    .off {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      background-color: lightgrey;
+      border-radius: 50%;
+    }
+  </style>
 </head>
 
 <body>
+  <h1><img width="260" src="https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"> ATS Monitor
+  </h1>
   <hr />
-  <h1>Settings</h1>
+  <h2>Settings</h2>
   <form action="/">
     <div>
-      <label for="ftest">Test Field:</label>
-      <input type="text" id="ftest" name="ftest"><br>
+      <label for="ftest">Monitor name:</label>
+      <input type="text" id="monitorName" name="monitorName"><br>
     </div>
     <div>
       <input type="submit" value="Save">
     </div>
   </form>
   <hr />
+  <h2>Devices</h2>
+  <div hx-get="/devices" hx-trigger="every 0.5s"></div>
 </body>
 
 </html>
