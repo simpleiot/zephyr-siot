@@ -3,71 +3,56 @@ siot_setup() {
 	west blobs fetch hal_espressif
 }
 
-# APP is one of directories in apps/
-siot_build() {
-	BOARD=$1
-	APP=$2
-	# see if we need to tack on board root
-	if grep -q -E "(esp32_poe)" <<<"${BOARD}"; then
-		echo "using custom board"
-		west build -b "${BOARD}" "${APP}" -- -DBOARD_ROOT="$(pwd)"
-	else
-		echo "using zephyr board"
-		west build -b "${BOARD}" "${APP}"
-	fi
-}
-
 # See https://community.tmpdir.org/t/zephyr-on-the-esp32/1310 for a comparison of ESP hardware
 
 # https://www.olimex.com/Products/IoT/ESP32/ESP32-POE/open-source-hardware
 siot_build_esp32_poe() {
 	APP=$1
-	siot_build esp32_poe/esp32/procpu "${APP}"
-	#west build -b esp32_poe/esp32/procpu apps/siot -- -DBOARD_ROOT="$(pwd)"
+	west build -b esp32_poe/esp32/procpu "${APP}" -- -DBOARD_ROOT="$(pwd)"
 }
 
 # https://docs.zephyrproject.org/latest/boards/espressif/esp32_ethernet_kit/doc/index.html
 siot_build_esp32_ethernet_kit() {
 	APP=$1
-	siot_build esp32_ethernet_kit/esp32/procpu "${APP}"
+	west build -b esp32_ethernet_kit/esp32/procpu "${APP}"
 }
 
 # https://docs.zephyrproject.org/latest/boards/espressif/esp32c3_devkitc/doc/index.html
 # DevKitC is the larger module
 siot_build_esp32c3_devkitc() {
 	APP=$1
-	siot_build esp32c3_devkitc "${APP}"
+	west build -b esp32c3_devkitc "${APP}"
 }
 
 # https://docs.zephyrproject.org/latest/boards/espressif/esp32c3_devkitm/doc/index.html
 # DevKitM is the mini (smaller module)
 siot_build_esp32c3_devkitm() {
 	APP=$1
-	siot_build esp32c3_devkitm "${APP}"
+	west build -b esp32c3_devkitm "${APP}"
 }
 
 # https://docs.zephyrproject.org/latest/boards/st/nucleo_h743zi/doc/index.html
 siot_build_nucleo_h743zi() {
 	APP=$1
-	siot_build nucleo_h743zi "${APP}"
+	west build -b nucleo_h743zi "${APP}"
 }
 
 # https://docs.zephyrproject.org/latest/boards/st/nucleo_l452re/doc/index.html
 siot_build_nucleo_l452re() {
 	APP=$1
-	siot_build nucleo_l452re "${APP}"
+	west build -b nucleo_l452re "${APP}"
 }
 
 # https://docs.zephyrproject.org/latest/boards/st/nucleo_l432kc/doc/index.html
 siot_build_nucleo_l432kc() {
 	APP=$1
-	siot_build nucleo_l432kc "${APP}"
+	west build -b nucleo_l432kc "${APP}"
 }
 
 # https://docs.zephyrproject.org/latest/boards/espressif/esp32_devkitc_wroom/doc/index.html
 siot_build_esp32_wroom() {
 	APP=$1
-	siot_build esp32_devkitc_wroom/esp32/procpu "${APP}"
+	west build -b esp32_devkitc_wroom/esp32/procpu "${APP}"
 }
 
 # following can be used for STM32 targets + Jlink
