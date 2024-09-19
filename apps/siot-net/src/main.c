@@ -8,6 +8,9 @@
 
 LOG_MODULE_REGISTER(siot, LOG_LEVEL_DBG);
 
+// ********************************
+// NVS Config storage
+
 // NVS Keys
 #define NVS_KEY_BOOT_CNT 1
 
@@ -61,6 +64,9 @@ int nvs_init()
 	return 0;
 }
 
+// ********************************
+// HTTP Server
+
 static uint8_t index_html_gz[] = {
 #include "index.html.gz.inc"
 };
@@ -82,6 +88,56 @@ struct http_resource_detail_static index_html_gz_resource_detail = {
 
 HTTP_RESOURCE_DEFINE(index_html_gz_resource, siot_http_service, "/",
 		     &index_html_gz_resource_detail);
+
+static uint8_t post_buf[256];
+
+static int post_handler(struct http_client_ctx *client, enum http_data_status status,
+			uint8_t *buffer, size_t len, void *user_data)
+{
+	static uint8_t post_payload_buf[32];
+	static size_t cursor;
+
+	LOG_DBG("LED handler status %d, size %zu", status, len);
+
+	if (status == HTTP_SERVER_DATA_ABORTED) {
+		cursor = 0;
+		return 0;
+	}
+
+	if (len + cursor > sizeof(post_payload_buf)) {
+		cursor = 0;
+		return -ENOMEM;
+	}
+
+	/* Copy payload to our buffer. Note that even for a small payload, it may arrive split into
+	 * chunks (e.g. if the header size was such that the whole HTTP request exceeds the size of
+	 * the client buffer).
+	 */
+	memcpy(post_payload_buf + cursor, buffer, len);
+	cursor += len;
+
+	if (status == HTTP_SERVER_DATA_FINAL) {
+		LOG_DBG("CLIFF: Post payload: %s", post_payload_buf);
+		// parse_led_post(post_payload_buf, cursor);
+		cursor = 0;
+	}
+
+	return 0;
+}
+
+static struct http_resource_detail_dynamic post_resource_detail = {
+	.common =
+		{
+			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
+			.bitmask_of_supported_http_methods = BIT(HTTP_POST),
+		},
+	.cb = post_handler,
+	.data_buffer = post_buf,
+	.data_buffer_len = sizeof(post_buf),
+	.user_data = NULL,
+};
+
+HTTP_RESOURCE_DEFINE(post_resource, siot_http_service, "/", &post_resource_detail);
 
 int main(void)
 {
