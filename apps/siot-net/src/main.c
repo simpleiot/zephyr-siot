@@ -65,14 +65,19 @@ int nvs_init()
 }
 
 // ********************************
-// HTTP Server
+// HTTP service
+
+static uint8_t recv_buffer[1024];
+
+static uint16_t http_service_port = 80;
+HTTP_SERVICE_DEFINE(siot_http_service, "0.0.0.0", &http_service_port, 1, 10, NULL);
 
 static uint8_t index_html_gz[] = {
 #include "index.html.gz.inc"
 };
 
-static uint16_t http_service_port = 80;
-HTTP_SERVICE_DEFINE(siot_http_service, "0.0.0.0", &http_service_port, 1, 10, NULL);
+// ********************************
+// index.html resource
 
 struct http_resource_detail_static index_html_gz_resource_detail = {
 	.common =
@@ -88,6 +93,54 @@ struct http_resource_detail_static index_html_gz_resource_detail = {
 
 HTTP_RESOURCE_DEFINE(index_html_gz_resource, siot_http_service, "/",
 		     &index_html_gz_resource_detail);
+
+// ********************************
+// boot count handler
+
+static int bootcount_handler(struct http_client_ctx *client, enum http_data_status status,
+			     uint8_t *buffer, size_t len, void *user_data)
+{
+	char *end = recv_buffer;
+	static bool processed = false;
+	int rc = 0;
+	uint32_t reboot_counter = 0U;
+
+	rc = nvs_read(&fs, NVS_KEY_BOOT_CNT, &reboot_counter, sizeof(reboot_counter));
+	if (rc > 0) { /* item was found, show it */
+		sprintf(recv_buffer, "%i", reboot_counter);
+	} else {
+		strcpy(recv_buffer, "error");
+	}
+
+	if (processed) {
+		processed = false;
+		return 0;
+	}
+
+	/* This will echo data back to client as the buffer and recv_buffer
+	 * point to same area.
+	 */
+	processed = true;
+	return strlen(recv_buffer);
+}
+
+struct http_resource_detail_dynamic bootcount_resource_detail = {
+	.common =
+		{
+			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET) | BIT(HTTP_POST),
+		},
+	.cb = bootcount_handler,
+	.data_buffer = recv_buffer,
+	.data_buffer_len = sizeof(recv_buffer),
+	.user_data = NULL,
+};
+
+HTTP_RESOURCE_DEFINE(bootcount_resource, siot_http_service, "/bootcount",
+		     &bootcount_resource_detail);
+
+// ********************************
+// post handler
 
 static uint8_t post_buf[256];
 
@@ -138,6 +191,9 @@ static struct http_resource_detail_dynamic post_resource_detail = {
 };
 
 HTTP_RESOURCE_DEFINE(post_resource, siot_http_service, "/", &post_resource_detail);
+
+// ********************************
+// main
 
 int main(void)
 {

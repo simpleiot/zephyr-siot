@@ -3,11 +3,37 @@
 
 <head>
   <title>Simple IoT Zephyr</title>
+  <script src="https://unpkg.com/htmx.org@2.0.2"
+    integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ"
+    crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css" />
+  <style>
+    .on {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      background-color: #0eff00;
+      border-radius: 50%;
+    }
+
+    .off {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      background-color: lightgrey;
+      border-radius: 50%;
+    }
+  </style>
 </head>
 
 <body>
+  <h1>SIOT Zephyr</h1>
+  <h2>Status</h2>
+  <ul>
+    <li>Boot count: <span hx-get="/bootcount" hx-trigger="load" />
+  </ul>
   <hr />
-  <h1>Settings</h1>
+  <h2>Settings</h2>
   <form action="/" method="POST">
     <div>
       <label for="fid">Device ID:</label>
