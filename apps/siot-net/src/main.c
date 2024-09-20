@@ -1,4 +1,7 @@
 
+#include "zephyr/arch/xtensa/thread.h"
+#include "zephyr/kernel.h"
+#include "zephyr/kernel/thread.h"
 #include <zephyr/net/http/server.h>
 #include <zephyr/net/http/service.h>
 #include <zephyr/logging/log.h>
@@ -117,9 +120,6 @@ static int bootcount_handler(struct http_client_ctx *client, enum http_data_stat
 		return 0;
 	}
 
-	/* This will echo data back to client as the buffer and recv_buffer
-	 * point to same area.
-	 */
 	processed = true;
 	return strlen(recv_buffer);
 }
@@ -138,6 +138,84 @@ struct http_resource_detail_dynamic bootcount_resource_detail = {
 
 HTTP_RESOURCE_DEFINE(bootcount_resource, siot_http_service, "/bootcount",
 		     &bootcount_resource_detail);
+
+// ********************************
+// CPU usage handler
+
+static int cpu_usage_handler(struct http_client_ctx *client, enum http_data_status status,
+			     uint8_t *buffer, size_t len, void *user_data)
+{
+	char *end = recv_buffer;
+	static bool processed = false;
+	int rc = 0;
+
+	k_thread_runtime_stats_t stats;
+	rc = k_thread_runtime_stats_all_get(&stats);
+
+	if (rc == 0) { /* item was found, show it */
+		sprintf(recv_buffer, "%0.2lf%%",
+			((double)stats.total_cycles) * 100 / stats.execution_cycles);
+	} else {
+		strcpy(recv_buffer, "error");
+	}
+
+	if (processed) {
+		processed = false;
+		return 0;
+	}
+
+	processed = true;
+	return strlen(recv_buffer);
+}
+
+struct http_resource_detail_dynamic cpu_usage_resource_detail = {
+	.common =
+		{
+			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET) | BIT(HTTP_POST),
+		},
+	.cb = cpu_usage_handler,
+	.data_buffer = recv_buffer,
+	.data_buffer_len = sizeof(recv_buffer),
+	.user_data = NULL,
+};
+
+HTTP_RESOURCE_DEFINE(cpu_usage_resource, siot_http_service, "/cpu-usage",
+		     &cpu_usage_resource_detail);
+
+// ********************************
+// Board handler
+
+static int board_handler(struct http_client_ctx *client, enum http_data_status status,
+			 uint8_t *buffer, size_t len, void *user_data)
+{
+	char *end = recv_buffer;
+	static bool processed = false;
+
+	sprintf(recv_buffer, "%s", CONFIG_BOARD_TARGET);
+
+	if (processed) {
+		processed = false;
+		return 0;
+	}
+
+	processed = true;
+	return strlen(recv_buffer);
+}
+
+struct http_resource_detail_dynamic board_resource_detail = {
+	.common =
+		{
+			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET) | BIT(HTTP_POST),
+		},
+	.cb = board_handler,
+	.data_buffer = recv_buffer,
+	.data_buffer_len = sizeof(recv_buffer),
+	.user_data = NULL,
+};
+
+HTTP_RESOURCE_DEFINE(board_resource, siot_http_service, "/board", &board_resource_detail);
 
 // ********************************
 // post handler

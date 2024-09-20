@@ -30,7 +30,9 @@
   <h1>SIOT Zephyr</h1>
   <h2>Status</h2>
   <ul>
+    <li>Board: <span hx-get="/board" hx-trigger="load" />
     <li>Boot count: <span hx-get="/bootcount" hx-trigger="load" />
+    <li>CPU Usage: <span hx-get="/cpu-usage" hx-trigger="every 2s" />
   </ul>
   <hr />
   <h2>Settings</h2>
