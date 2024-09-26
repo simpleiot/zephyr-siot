@@ -23,10 +23,70 @@
       background-color: lightgrey;
       border-radius: 50%;
     }
+
+    .fade {
+      opacity: 1;
+      transition: opacity 1s ease-out;
+    }
+
+    .fade-out {
+      opacity: 0;
+    }
   </style>
 </head>
 
 <body>
+  <script>
+    <!-- htmx.logAll(); -->
+    function fetchAndSetValue(url, inputId) {
+      fetch(url)
+        .then(response => response.text()) // Get the response as plain text
+        .then(value => {
+          const inputField = document.getElementById(inputId);
+          if (inputField) {
+            inputField.value = value.trim(); // Update the input field's value
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching the value:', error);
+        });
+    }
+
+    // Fetch and set values for the form fields on page load
+    window.onload = function () {
+      fetchAndSetValue('/did', 'did');       // Populate DID form
+    };
+
+    function fadeOutAfterDelay(elementId, delay) {
+      setTimeout(() => {
+        const element = document.getElementById(elementId);
+        if (element) {
+          element.classList.add('fade-out');
+        }
+      }, delay);
+    }
+
+    function resetFadeOut(elementId) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.classList.remove('fade-out'); // Reset the fade-out effect
+      }
+    }
+
+    // Add HTMX event listener to reset fade-out before new form submission
+    document.body.addEventListener('htmx:beforeRequest', function (evt) {
+      if (evt.detail.target.id === 'settings-result') {
+        resetFadeOut('settings-result'); // Reset fade-out before new request
+      }
+    });
+
+    // Add HTMX event listener to trigger the fade-out after 3 seconds
+    document.body.addEventListener('htmx:afterRequest', function (evt) {
+      if (evt.detail.target.id === 'settings-result') {
+        fadeOutAfterDelay('settings-result', 3000); // Fade out after 3 seconds
+      }
+    });
+  </script>
   <h1>SIOT Zephyr</h1>
   <h2>Status</h2>
   <ul>
@@ -36,14 +96,16 @@
   </ul>
   <hr />
   <h2>Settings</h2>
-  <form action="/" method="POST">
+  <form hx-post="/settings" hx-target="#settings-result">
     <div>
-      <label for="fid">Device ID:</label>
-      <input type="text" id="fid" name="fid"><br>
+      <label for="did">Device ID:</label>
+      <input type="text" id="did" name="did">
+      <br>
     </div>
     <div>
       <input type="submit" value="Save">
     </div>
+    <div id="settings-result" class="fade"></div>
   </form>
   <hr />
 </body>
