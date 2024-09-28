@@ -1,5 +1,4 @@
 
-#include "zephyr/arch/xtensa/thread.h"
 #include "zephyr/kernel.h"
 #include "zephyr/kernel/thread.h"
 #include <zephyr/net/http/server.h>
@@ -8,6 +7,9 @@
 #include <zephyr/drivers/flash.h>
 #include <zephyr/storage/flash_map.h>
 #include <zephyr/fs/nvs.h>
+#include <sys/types.h>
+
+#include "html.h"
 
 LOG_MODULE_REGISTER(siot, LOG_LEVEL_DBG);
 
@@ -15,7 +17,9 @@ LOG_MODULE_REGISTER(siot, LOG_LEVEL_DBG);
 // NVS Config storage
 
 // NVS Keys
-#define NVS_KEY_BOOT_CNT 1
+#define NVS_KEY_BOOT_CNT  1
+#define NVS_KEY_DEVICE_ID 2
+#define NVS_KEY_STATIC_IP 3
 
 static struct nvs_fs fs;
 
@@ -54,9 +58,16 @@ int nvs_init()
 		return -1;
 	}
 
+	char did[32];
+
+	rc = nvs_read(&fs, NVS_KEY_DEVICE_ID, &did, sizeof(did));
+	if (rc > 0) {
+		LOG_INF("Device ID: %s", did);
+	}
+
 	rc = nvs_read(&fs, NVS_KEY_BOOT_CNT, &reboot_counter, sizeof(reboot_counter));
 	if (rc > 0) { /* item was found, show it */
-		LOG_INF("Id: %d, boot_counter: %d\n", NVS_KEY_BOOT_CNT, reboot_counter);
+		LOG_INF("Boot count: %d\n", reboot_counter);
 		reboot_counter++;
 		(void)nvs_write(&fs, NVS_KEY_BOOT_CNT, &reboot_counter, sizeof(reboot_counter));
 	} else { /* item was not found, add it */
@@ -128,7 +139,7 @@ struct http_resource_detail_dynamic bootcount_resource_detail = {
 	.common =
 		{
 			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
-			.bitmask_of_supported_http_methods = BIT(HTTP_GET) | BIT(HTTP_POST),
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
 		},
 	.cb = bootcount_handler,
 	.data_buffer = recv_buffer,
@@ -172,7 +183,7 @@ struct http_resource_detail_dynamic cpu_usage_resource_detail = {
 	.common =
 		{
 			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
-			.bitmask_of_supported_http_methods = BIT(HTTP_GET) | BIT(HTTP_POST),
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
 		},
 	.cb = cpu_usage_handler,
 	.data_buffer = recv_buffer,
@@ -207,7 +218,7 @@ struct http_resource_detail_dynamic board_resource_detail = {
 	.common =
 		{
 			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
-			.bitmask_of_supported_http_methods = BIT(HTTP_GET) | BIT(HTTP_POST),
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
 		},
 	.cb = board_handler,
 	.data_buffer = recv_buffer,
@@ -218,57 +229,106 @@ struct http_resource_detail_dynamic board_resource_detail = {
 HTTP_RESOURCE_DEFINE(board_resource, siot_http_service, "/board", &board_resource_detail);
 
 // ********************************
-// post handler
+// DID handler
 
-static uint8_t post_buf[256];
-
-static int post_handler(struct http_client_ctx *client, enum http_data_status status,
-			uint8_t *buffer, size_t len, void *user_data)
+static int did_handler(struct http_client_ctx *client, enum http_data_status status,
+		       uint8_t *buffer, size_t len, void *user_data)
 {
-	static uint8_t post_payload_buf[32];
-	static size_t cursor;
+	char *end = recv_buffer;
+	static bool processed = false;
 
-	LOG_DBG("LED handler status %d, size %zu", status, len);
+	int rc = nvs_read(&fs, NVS_KEY_DEVICE_ID, &recv_buffer, sizeof(recv_buffer));
+	if (rc > 0) {
+		recv_buffer[rc] = 0;
+	} else {
+		recv_buffer[0] = 0;
+	}
 
-	if (status == HTTP_SERVER_DATA_ABORTED) {
-		cursor = 0;
+	if (processed) {
+		processed = false;
 		return 0;
 	}
 
-	if (len + cursor > sizeof(post_payload_buf)) {
-		cursor = 0;
-		return -ENOMEM;
+	processed = true;
+	return strlen(recv_buffer);
+}
+
+struct http_resource_detail_dynamic did_resource_detail = {
+	.common =
+		{
+			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
+		},
+	.cb = did_handler,
+	.data_buffer = recv_buffer,
+	.data_buffer_len = sizeof(recv_buffer),
+	.user_data = NULL,
+};
+
+HTTP_RESOURCE_DEFINE(did_resource, siot_http_service, "/did", &did_resource_detail);
+
+// ********************************
+// settings post handler
+
+void settings_callback(char *key, char *value)
+{
+	LOG_DBG("setting: %s:%s", key, value);
+
+	uint16_t nvs_id;
+
+	if (strcmp(key, "did") == 0) {
+		nvs_id = NVS_KEY_DEVICE_ID;
+	} else if (strcmp(key, "ipstatic") == 0) {
+		nvs_id = NVS_KEY_STATIC_IP;
+	} else {
+		LOG_ERR("Unhandled setting: %s", key);
+		return;
 	}
 
-	/* Copy payload to our buffer. Note that even for a small payload, it may arrive split into
-	 * chunks (e.g. if the header size was such that the whole HTTP request exceeds the size of
-	 * the client buffer).
-	 */
-	memcpy(post_payload_buf + cursor, buffer, len);
-	cursor += len;
+	ssize_t cnt = nvs_write(&fs, nvs_id, value, strlen(value) + 1);
+	// 0 indicates value is already written and nothing to do
+	if (cnt != 0 && (cnt < 0 || cnt != strlen(value) + 1)) {
+		LOG_ERR("Error writing setting: %s, len: %lu, written: %lu", key, strlen(value) + 1,
+			cnt);
 
-	if (status == HTTP_SERVER_DATA_FINAL) {
-		LOG_DBG("CLIFF: Post payload: %s", post_payload_buf);
-		// parse_led_post(post_payload_buf, cursor);
-		cursor = 0;
+		return;
 	}
+
+	char buf[30];
+	cnt = nvs_read(&fs, nvs_id, buf, sizeof(buf));
+}
+
+static int settings_post_handler(struct http_client_ctx *client, enum http_data_status status,
+				 uint8_t *buffer, size_t len, void *user_data)
+{
+	if (status == HTTP_SERVER_DATA_ABORTED) {
+		return 0;
+	}
+
+	// make sure data is null terminated
+	buffer[len] = 0;
+
+	html_parse_form_data(buffer, settings_callback);
+
+	// LOG_HEXDUMP_DBG(buffer, len, "settings data");
 
 	return 0;
 }
 
-static struct http_resource_detail_dynamic post_resource_detail = {
+static struct http_resource_detail_dynamic settings_post_resource_detail = {
 	.common =
 		{
 			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
 			.bitmask_of_supported_http_methods = BIT(HTTP_POST),
 		},
-	.cb = post_handler,
-	.data_buffer = post_buf,
-	.data_buffer_len = sizeof(post_buf),
+	.cb = settings_post_handler,
+	.data_buffer = recv_buffer,
+	.data_buffer_len = sizeof(recv_buffer),
 	.user_data = NULL,
 };
 
-HTTP_RESOURCE_DEFINE(post_resource, siot_http_service, "/", &post_resource_detail);
+HTTP_RESOURCE_DEFINE(settings_post_resource, siot_http_service, "/settings",
+		     &settings_post_resource_detail);
 
 // ********************************
 // main
