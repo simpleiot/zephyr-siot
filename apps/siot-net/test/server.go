@@ -79,7 +79,7 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 	did = r.FormValue("did")
 	ipAddr = r.FormValue("ipaddr")
 	ipStaticS := r.FormValue("ipstatic")
-	if ipStaticS != "" {
+	if ipStaticS == "true" {
 		ipStatic = true
 	} else {
 		ipStatic = false
