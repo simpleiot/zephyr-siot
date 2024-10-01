@@ -59,8 +59,6 @@ void html_parse_form_data(const char *body, html_form_callback callback)
 
 	key_value = strtok_r(form_data, "&", &saveptr1);
 
-	bool ipstatic_found = false;
-
 	while (key_value != NULL) {
 		key = strtok_r(key_value, "=", &saveptr2); // Extract the key
 		value = strtok_r(NULL, "=", &saveptr2);    // Extract the value
@@ -71,20 +69,12 @@ void html_parse_form_data(const char *body, html_form_callback callback)
 			url_decode(value,
 				   decoded_value); // Decode the value (since it's URL-encoded)
 
-			if (strcmp(key, "ipstatic") == 0) {
-				ipstatic_found = true;
-			}
-
 			callback(key, decoded_value);
 
 			k_free(decoded_value); // Free the decoded value after use
 		}
 
 		key_value = strtok_r(NULL, "&", &saveptr1); // Get the next key-value pair
-	}
-
-	if (!ipstatic_found) {
-		callback("ipstatic", "off");
 	}
 
 	k_free(form_data); // Free the duplicated form data string
