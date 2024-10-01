@@ -38,13 +38,17 @@
 <body>
   <script>
     <!-- htmx.logAll(); -->
-    function fetchAndSetValue(url, inputId) {
+    function fetchAndSetValue(url, inputId, isCheckbox = false) {
       fetch(url)
         .then(response => response.text()) // Get the response as plain text
         .then(value => {
           const inputField = document.getElementById(inputId);
           if (inputField) {
-            inputField.value = value.trim(); // Update the input field's value
+            if (isCheckbox) {
+              inputField.checked = value.trim() === 'true'; // Update checkbox's checked property
+            } else {
+              inputField.value = value.trim(); // Update the input field's value for text inputs
+            }
           }
         })
         .catch(error => {
@@ -55,6 +59,7 @@
     // Fetch and set values for the form fields on page load
     window.onload = function () {
       fetchAndSetValue('/did', 'did');       // Populate DID form
+      fetchAndSetValue('/ipstatic', 'ipstatic', true);
     };
 
     function fadeOutAfterDelay(elementId, delay) {
