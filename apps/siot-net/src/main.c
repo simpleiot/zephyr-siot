@@ -268,6 +268,45 @@ struct http_resource_detail_dynamic did_resource_detail = {
 HTTP_RESOURCE_DEFINE(did_resource, siot_http_service, "/did", &did_resource_detail);
 
 // ********************************
+// ipstatic handler
+
+static int ipstatic_handler(struct http_client_ctx *client, enum http_data_status status,
+			    uint8_t *buffer, size_t len, void *user_data)
+{
+	char *end = recv_buffer;
+	static bool processed = false;
+
+	int rc = nvs_read(&fs, NVS_KEY_STATIC_IP, &recv_buffer, sizeof(recv_buffer));
+	if (rc > 0) {
+		recv_buffer[rc] = 0;
+	} else {
+		recv_buffer[0] = 0;
+	}
+
+	if (processed) {
+		processed = false;
+		return 0;
+	}
+
+	processed = true;
+	return strlen(recv_buffer);
+}
+
+struct http_resource_detail_dynamic ipstatic_resource_detail = {
+	.common =
+		{
+			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
+		},
+	.cb = ipstatic_handler,
+	.data_buffer = recv_buffer,
+	.data_buffer_len = sizeof(recv_buffer),
+	.user_data = NULL,
+};
+
+HTTP_RESOURCE_DEFINE(ipstatic_resource, siot_http_service, "/ipstatic", &ipstatic_resource_detail);
+
+// ********************************
 // settings post handler
 
 void settings_callback(char *key, char *value)

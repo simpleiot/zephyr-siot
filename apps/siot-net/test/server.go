@@ -14,6 +14,7 @@ var (
 	ipAddr    = "192.168.0.1"
 	board     = "Go Test server"
 	did       = ""
+	ipStatic  = false
 )
 
 func main() {
@@ -26,8 +27,9 @@ func main() {
 	http.HandleFunc("/bootcount", bootCountHandler)
 	http.HandleFunc("/cpu-usage", cpuUsageHandler)
 	http.HandleFunc("/settings", settingsHandler)
-	http.HandleFunc("/did", didHandler)       // New endpoint for FID
-	http.HandleFunc("/ipaddr", ipAddrHandler) // New endpoint for IP address
+	http.HandleFunc("/did", didHandler)           // New endpoint for FID
+	http.HandleFunc("/ipaddr", ipAddrHandler)     // New endpoint for IP address
+	http.HandleFunc("/ipstatic", ipStaticHandler) // New endpoint for IP address
 
 	// Start the server
 	log.Println("Starting server on :8080...")
@@ -62,7 +64,6 @@ func cpuUsageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func settingsHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("CLIFF: settingsHandler")
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
@@ -77,15 +78,20 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 
 	did = r.FormValue("did")
 	ipAddr = r.FormValue("ipaddr")
+	ipStaticS := r.FormValue("ipstatic")
+	if ipStaticS == "true" {
+		ipStatic = true
+	} else {
+		ipStatic = false
+	}
 
-	log.Printf("Received form data - fid: %s, ipaddr: %s\n", did, ipAddr)
+	log.Printf("Received form data - did: %s, ipStaticS: %s\n", did, ipStaticS)
 
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte("Settings saved."))
 }
 
 func didHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("CLIFF: get did: ", did)
 	// Respond with the current fid as plain text
 	w.Header().Set("Content-Type", "text/plain")
 	_, _ = w.Write([]byte(did))
@@ -95,4 +101,14 @@ func ipAddrHandler(w http.ResponseWriter, r *http.Request) {
 	// Respond with the current IP address as plain text
 	w.Header().Set("Content-Type", "text/plain")
 	_, _ = w.Write([]byte(ipAddr))
+}
+
+func ipStaticHandler(w http.ResponseWriter, r *http.Request) {
+	// Respond with the current IP address as plain text
+	w.Header().Set("Content-Type", "text/plain")
+	if ipStatic {
+		_, _ = fmt.Fprintln(w, "true")
+	} else {
+		_, _ = fmt.Fprintln(w, "false")
+	}
 }
