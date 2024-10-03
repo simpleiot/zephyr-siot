@@ -17,9 +17,12 @@ LOG_MODULE_REGISTER(siot, LOG_LEVEL_DBG);
 // NVS Config storage
 
 // NVS Keys
-#define NVS_KEY_BOOT_CNT  1
-#define NVS_KEY_DEVICE_ID 2
-#define NVS_KEY_STATIC_IP 3
+#define NVS_KEY_BOOT_CNT    1
+#define NVS_KEY_DEVICE_ID   2
+#define NVS_KEY_STATIC_IP   3
+#define NVS_KEY_IP_ADDR     4
+#define NVS_KEY_SUBNET_MASK 5
+#define NVS_KEY_GATEWAY     6
 
 static struct nvs_fs fs;
 
@@ -112,27 +115,27 @@ HTTP_RESOURCE_DEFINE(index_html_gz_resource, siot_http_service, "/",
 // boot count handler
 
 static int bootcount_handler(struct http_client_ctx *client, enum http_data_status status,
-			     uint8_t *buffer, size_t len, void *user_data)
+			     uint8_t *buffer, size_t len, struct http_response_ctx *resp,
+			     void *user_data)
 {
-	char *end = recv_buffer;
-	static bool processed = false;
-	int rc = 0;
 	uint32_t reboot_counter = 0U;
 
-	rc = nvs_read(&fs, NVS_KEY_BOOT_CNT, &reboot_counter, sizeof(reboot_counter));
+	if (status != HTTP_SERVER_DATA_FINAL) {
+		return 0;
+	}
+
+	int rc = nvs_read(&fs, NVS_KEY_BOOT_CNT, &reboot_counter, sizeof(reboot_counter));
 	if (rc > 0) { /* item was found, show it */
 		sprintf(recv_buffer, "%i", reboot_counter);
 	} else {
 		strcpy(recv_buffer, "error");
 	}
 
-	if (processed) {
-		processed = false;
-		return 0;
-	}
+	resp->body = recv_buffer;
+	resp->body_len = strlen(recv_buffer);
+	resp->final_chunk = true;
 
-	processed = true;
-	return strlen(recv_buffer);
+	return 0;
 }
 
 struct http_resource_detail_dynamic bootcount_resource_detail = {
@@ -142,8 +145,6 @@ struct http_resource_detail_dynamic bootcount_resource_detail = {
 			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
 		},
 	.cb = bootcount_handler,
-	.data_buffer = recv_buffer,
-	.data_buffer_len = sizeof(recv_buffer),
 	.user_data = NULL,
 };
 
@@ -154,14 +155,15 @@ HTTP_RESOURCE_DEFINE(bootcount_resource, siot_http_service, "/bootcount",
 // CPU usage handler
 
 static int cpu_usage_handler(struct http_client_ctx *client, enum http_data_status status,
-			     uint8_t *buffer, size_t len, void *user_data)
+			     uint8_t *buffer, size_t len, struct http_response_ctx *resp,
+			     void *user_data)
 {
-	char *end = recv_buffer;
-	static bool processed = false;
-	int rc = 0;
+	if (status != HTTP_SERVER_DATA_FINAL) {
+		return 0;
+	}
 
 	k_thread_runtime_stats_t stats;
-	rc = k_thread_runtime_stats_all_get(&stats);
+	int rc = k_thread_runtime_stats_all_get(&stats);
 
 	if (rc == 0) { /* item was found, show it */
 		sprintf(recv_buffer, "%0.2lf%%",
@@ -170,13 +172,11 @@ static int cpu_usage_handler(struct http_client_ctx *client, enum http_data_stat
 		strcpy(recv_buffer, "error");
 	}
 
-	if (processed) {
-		processed = false;
-		return 0;
-	}
+	resp->body = recv_buffer;
+	resp->body_len = strlen(recv_buffer);
+	resp->final_chunk = true;
 
-	processed = true;
-	return strlen(recv_buffer);
+	return 0;
 }
 
 struct http_resource_detail_dynamic cpu_usage_resource_detail = {
@@ -186,8 +186,6 @@ struct http_resource_detail_dynamic cpu_usage_resource_detail = {
 			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
 		},
 	.cb = cpu_usage_handler,
-	.data_buffer = recv_buffer,
-	.data_buffer_len = sizeof(recv_buffer),
 	.user_data = NULL,
 };
 
@@ -198,20 +196,19 @@ HTTP_RESOURCE_DEFINE(cpu_usage_resource, siot_http_service, "/cpu-usage",
 // Board handler
 
 static int board_handler(struct http_client_ctx *client, enum http_data_status status,
-			 uint8_t *buffer, size_t len, void *user_data)
+			 uint8_t *buffer, size_t len, struct http_response_ctx *resp,
+			 void *user_data)
 {
-	char *end = recv_buffer;
-	static bool processed = false;
-
-	sprintf(recv_buffer, "%s", CONFIG_BOARD_TARGET);
-
-	if (processed) {
-		processed = false;
+	if (status != HTTP_SERVER_DATA_FINAL) {
 		return 0;
 	}
+	sprintf(recv_buffer, "%s", CONFIG_BOARD_TARGET);
 
-	processed = true;
-	return strlen(recv_buffer);
+	resp->body = recv_buffer;
+	resp->body_len = strlen(recv_buffer);
+	resp->final_chunk = true;
+
+	return 0;
 }
 
 struct http_resource_detail_dynamic board_resource_detail = {
@@ -221,8 +218,6 @@ struct http_resource_detail_dynamic board_resource_detail = {
 			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
 		},
 	.cb = board_handler,
-	.data_buffer = recv_buffer,
-	.data_buffer_len = sizeof(recv_buffer),
 	.user_data = NULL,
 };
 
@@ -232,11 +227,12 @@ HTTP_RESOURCE_DEFINE(board_resource, siot_http_service, "/board", &board_resourc
 // DID handler
 
 static int did_handler(struct http_client_ctx *client, enum http_data_status status,
-		       uint8_t *buffer, size_t len, void *user_data)
+		       uint8_t *buffer, size_t len, struct http_response_ctx *resp, void *user_data)
 {
-	char *end = recv_buffer;
-	static bool processed = false;
 
+	if (status != HTTP_SERVER_DATA_FINAL) {
+		return 0;
+	}
 	int rc = nvs_read(&fs, NVS_KEY_DEVICE_ID, &recv_buffer, sizeof(recv_buffer));
 	if (rc > 0) {
 		recv_buffer[rc] = 0;
@@ -244,13 +240,11 @@ static int did_handler(struct http_client_ctx *client, enum http_data_status sta
 		recv_buffer[0] = 0;
 	}
 
-	if (processed) {
-		processed = false;
-		return 0;
-	}
+	resp->body = recv_buffer;
+	resp->body_len = strlen(recv_buffer);
+	resp->final_chunk = true;
 
-	processed = true;
-	return strlen(recv_buffer);
+	return 0;
 }
 
 struct http_resource_detail_dynamic did_resource_detail = {
@@ -260,8 +254,6 @@ struct http_resource_detail_dynamic did_resource_detail = {
 			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
 		},
 	.cb = did_handler,
-	.data_buffer = recv_buffer,
-	.data_buffer_len = sizeof(recv_buffer),
 	.user_data = NULL,
 };
 
@@ -271,11 +263,13 @@ HTTP_RESOURCE_DEFINE(did_resource, siot_http_service, "/did", &did_resource_deta
 // ipstatic handler
 
 static int ipstatic_handler(struct http_client_ctx *client, enum http_data_status status,
-			    uint8_t *buffer, size_t len, void *user_data)
+			    uint8_t *buffer, size_t len, struct http_response_ctx *resp,
+			    void *user_data)
 {
-	char *end = recv_buffer;
-	static bool processed = false;
 
+	if (status != HTTP_SERVER_DATA_FINAL) {
+		return 0;
+	}
 	int rc = nvs_read(&fs, NVS_KEY_STATIC_IP, &recv_buffer, sizeof(recv_buffer));
 	if (rc > 0) {
 		recv_buffer[rc] = 0;
@@ -283,13 +277,11 @@ static int ipstatic_handler(struct http_client_ctx *client, enum http_data_statu
 		recv_buffer[0] = 0;
 	}
 
-	if (processed) {
-		processed = false;
-		return 0;
-	}
+	resp->body = recv_buffer;
+	resp->body_len = strlen(recv_buffer);
+	resp->final_chunk = true;
 
-	processed = true;
-	return strlen(recv_buffer);
+	return 0;
 }
 
 struct http_resource_detail_dynamic ipstatic_resource_detail = {
@@ -299,12 +291,116 @@ struct http_resource_detail_dynamic ipstatic_resource_detail = {
 			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
 		},
 	.cb = ipstatic_handler,
-	.data_buffer = recv_buffer,
-	.data_buffer_len = sizeof(recv_buffer),
 	.user_data = NULL,
 };
 
 HTTP_RESOURCE_DEFINE(ipstatic_resource, siot_http_service, "/ipstatic", &ipstatic_resource_detail);
+
+// ********************************
+// ipaddr handler
+
+static int ipaddr_handler(struct http_client_ctx *client, enum http_data_status status,
+			  uint8_t *buffer, size_t len, struct http_response_ctx *resp,
+			  void *user_data)
+{
+	if (status != HTTP_SERVER_DATA_FINAL) {
+		return 0;
+	}
+	int rc = nvs_read(&fs, NVS_KEY_IP_ADDR, &recv_buffer, sizeof(recv_buffer));
+	if (rc > 0) {
+		recv_buffer[rc] = 0;
+	} else {
+		recv_buffer[0] = 0;
+	}
+
+	resp->body = recv_buffer;
+	resp->body_len = strlen(recv_buffer);
+	resp->final_chunk = true;
+
+	return 0;
+}
+
+struct http_resource_detail_dynamic ipaddr_resource_detail = {
+	.common =
+		{
+			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
+		},
+	.cb = ipaddr_handler,
+	.user_data = NULL,
+};
+
+HTTP_RESOURCE_DEFINE(ipaddr_resource, siot_http_service, "/ipaddr", &ipaddr_resource_detail);
+
+// ********************************
+// subnet-mask handler
+
+static int subnet_mask_handler(struct http_client_ctx *client, enum http_data_status status,
+			       uint8_t *buffer, size_t len, struct http_response_ctx *resp,
+			       void *user_data)
+{
+	if (status != HTTP_SERVER_DATA_FINAL) {
+		return 0;
+	}
+	int rc = nvs_read(&fs, NVS_KEY_SUBNET_MASK, &recv_buffer, sizeof(recv_buffer));
+	if (rc > 0) {
+		recv_buffer[rc] = 0;
+	} else {
+		recv_buffer[0] = 0;
+	}
+
+	resp->body = recv_buffer;
+	resp->body_len = strlen(recv_buffer);
+	resp->final_chunk = true;
+
+	return 0;
+}
+
+struct http_resource_detail_dynamic subnet_mask_resource_detail = {
+	.common =
+		{
+			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
+		},
+	.cb = subnet_mask_handler,
+	.user_data = NULL,
+};
+
+HTTP_RESOURCE_DEFINE(subnet_mask_resource, siot_http_service, "/subnet-mask",
+		     &subnet_mask_resource_detail);
+
+// ********************************
+// gateway handler
+
+static int gateway_handler(struct http_client_ctx *client, enum http_data_status status,
+			   uint8_t *buffer, size_t len, struct http_response_ctx *resp,
+			   void *user_data)
+{
+	int rc = nvs_read(&fs, NVS_KEY_GATEWAY, &recv_buffer, sizeof(recv_buffer));
+	if (rc > 0) {
+		recv_buffer[rc] = 0;
+	} else {
+		recv_buffer[0] = 0;
+	}
+
+	resp->body = recv_buffer;
+	resp->body_len = strlen(recv_buffer);
+	resp->final_chunk = true;
+
+	return 0;
+}
+
+struct http_resource_detail_dynamic gateway_resource_detail = {
+	.common =
+		{
+			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
+		},
+	.cb = gateway_handler,
+	.user_data = NULL,
+};
+
+HTTP_RESOURCE_DEFINE(gateway_resource, siot_http_service, "/gateway", &gateway_resource_detail);
 
 // ********************************
 // settings post handler
@@ -319,6 +415,12 @@ void settings_callback(char *key, char *value)
 		nvs_id = NVS_KEY_DEVICE_ID;
 	} else if (strcmp(key, "ipstatic") == 0) {
 		nvs_id = NVS_KEY_STATIC_IP;
+	} else if (strcmp(key, "ipaddr")) {
+		nvs_id = NVS_KEY_IP_ADDR;
+	} else if (strcmp(key, "subnet-mask")) {
+		nvs_id = NVS_KEY_SUBNET_MASK;
+	} else if (strcmp(key, "gateway")) {
+		nvs_id = NVS_KEY_GATEWAY;
 	} else {
 		LOG_ERR("Unhandled setting: %s", key);
 		return;
@@ -327,7 +429,7 @@ void settings_callback(char *key, char *value)
 	ssize_t cnt = nvs_write(&fs, nvs_id, value, strlen(value) + 1);
 	// 0 indicates value is already written and nothing to do
 	if (cnt != 0 && (cnt < 0 || cnt != strlen(value) + 1)) {
-		LOG_ERR("Error writing setting: %s, len: %lu, written: %lu", key, strlen(value) + 1,
+		LOG_ERR("Error writing setting: %s, len: %zu, written: %zu", key, strlen(value) + 1,
 			cnt);
 
 		return;
@@ -337,8 +439,9 @@ void settings_callback(char *key, char *value)
 	cnt = nvs_read(&fs, nvs_id, buf, sizeof(buf));
 }
 
-static int settings_post_handler(struct http_client_ctx *client, enum http_data_status status,
-				 uint8_t *buffer, size_t len, void *user_data)
+static int settings_handler(struct http_client_ctx *client, enum http_data_status status,
+			    uint8_t *buffer, size_t len, struct http_response_ctx *resp,
+			    void *user_data)
 {
 	if (status == HTTP_SERVER_DATA_ABORTED) {
 		return 0;
@@ -347,9 +450,11 @@ static int settings_post_handler(struct http_client_ctx *client, enum http_data_
 	// make sure data is null terminated
 	buffer[len] = 0;
 
+	// FIXME: make sure we have received all of the data here ...
+
 	html_parse_form_data(buffer, settings_callback);
 
-	// LOG_HEXDUMP_DBG(buffer, len, "settings data");
+	LOG_HEXDUMP_DBG(buffer, len, "settings data");
 
 	return 0;
 }
@@ -360,9 +465,7 @@ static struct http_resource_detail_dynamic settings_post_resource_detail = {
 			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
 			.bitmask_of_supported_http_methods = BIT(HTTP_POST),
 		},
-	.cb = settings_post_handler,
-	.data_buffer = recv_buffer,
-	.data_buffer_len = sizeof(recv_buffer),
+	.cb = settings_handler,
 	.user_data = NULL,
 };
 
@@ -374,8 +477,6 @@ HTTP_RESOURCE_DEFINE(settings_post_resource, siot_http_service, "/settings",
 
 int main(void)
 {
-	int rc = 0;
-
 	LOG_INF("SIOT Zephyr Application! %s", CONFIG_BOARD_TARGET);
 	nvs_init();
 
