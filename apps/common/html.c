@@ -63,7 +63,8 @@ void html_parse_form_data(const char *body, html_form_callback callback)
 		key = strtok_r(key_value, "=", &saveptr2); // Extract the key
 		value = strtok_r(NULL, "=", &saveptr2);    // Extract the value
 
-		if (key && value) {
+		if (key) {
+			value = value ? value : "";
 			decoded_value = (char *)k_malloc(strlen(value) +
 							 1); // Allocate space for decoded value
 			url_decode(value,

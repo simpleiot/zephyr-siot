@@ -10,11 +10,13 @@ import (
 )
 
 var (
-	bootCount uint64
-	ipAddr    = "192.168.0.1"
-	board     = "Go Test server"
-	did       = ""
-	ipStatic  = false
+	bootCount  uint64
+	ipAddr     = "192.168.0.1"
+	board      = "Go Test server"
+	did        = ""
+	ipStatic   = false
+	subnetMask = ""
+	gateway    = ""
 )
 
 func main() {
@@ -27,9 +29,11 @@ func main() {
 	http.HandleFunc("/bootcount", bootCountHandler)
 	http.HandleFunc("/cpu-usage", cpuUsageHandler)
 	http.HandleFunc("/settings", settingsHandler)
-	http.HandleFunc("/did", didHandler)           // New endpoint for FID
-	http.HandleFunc("/ipaddr", ipAddrHandler)     // New endpoint for IP address
-	http.HandleFunc("/ipstatic", ipStaticHandler) // New endpoint for IP address
+	http.HandleFunc("/did", didHandler)                // New endpoint for FID
+	http.HandleFunc("/ipaddr", ipAddrHandler)          // New endpoint for IP address
+	http.HandleFunc("/ipstatic", ipStaticHandler)      // New endpoint for IP address
+	http.HandleFunc("/subnet-mask", subnetMaskHandler) // New endpoint for IP address
+	http.HandleFunc("/gateway", gatewayHandler)        // New endpoint for IP address
 
 	// Start the server
 	log.Println("Starting server on :8080...")
@@ -78,6 +82,8 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 
 	did = r.FormValue("did")
 	ipAddr = r.FormValue("ipaddr")
+	subnetMask = r.FormValue("subnet-mask")
+	gateway = r.FormValue("gateway")
 	ipStaticS := r.FormValue("ipstatic")
 	if ipStaticS == "true" {
 		ipStatic = true
@@ -92,13 +98,11 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func didHandler(w http.ResponseWriter, r *http.Request) {
-	// Respond with the current fid as plain text
 	w.Header().Set("Content-Type", "text/plain")
 	_, _ = w.Write([]byte(did))
 }
 
 func ipAddrHandler(w http.ResponseWriter, r *http.Request) {
-	// Respond with the current IP address as plain text
 	w.Header().Set("Content-Type", "text/plain")
 	_, _ = w.Write([]byte(ipAddr))
 }
@@ -111,4 +115,14 @@ func ipStaticHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		_, _ = fmt.Fprintln(w, "false")
 	}
+}
+
+func subnetMaskHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	_, _ = w.Write([]byte(subnetMask))
+}
+
+func gatewayHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	_, _ = w.Write([]byte(gateway))
 }
