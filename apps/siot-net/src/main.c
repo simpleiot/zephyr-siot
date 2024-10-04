@@ -21,8 +21,8 @@ LOG_MODULE_REGISTER(siot, LOG_LEVEL_DBG);
 #define NVS_KEY_DEVICE_ID   2
 #define NVS_KEY_STATIC_IP   3
 #define NVS_KEY_IP_ADDR     4
-#define NVS_KEY_SUBNET_MASK 5
-#define NVS_KEY_GATEWAY     6
+#define NVS_KEY_GATEWAY     5
+#define NVS_KEY_SUBNET_MASK 6
 
 static struct nvs_fs fs;
 
@@ -30,6 +30,35 @@ static struct nvs_fs fs;
 #define NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(NVS_PARTITION)
 #define NVS_PARTITION_OFFSET FIXED_PARTITION_OFFSET(NVS_PARTITION)
 
+void nvs_dump_settings()
+{
+	char buf[32];
+
+	int rc = nvs_read(&fs, NVS_KEY_DEVICE_ID, &buf, sizeof(buf));
+	if (rc > 0) {
+		LOG_INF("Device ID: %s", buf);
+	}
+
+	nvs_read(&fs, NVS_KEY_STATIC_IP, &buf, sizeof(buf));
+	if (rc > 0) {
+		LOG_INF("Static IP: %s", buf);
+	}
+
+	nvs_read(&fs, NVS_KEY_IP_ADDR, &buf, sizeof(buf));
+	if (rc > 0) {
+		LOG_INF("IP Address: %s", buf);
+	}
+
+	nvs_read(&fs, NVS_KEY_SUBNET_MASK, &buf, sizeof(buf));
+	if (rc > 0) {
+		LOG_INF("Subnet mask: %s", buf);
+	}
+
+	nvs_read(&fs, NVS_KEY_GATEWAY, &buf, sizeof(buf));
+	if (rc > 0) {
+		LOG_INF("Gateway: %s", buf);
+	}
+}
 int nvs_init()
 {
 	struct flash_pages_info info;
@@ -61,13 +90,6 @@ int nvs_init()
 		return -1;
 	}
 
-	char did[32];
-
-	rc = nvs_read(&fs, NVS_KEY_DEVICE_ID, &did, sizeof(did));
-	if (rc > 0) {
-		LOG_INF("Device ID: %s", did);
-	}
-
 	rc = nvs_read(&fs, NVS_KEY_BOOT_CNT, &reboot_counter, sizeof(reboot_counter));
 	if (rc > 0) { /* item was found, show it */
 		LOG_INF("Boot count: %d\n", reboot_counter);
@@ -77,6 +99,8 @@ int nvs_init()
 		LOG_INF("No boot counter found, adding it at id %d\n", NVS_KEY_BOOT_CNT);
 		(void)nvs_write(&fs, NVS_KEY_BOOT_CNT, &reboot_counter, sizeof(reboot_counter));
 	}
+
+	nvs_dump_settings();
 
 	return 0;
 }
@@ -233,6 +257,7 @@ static int did_handler(struct http_client_ctx *client, enum http_data_status sta
 	if (status != HTTP_SERVER_DATA_FINAL) {
 		return 0;
 	}
+
 	int rc = nvs_read(&fs, NVS_KEY_DEVICE_ID, &recv_buffer, sizeof(recv_buffer));
 	if (rc > 0) {
 		recv_buffer[rc] = 0;
@@ -270,6 +295,7 @@ static int ipstatic_handler(struct http_client_ctx *client, enum http_data_statu
 	if (status != HTTP_SERVER_DATA_FINAL) {
 		return 0;
 	}
+
 	int rc = nvs_read(&fs, NVS_KEY_STATIC_IP, &recv_buffer, sizeof(recv_buffer));
 	if (rc > 0) {
 		recv_buffer[rc] = 0;
@@ -306,6 +332,7 @@ static int ipaddr_handler(struct http_client_ctx *client, enum http_data_status 
 	if (status != HTTP_SERVER_DATA_FINAL) {
 		return 0;
 	}
+
 	int rc = nvs_read(&fs, NVS_KEY_IP_ADDR, &recv_buffer, sizeof(recv_buffer));
 	if (rc > 0) {
 		recv_buffer[rc] = 0;
@@ -342,6 +369,7 @@ static int subnet_mask_handler(struct http_client_ctx *client, enum http_data_st
 	if (status != HTTP_SERVER_DATA_FINAL) {
 		return 0;
 	}
+
 	int rc = nvs_read(&fs, NVS_KEY_SUBNET_MASK, &recv_buffer, sizeof(recv_buffer));
 	if (rc > 0) {
 		recv_buffer[rc] = 0;
@@ -376,6 +404,7 @@ static int gateway_handler(struct http_client_ctx *client, enum http_data_status
 			   uint8_t *buffer, size_t len, struct http_response_ctx *resp,
 			   void *user_data)
 {
+
 	int rc = nvs_read(&fs, NVS_KEY_GATEWAY, &recv_buffer, sizeof(recv_buffer));
 	if (rc > 0) {
 		recv_buffer[rc] = 0;
@@ -407,7 +436,7 @@ HTTP_RESOURCE_DEFINE(gateway_resource, siot_http_service, "/gateway", &gateway_r
 
 void settings_callback(char *key, char *value)
 {
-	LOG_DBG("setting: %s:%s", key, value);
+	// LOG_DBG("setting: %s:%s", key, value);
 
 	uint16_t nvs_id;
 
@@ -415,11 +444,11 @@ void settings_callback(char *key, char *value)
 		nvs_id = NVS_KEY_DEVICE_ID;
 	} else if (strcmp(key, "ipstatic") == 0) {
 		nvs_id = NVS_KEY_STATIC_IP;
-	} else if (strcmp(key, "ipaddr")) {
+	} else if (strcmp(key, "ipaddr") == 0) {
 		nvs_id = NVS_KEY_IP_ADDR;
-	} else if (strcmp(key, "subnet-mask")) {
+	} else if (strcmp(key, "subnet-mask") == 0) {
 		nvs_id = NVS_KEY_SUBNET_MASK;
-	} else if (strcmp(key, "gateway")) {
+	} else if (strcmp(key, "gateway") == 0) {
 		nvs_id = NVS_KEY_GATEWAY;
 	} else {
 		LOG_ERR("Unhandled setting: %s", key);
@@ -434,9 +463,6 @@ void settings_callback(char *key, char *value)
 
 		return;
 	}
-
-	char buf[30];
-	cnt = nvs_read(&fs, nvs_id, buf, sizeof(buf));
 }
 
 static int settings_handler(struct http_client_ctx *client, enum http_data_status status,
@@ -447,14 +473,41 @@ static int settings_handler(struct http_client_ctx *client, enum http_data_statu
 		return 0;
 	}
 
-	// make sure data is null terminated
-	buffer[len] = 0;
+	static uint8_t settings_buffer[256];
+	static size_t cursor;
 
-	// FIXME: make sure we have received all of the data here ...
+	if (len + cursor > sizeof(settings_buffer)) {
+		cursor = 0;
+		return -ENOMEM;
+	}
 
-	html_parse_form_data(buffer, settings_callback);
+	memcpy(settings_buffer + cursor, buffer, len);
+	cursor += len;
 
-	LOG_HEXDUMP_DBG(buffer, len, "settings data");
+	if (status == HTTP_SERVER_DATA_FINAL) {
+		if (cursor >= sizeof(settings_buffer)) {
+			cursor = 0;
+			return -ENOMEM;
+		}
+
+		// make sure data is null terminated
+		settings_buffer[cursor] = 0;
+
+		// LOG_HEXDUMP_DBG(settings_buffer, cursor, "settings data");
+		cursor = 0;
+
+		html_parse_form_data(settings_buffer, settings_callback);
+
+		LOG_INF("Settings updated");
+
+		nvs_dump_settings();
+
+		strcpy(recv_buffer, "Settings saved");
+
+		resp->body = recv_buffer;
+		resp->body_len = strlen(recv_buffer);
+		resp->final_chunk = true;
+	}
 
 	return 0;
 }
