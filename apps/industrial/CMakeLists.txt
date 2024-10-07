@@ -5,7 +5,12 @@ cmake_minimum_required(VERSION 3.20.0)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(siot)
 
-target_sources(app PRIVATE src/main.c)
+zephyr_include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common)
+
+target_sources(app PRIVATE 
+	src/main.c 
+	${CMAKE_CURRENT_SOURCE_DIR}/../common/html.c
+)
 
 set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)
 set(source_file_index src/index.html)
