@@ -21,17 +21,21 @@
 
 / {
 	kbd_matrix: kbd-matrix {
-	     compatible = "gpio-kbd-matrix";
-	     row-gpios = <&gpio1 4 (GPIO_ACTIVE_LOW)>,
-	                 <&gpio1 3 (GPIO_ACTIVE_LOW)>,
-	                 <&gpio1 2 (GPIO_ACTIVE_LOW)>,
-	                 <&gpio1 1 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
-	     col-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>,
-	                 <&gpio0 15 GPIO_ACTIVE_LOW>,
-	                 <&gpio0 14 GPIO_ACTIVE_LOW>,
-	                 <&gpio0 5 GPIO_ACTIVE_LOW>,
-	                 <&gpio0 4 GPIO_ACTIVE_LOW>,
-	                 <&gpio0 0 GPIO_ACTIVE_LOW>;
+	    compatible = "gpio-kbd-matrix";
+	    row-gpios = <&gpio1 4 (GPIO_ACTIVE_LOW)>,
+	                <&gpio1 3 (GPIO_ACTIVE_LOW)>,
+	                <&gpio1 2 (GPIO_ACTIVE_LOW)>,
+	                <&gpio1 1 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+	    col-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>,
+	                <&gpio0 15 GPIO_ACTIVE_LOW>,
+	                <&gpio0 14 GPIO_ACTIVE_LOW>,
+	                <&gpio0 5 GPIO_ACTIVE_LOW>,
+	                <&gpio0 4 GPIO_ACTIVE_LOW>,
+	                <&gpio0 0 GPIO_ACTIVE_LOW>;
+
+		col-drive-inactive;
+        settle-time-us = <0>;
+        no-ghostkey-check;
 
 		keymap:keymap {
 		    compatible = "input-keymap";
