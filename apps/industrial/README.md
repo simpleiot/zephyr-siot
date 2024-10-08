@@ -1,5 +1,7 @@
 # Zonit Industrial Monitor Application
 
+- [Product documentation](https://gitea.zonit.com/Zonit-Dev/product/src/branch/master/ats-industrial/monitor)
+
 This application is meant to run on the ESP32-POE board from Olimex.
 
 ## Olimex Pin Mapping
