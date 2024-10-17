@@ -19,12 +19,12 @@ typedef void (*snmp_event_handler)(const struct snmp_message* message, const str
 // SNMP structure
 struct snmp {
     uint16_t port;
-    struct udp* udp;
+    int sock;
     snmp_event_handler on_message;
 };
 
 // Function prototypes
-bool snmp_begin(struct snmp* snmp, struct udp* udp);
+bool snmp_begin(struct snmp* snmp);
 void snmp_loop(struct snmp* snmp);
 bool snmp_send(struct snmp* snmp, struct snmp_message* message, const struct ip_address* ip, uint16_t port);
 void snmp_on_message(struct snmp* snmp, snmp_event_handler event);
