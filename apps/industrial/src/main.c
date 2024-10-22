@@ -9,10 +9,12 @@
 #include <zephyr/storage/flash_map.h>
 #include <zephyr/fs/nvs.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/net/net_mgmt.h>
 #include <zephyr/input/input.h>
 #include <sys/types.h>
 
 #include "html.h"
+#include "snmp.h"
 
 LOG_MODULE_REGISTER(siot, LOG_LEVEL_DBG);
 
@@ -612,9 +614,32 @@ static const struct device *const keymap_dev = DEVICE_DT_GET(DT_NODELABEL(keymap
 
 INPUT_CALLBACK_DEFINE(keymap_dev, keymap_callback, NULL);
 
+// ==================================================
+// Network manager
+
+static struct net_mgmt_event_callback mgmt_cb;
+
+static void net_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event,
+			      struct net_if *iface)
+{
+	if (mgmt_event == NET_EVENT_L4_CONNECTED) {
+		LOG_INF("Network connected\n");
+
+		// FIXME: send test
+		int ret = snmp_send("10.0.0.100", "hello", sizeof("hello"));
+		if (ret != 0) {
+			LOG_ERR("Error sending SNMP message: %i", ret);
+		}
+	}
+}
+
 int main(void)
 {
 	LOG_INF("Zonit Industrial Monitoring Application! %s", CONFIG_BOARD_TARGET);
+
+	// In your initialization code:
+	net_mgmt_init_event_callback(&mgmt_cb, net_event_handler, NET_EVENT_L4_CONNECTED);
+	net_mgmt_add_event_callback(&mgmt_cb);
 
 	nvs_init();
 

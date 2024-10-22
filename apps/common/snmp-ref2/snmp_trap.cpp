@@ -1,4 +1,4 @@
-#include "SNMPTrap.h"
+#include "snmp_trap.h"
 #include "include/SNMPParser.h"
 
 SNMPTrap::~SNMPTrap(){

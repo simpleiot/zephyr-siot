@@ -5,25 +5,15 @@
 #define SNMPTrap_h
 
 #include <list>
-#include "include/ValueCallbacks.h"
+#include "include/value_callbacks.h"
 #include "include/defs.h"
-#include "include/SNMPPacket.h"
+#include "include/snmp_packet.h"
 
 #include <stdlib.h>
 
-#ifdef COMPILING_TESTS
-	#include "tests/required/IPAddress.h"
-	#include "tests/required/UDP.h"
-#else
-	#include <Arduino.h>
-	#include "IPAddress.h"
-	
-	#if defined(ESP8266) || defined(ESP32)
-		#include <WiFiUdp.h>
-	#else
-		#include "Udp.h"
-	#endif
-#endif
+struct snmp_trap {
+
+};
 
 class SNMPTrap : public SNMPPacket {
   public:
