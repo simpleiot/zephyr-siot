@@ -16,6 +16,19 @@ The Industrial monitor applications sends SNMP Traps when events occur.
 
 ### SNMP Test Server
 
+#### net-snmp
+
+Populate `/etc/snmp/snmptrapd.conf` with the following:
+
+```
+authCommunity log,execute,net public
+disableAuthorization yes
+```
+
+`sudo snmptrapd -f -Lo`
+
+#### Telegraf
+
 This can be tested using
 [Telegraf](https://www.influxdata.com/time-series-platform/telegraf/).
 
@@ -36,4 +49,4 @@ You can test a trap by:
 
 - install: `net-snmp`
 - run:
-  `snmptrap -v 2c -c public localhost '' NET-SNMP-EXAMPLES-MIB::netSnmpExampleHeartbeatNotific│ │ation netSnmpExampleHeartbeatRate i 123456`
+  `snmptrap -v 2c -c public localhost '' NET-SNMP-EXAMPLES-MIB::netSnmpExampleHeartbeatNotification netSnmpExampleHeartbeatRate i 123456`
