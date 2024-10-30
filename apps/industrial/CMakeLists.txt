@@ -14,6 +14,8 @@ target_sources(app PRIVATE
 	src/main.c 
 	${CMAKE_CURRENT_SOURCE_DIR}/../common/html.c
 	${CMAKE_CURRENT_SOURCE_DIR}/../common/snmp/snmp.c
+	${CMAKE_CURRENT_SOURCE_DIR}/../common/snmp/tools.c
+	${CMAKE_CURRENT_SOURCE_DIR}/../common/snmp/asn1.c
 )
 
 set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)

@@ -626,7 +626,7 @@ static void net_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_
 		LOG_INF("Network connected\n");
 
 		// FIXME: send test
-		int ret = snmp_send("10.0.0.100", "hello", sizeof("hello"));
+		int ret = snmp_trap("10.0.0.100", "hello", sizeof("hello"));
 		if (ret != 0) {
 			LOG_ERR("Error sending SNMP message: %i", ret);
 		}
