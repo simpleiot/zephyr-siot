@@ -7,13 +7,11 @@ project(siot)
 
 zephyr_include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/../common
-	${CMAKE_CURRENT_SOURCE_DIR}/../common/snmp
 )
 
 target_sources(app PRIVATE 
 	src/main.c 
 	${CMAKE_CURRENT_SOURCE_DIR}/../common/html.c
-	${CMAKE_CURRENT_SOURCE_DIR}/../common/snmp/snmp.c
 )
 
 set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)
