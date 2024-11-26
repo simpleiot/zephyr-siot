@@ -1,3 +1,0 @@
-module = SNMP
-module-str = snmp
-source "subsys/logging/Kconfig.template.log_config"
