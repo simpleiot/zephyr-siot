@@ -1,0 +1,5 @@
+board:
+  name: fysetc_ucan
+  vendor: fysetc
+  socs:
+    - name: stm32f072xb
