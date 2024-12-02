@@ -1,5 +1,7 @@
 manifest:
   remotes:
+    - name: simpleiot
+      url-base: https://github.com/simpleiot
     - name: zephyrproject-rtos
       url-base: https://github.com/zephyrproject-rtos
     - name: zephyr-sylvio
@@ -18,5 +20,13 @@ manifest:
           - hal_stm32
           - cmsis
           - mbedtls
+    - name: zephyr-snmp
+      remote: simpleiot
+      revision: main
+      path: modules/lib/snmp
+    - name: module-sample
+      url: https://github.com/yashi/module-sample
+      revision: main
+      path: modules/lib/sample
   self:
     path: siot
