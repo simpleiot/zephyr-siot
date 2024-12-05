@@ -4,11 +4,27 @@
 
 This application is meant to run on the ESP32-POE board from Olimex.
 
+## Building/Flashing
+
+In repo root directory:
+
+- `. envsetup-zonit.sh`
+- `z_build_industrial`
+- `z_flash_industrial <serial port>`
+
 ## Olimex Pin Mapping
 
 ![Olimex pins](assets/olimex-pins.png)
 
 ![DC Wiring](assets/z-ind-monitor-matrix-map.png)
+
+### I2C Devices
+
+#### 6-chan, Rev1
+
+- IC1: MCP23018T-E/SO: 010 0111 0x20
+- DS2484R+T: 0x18
+- EMC2302-1-AIZL: 0x2E
 
 ## SNMP Testing
 
