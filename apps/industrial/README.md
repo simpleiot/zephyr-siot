@@ -24,7 +24,7 @@ In repo root directory:
 - open a web page on the device IP address to see status
   http://device-ip-address/ -- example show below:
 
-![image-20241205135158112](assets/image-20241205135158112.png)
+<img src="assets/image-20241205135158112.png" alt="image-20241205135158112" style="zoom:50%;" />
 
 ## Olimex Pin Mapping
 
