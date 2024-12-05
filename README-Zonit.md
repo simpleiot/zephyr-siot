@@ -1,5 +1,7 @@
 # Zonit Zephyr Projects
 
+See main [README.md](/README.md)
+
 This is a Zephyr Workspace
 [T2 topology](https://docs.zephyrproject.org/latest/develop/west/workspaces.html#t2-star-topology-application-is-the-manifest-repository)
 that sets up to build the Zonit Zephyr applications.
@@ -14,9 +16,6 @@ that sets up to build the Zonit Zephyr applications.
 - `. envsetup.sh` (notice leading `.`)
 - `siot_setup`
 
-## Build
-
-see main [README.md](/README.md)
+## Projects
 
 - [Industrial Monitor](apps/industrial/README.md)
-  - `siot_build_esp32_poe apps/industrial`
