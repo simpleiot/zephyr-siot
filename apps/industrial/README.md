@@ -11,10 +11,9 @@ In repo root directory:
 - see top level
   [README-Zonit.md](https://gitea.zonit.com/Zonit-Dev/zephyr-zonit/src/branch/main/README-Zonit.md)
   for instructions on workspace setup.
-
-* `. envsetup-zonit.sh`
-* `z_build_industrial`
-* `z_flash_industrial <serial port>`
+- `. envsetup-zonit.sh`
+- `z_build_industrial`
+- `z_flash_industrial <serial port>`
 
 ## Operation
 
