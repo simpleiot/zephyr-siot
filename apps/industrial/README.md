@@ -8,11 +8,13 @@ This application is meant to run on the ESP32-POE board from Olimex.
 
 In repo root directory:
 
-* see top level [README-Zonit.md](../../README-Zonit.md) for instructions on workspace setup.
+- see top level
+  [README-Zonit.md](https://gitea.zonit.com/Zonit-Dev/zephyr-zonit/src/branch/main/README-Zonit.md)
+  for instructions on workspace setup.
 
-- `. envsetup-zonit.sh`
-- `z_build_industrial`
-- `z_flash_industrial <serial port>`
+* `. envsetup-zonit.sh`
+* `z_build_industrial`
+* `z_flash_industrial <serial port>`
 
 ## Operation
 
@@ -24,8 +26,6 @@ In repo root directory:
   http://device-ip-address/ -- example show below:
 
 ![image-20241205135158112](assets/image-20241205135158112.png)
-
-
 
 ## Olimex Pin Mapping
 
