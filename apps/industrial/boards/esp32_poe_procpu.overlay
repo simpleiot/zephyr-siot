@@ -34,7 +34,7 @@
 	                <&gpio0 0 GPIO_ACTIVE_LOW>;
 
 		col-drive-inactive;
-        settle-time-us = <0>;
+        settle-time-us = <40>;
         no-ghostkey-check;
 
 		keymap:keymap {
