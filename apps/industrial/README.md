@@ -8,9 +8,23 @@ This application is meant to run on the ESP32-POE board from Olimex.
 
 In repo root directory:
 
+- see top level
+  [README-Zonit.md](https://gitea.zonit.com/Zonit-Dev/zephyr-zonit/src/branch/main/README-Zonit.md)
+  for instructions on workspace setup.
 - `. envsetup-zonit.sh`
 - `z_build_industrial`
 - `z_flash_industrial <serial port>`
+
+## Operation
+
+- open a serial console on the USB serial port
+- connect an Ethernet cable
+- the device will get an IP address via DHCP and display it in the serial
+  console
+- open a web page on the device IP address to see status
+  http://device-ip-address/ -- example show below:
+
+<img src="assets/image-20241205135158112.png" alt="image-20241205135158112" style="zoom:50%;" />
 
 ## Olimex Pin Mapping
 
