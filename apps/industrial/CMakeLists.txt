@@ -11,6 +11,7 @@ zephyr_include_directories(
 
 target_sources(app PRIVATE 
 	src/main.c 
+	src/w1.c
 	${CMAKE_CURRENT_SOURCE_DIR}/../common/html.c
 )
 
