@@ -36,9 +36,12 @@ In repo root directory:
 
 #### 6-chan, Rev1
 
-- IC1: MCP23018T-E/SO: 010 0111 0x20
-- DS2484R+T: 0x18
-- EMC2302-1-AIZL: 0x2E
+- IC1: MCP23018T-E/SO: `0x20` (up to 8 IO-expanders can be added from `0x20` to
+  `0x27`)
+- DS2484R+T: `0x18`
+- EMC2302-1-AIZL: `0x2E`
+- 8K EEProm: `0x80` to `0x87` (see
+  [M+R product spec](https://gitea.zonit.com/Zonit-Dev/product/src/branch/master/mr/mr-product-spec.md#i2c-eeprom))
 
 ## SNMP Testing
 
