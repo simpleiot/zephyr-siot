@@ -17,4 +17,4 @@ that sets up to build the Zonit Zephyr applications.
 
 ## Projects
 
-- [Industrial Monitor](apps/industrial/README.md)
+- [z-MR](apps/z-mr/README.md)
