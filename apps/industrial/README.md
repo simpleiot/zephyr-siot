@@ -43,13 +43,33 @@ In repo root directory:
 - 8K EEProm: `0x80` to `0x87` (see
   [M+R product spec](https://gitea.zonit.com/Zonit-Dev/product/src/branch/master/mr/mr-product-spec.md#i2c-eeprom))
 
-## SNMP Testing
+## SNMP
+
+We are planning to port the
+[LWIP SNMP](https://www.nongnu.org/lwip/2_1_x/group__snmp.html) code to Zephyr.
+
+The initial goal is to support SNMPv2c.
+
+A public Zephyr module has been set up in this repo:
+
+https://github.com/simpleiot/zephyr-snmp
+
+This module is included in our build by adding it to
+[`west.yml`](../../west.yml).
+
+The SNMP library can be enabled by adding the following to `prj.conf`:
+
+`CONFIG_LIB_SNMP=y`
+
+It still needs ported and currently does not compile.
+
+### SNMP Testing
 
 The Industrial monitor applications sends SNMP Traps when events occur.
 
-### SNMP Test Server
+#### SNMP Test Server
 
-#### net-snmp
+##### net-snmp
 
 Populate `/etc/snmp/snmptrapd.conf` with the following:
 
@@ -60,7 +80,7 @@ disableAuthorization yes
 
 `sudo snmptrapd -f -Lo`
 
-#### Telegraf
+##### Telegraf
 
 This can be tested using
 [Telegraf](https://www.influxdata.com/time-series-platform/telegraf/).
@@ -76,7 +96,7 @@ Steps:
 
 Now, Telegraf will print out any data it receives to `stdout`.
 
-### Send a test trap
+#### Send a test trap
 
 You can test a trap by:
 
