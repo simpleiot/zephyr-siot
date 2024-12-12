@@ -46,7 +46,10 @@ In repo root directory:
 ## SNMP
 
 We are planning to port the
-[LWIP SNMP](https://www.nongnu.org/lwip/2_1_x/group__snmp.html) code to Zephyr.
+[LWIP SNMP](https://www.nongnu.org/lwip/2_1_x/group__snmp.html) code to Zephyr
+([source code](https://github.com/lwip-tcpip/lwip/tree/master/src/apps/snmp)).
+See
+[this dicussion thread](https://github.com/zephyrproject-rtos/zephyr/discussions/80648).
 
 The initial goal is to support SNMPv2c.
 
