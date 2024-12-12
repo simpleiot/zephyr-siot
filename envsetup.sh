@@ -11,6 +11,11 @@ siot_build_esp32_poe() {
 	west build -b esp32_poe/esp32/procpu "${APP}" -- -DBOARD_ROOT="$(pwd)"
 }
 
+siot_build_fysetc_ucan() {
+	APP=$1
+	west build -b fysetc_ucan "${APP}" -- -DBOARD_ROOT="$(pwd)"
+}
+
 # https://docs.zephyrproject.org/latest/boards/espressif/esp32_ethernet_kit/doc/index.html
 siot_build_esp32_ethernet_kit() {
 	APP=$1
