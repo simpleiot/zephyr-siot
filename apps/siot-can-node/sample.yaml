@@ -1,0 +1,5 @@
+sample:
+  description: SIOT CAN Node
+  name: SIOT-CAN-NODE
+common:
+  tags: siot
