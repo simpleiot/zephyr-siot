@@ -1,6 +1,6 @@
 sample:
-  description: Zonit industrail monitoring application
-  name: zonit-ind
+  description: Zonit M+R
+  name: z-mr
 common:
   tags: introduction
   integration_platforms:
