@@ -1,6 +1,6 @@
-# Zonit Industrial Monitor Application
+# Zonit M+R Zephyr Firmware
 
-- [Product documentation](https://gitea.zonit.com/Zonit-Dev/product/src/branch/master/ats-industrial/monitor)
+- [Product documentation](https://gitea.zonit.com/Zonit-Dev/product/src/branch/master/z-mr)
 
 This application is meant to run on the ESP32-POE board from Olimex.
 
