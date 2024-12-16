@@ -1,3 +1,4 @@
+#include "zephyr/toolchain.h"
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/w1.h>
