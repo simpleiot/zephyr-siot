@@ -6,20 +6,19 @@
 #include "zephyr/kernel.h"
 #include "zephyr/device.h"
 #include <zephyr/input/input.h>
+#include <zephyr/zbus/zbus.h>
 
 #define STACKSIZE 1024
 #define PRIORITY  7
 
 LOG_MODULE_REGISTER(z_dc, LOG_LEVEL_DBG);
 
-ats ind_state[6];
+ZBUS_CHAN_DECLARE(z_ats_chan);
 
 // ==================================================
 // Industrial states
-// FIXME this should be local data in the main loop eventually
-// need to figure out how to process a HTTP callback in the event loop
 
-ats ind_state[6];
+ats_state astate = INIT_ATS_STATE();
 
 // ==================================================
 // Key event handler, and message queue for passing DC events to main loop
@@ -51,34 +50,36 @@ void z_dc_thread(void *arg1, void *arg2, void *arg3)
 		if (k_msgq_get(&dc_msgq, &evt, K_FOREVER) == 0) {
 			// Process the input event
 			int code_z = evt.code - 1;
-			int industrial = code_z / 4;
-			int ind_event = code_z % 4;
+			int ats = code_z / 4;
+			int ats_event = code_z % 4;
 
 			const char *msg = "unknown";
 
-			switch (ind_event) {
+			switch (ats_event) {
 			case AON:
 				msg = MSG_AON;
-				ind_state[industrial].aon = evt.value;
+				astate.state[ats].aon = evt.value;
 				break;
 
 			case ONA:
 				msg = MSG_ONA;
-				ind_state[industrial].ona = evt.value;
+				astate.state[ats].ona = evt.value;
 				break;
 
 			case BON:
 				msg = MSG_BON;
-				ind_state[industrial].bon = evt.value;
+				astate.state[ats].bon = evt.value;
 				break;
 
 			case ONB:
 				msg = MSG_ONB;
-				ind_state[industrial].onb = evt.value;
+				astate.state[ats].onb = evt.value;
 				break;
 			}
 
-			LOG_DBG("Industrial #%i: %s: %i", industrial + 1, msg, evt.value);
+			zbus_chan_pub(&z_ats_chan, &astate, K_MSEC(500));
+
+			LOG_DBG("ATS #%i: %s: %i", ats + 1, msg, evt.value);
 		}
 	}
 }

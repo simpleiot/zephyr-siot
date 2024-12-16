@@ -1,4 +1,6 @@
 
+#include "ats.h"
+
 #include <zephyr/logging/log.h>
 #include <zephyr/net/net_mgmt.h>
 #include <zephyr/zbus/zbus.h>
@@ -6,6 +8,15 @@
 LOG_MODULE_REGISTER(z_mr, LOG_LEVEL_DBG);
 
 ZBUS_CHAN_DEFINE(z_temp_chan, float, NULL, NULL, ZBUS_OBSERVERS_EMPTY, ZBUS_MSG_INIT(0));
+ZBUS_CHAN_DEFINE(z_ats_chan, ats_state, NULL, NULL, ZBUS_OBSERVERS_EMPTY,
+		 ZBUS_MSG_INIT(.state = {
+				       {false, false, false, false},
+				       {false, false, false, false},
+				       {false, false, false, false},
+				       {false, false, false, false},
+				       {false, false, false, false},
+				       {false, false, false, false},
+			       }));
 
 // ==================================================
 // Network manager

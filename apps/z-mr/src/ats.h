@@ -10,6 +10,12 @@ typedef struct {
 	bool onb;
 } ats;
 
+typedef struct {
+	ats state[6];
+} ats_state;
+
+#define INIT_ATS_STATE() (ats_state) { .state = { [0 ... 5] = { .aon = false, .bon = false, .ona = false, .onb = false } } }
+
 #define AON 0
 #define ONA 1
 #define BON 2

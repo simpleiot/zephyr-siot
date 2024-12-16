@@ -21,7 +21,7 @@ LOG_MODULE_REGISTER(z_web, LOG_LEVEL_DBG);
 
 static z_mr_config config;
 
-static ats ind_state[6];
+static ats_state astate = INIT_ATS_STATE();
 
 static float temp;
 
@@ -468,11 +468,12 @@ static int devices_handler(struct http_client_ctx *client, enum http_data_status
 		char *end = recv_buffer;
 
 		end += sprintf(end, "<ul>");
-		for (int i = 0; i < ARRAY_LENGTH(ind_state); i++) {
-			end += sprintf(
-				end, "<li><b>#%i</b>: AON:%s ONA:%s BON:%s ONB:%s</li>", i,
-				RENDER_ON_OFF(ind_state[i].aon), RENDER_ON_OFF(ind_state[i].ona),
-				RENDER_ON_OFF(ind_state[i].bon), RENDER_ON_OFF(ind_state[i].onb));
+		for (int i = 0; i < ARRAY_LENGTH(astate.state); i++) {
+			end += sprintf(end, "<li><b>#%i</b>: AON:%s ONA:%s BON:%s ONB:%s</li>", i,
+				       RENDER_ON_OFF(astate.state[i].aon),
+				       RENDER_ON_OFF(astate.state[i].ona),
+				       RENDER_ON_OFF(astate.state[i].bon),
+				       RENDER_ON_OFF(astate.state[i].onb));
 		}
 		end += sprintf(end, "</ul>");
 
@@ -499,8 +500,9 @@ HTTP_RESOURCE_DEFINE(devices_resource, siot_http_service, "/devices", &devices_r
 // Zbus stuff
 
 ZBUS_CHAN_DECLARE(z_temp_chan);
+ZBUS_CHAN_DECLARE(z_ats_chan);
 
-ZBUS_SUBSCRIBER_DEFINE(z_temp_sub, 4);
+ZBUS_SUBSCRIBER_DEFINE(z_web_sub, 8);
 
 void z_web_thread(void *arg1, void *arg2, void *arg3)
 {
@@ -510,10 +512,13 @@ void z_web_thread(void *arg1, void *arg2, void *arg3)
 
 	while (1) {
 		const struct zbus_channel *chan;
-		zbus_chan_add_obs(&z_temp_chan, &z_temp_sub, K_MSEC(500));
-		while (!zbus_sub_wait(&z_temp_sub, &chan, K_FOREVER)) {
+		zbus_chan_add_obs(&z_temp_chan, &z_web_sub, K_MSEC(500));
+		zbus_chan_add_obs(&z_ats_chan, &z_web_sub, K_MSEC(500));
+		while (!zbus_sub_wait(&z_web_sub, &chan, K_FOREVER)) {
 			if (chan == &z_temp_chan) {
 				zbus_chan_read(&z_temp_chan, &temp, K_NO_WAIT);
+			} else if (chan == &z_ats_chan) {
+				zbus_chan_read(&z_ats_chan, &astate, K_NO_WAIT);
 			}
 		}
 	}
