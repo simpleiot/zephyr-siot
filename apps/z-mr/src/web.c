@@ -3,6 +3,7 @@
 #include <zephyr/net/http/server.h>
 #include <zephyr/net/http/service.h>
 #include <zephyr/fs/nvs.h>
+#include <zephyr/zbus/zbus.h>
 
 #include "html.h"
 #include "config.h"
@@ -15,9 +16,14 @@ LOG_MODULE_REGISTER(z_web, LOG_LEVEL_DBG);
 
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof((x)[0]))
 
+// FIXME, we probably need a lock around these variables as the web server accesses them in
+// callbacks
+
 static z_mr_config config;
 
 static ats ind_state[6];
+
+static float temp;
 
 // ==================================================
 // HTTP Service
@@ -81,6 +87,38 @@ struct http_resource_detail_dynamic bootcount_resource_detail = {
 
 HTTP_RESOURCE_DEFINE(bootcount_resource, siot_http_service, "/bootcount",
 		     &bootcount_resource_detail);
+
+// ********************************
+// temp handler
+
+static int temp_handler(struct http_client_ctx *client, enum http_data_status status,
+			uint8_t *buffer, size_t len, struct http_response_ctx *resp,
+			void *user_data)
+{
+	if (status != HTTP_SERVER_DATA_FINAL) {
+		return 0;
+	}
+
+	sprintf(recv_buffer, "%.1f°C", (double)temp);
+
+	resp->body = recv_buffer;
+	resp->body_len = strlen(recv_buffer);
+	resp->final_chunk = true;
+
+	return 0;
+}
+
+struct http_resource_detail_dynamic temp_resource_detail = {
+	.common =
+		{
+			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
+		},
+	.cb = temp_handler,
+	.user_data = NULL,
+};
+
+HTTP_RESOURCE_DEFINE(temp_resource, siot_http_service, "/temp", &temp_resource_detail);
 
 // ********************************
 // CPU usage handler
@@ -458,6 +496,12 @@ struct http_resource_detail_dynamic devices_resource_detail = {
 
 HTTP_RESOURCE_DEFINE(devices_resource, siot_http_service, "/devices", &devices_resource_detail);
 
+// Zbus stuff
+
+ZBUS_CHAN_DECLARE(z_temp_chan);
+
+ZBUS_SUBSCRIBER_DEFINE(z_temp_sub, 4);
+
 void z_web_thread(void *arg1, void *arg2, void *arg3)
 {
 	LOG_INF("z web thread");
@@ -465,7 +509,13 @@ void z_web_thread(void *arg1, void *arg2, void *arg3)
 	http_server_start();
 
 	while (1) {
-		k_msleep(1000);
+		const struct zbus_channel *chan;
+		zbus_chan_add_obs(&z_temp_chan, &z_temp_sub, K_MSEC(500));
+		while (!zbus_sub_wait(&z_temp_sub, &chan, K_FOREVER)) {
+			if (chan == &z_temp_chan) {
+				zbus_chan_read(&z_temp_chan, &temp, K_NO_WAIT);
+			}
+		}
 	}
 }
 
