@@ -13,6 +13,15 @@ typedef struct z_mr_config_t {
   char gateway[20];
 } z_mr_config;
 
+#define Z_MR_CONFIG_INIT { \
+    .bootcount = 0, \
+    .device_id = {0}, \
+    .static_ip = false, \
+    .ip_addr = {0}, \
+    .subnet_mask = {0}, \
+    .gateway = {0} \
+}
+
 void z_mr_config_init(z_mr_config *c);
 
 #endif  // __CONFIG_H_

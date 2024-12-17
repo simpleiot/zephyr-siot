@@ -1,5 +1,6 @@
 
 #include "ats.h"
+#include "config.h"
 
 #include <zephyr/logging/log.h>
 #include <zephyr/net/net_mgmt.h>
@@ -17,6 +18,8 @@ ZBUS_CHAN_DEFINE(z_ats_chan, ats_state, NULL, NULL, ZBUS_OBSERVERS_EMPTY,
 				       {false, false, false, false},
 				       {false, false, false, false},
 			       }));
+
+ZBUS_CHAN_DEFINE(z_config_chan, z_mr_config, NULL, NULL, ZBUS_OBSERVERS_EMPTY, ZBUS_MSG_INIT(0))
 
 // ==================================================
 // Network manager

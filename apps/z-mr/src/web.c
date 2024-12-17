@@ -14,15 +14,21 @@
 
 LOG_MODULE_REGISTER(z_web, LOG_LEVEL_DBG);
 
+ZBUS_CHAN_DECLARE(z_temp_chan);
+ZBUS_CHAN_DECLARE(z_ats_chan);
+ZBUS_CHAN_DECLARE(z_config_chan);
+
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof((x)[0]))
 
-// FIXME, we probably need a lock around these variables as the web server accesses them in
+// ==================================================
+// State that is mirrored from other subsystems. A lock must be used
+// when accessing these variables as they can be accessed in the web
 // callbacks
 
+K_MUTEX_DEFINE(state_lock);
+
 static z_mr_config config;
-
 static ats_state astate = INIT_ATS_STATE();
-
 static float temp;
 
 // ==================================================
@@ -66,7 +72,9 @@ static int bootcount_handler(struct http_client_ctx *client, enum http_data_stat
 		return 0;
 	}
 
+	k_mutex_lock(&state_lock, K_FOREVER);
 	sprintf(recv_buffer, "%i", config.bootcount);
+	k_mutex_unlock(&state_lock);
 
 	resp->body = recv_buffer;
 	resp->body_len = strlen(recv_buffer);
@@ -99,7 +107,9 @@ static int temp_handler(struct http_client_ctx *client, enum http_data_status st
 		return 0;
 	}
 
+	k_mutex_lock(&state_lock, K_FOREVER);
 	sprintf(recv_buffer, "%.1f°C", (double)temp);
+	k_mutex_unlock(&state_lock);
 
 	resp->body = recv_buffer;
 	resp->body_len = strlen(recv_buffer);
@@ -203,7 +213,9 @@ static int did_handler(struct http_client_ctx *client, enum http_data_status sta
 		return 0;
 	}
 
+	k_mutex_lock(&state_lock, K_FOREVER);
 	strcpy(recv_buffer, config.device_id);
+	k_mutex_unlock(&state_lock);
 
 	resp->body = recv_buffer;
 	resp->body_len = strlen(recv_buffer);
@@ -236,11 +248,13 @@ static int ipstatic_handler(struct http_client_ctx *client, enum http_data_statu
 		return 0;
 	}
 
+	k_mutex_lock(&state_lock, K_FOREVER);
 	if (config.static_ip) {
 		strcpy(recv_buffer, "true");
 	} else {
 		strcpy(recv_buffer, "false");
 	}
+	k_mutex_unlock(&state_lock);
 
 	resp->body = recv_buffer;
 	resp->body_len = strlen(recv_buffer);
@@ -272,7 +286,9 @@ static int ipaddr_handler(struct http_client_ctx *client, enum http_data_status 
 		return 0;
 	}
 
+	k_mutex_lock(&state_lock, K_FOREVER);
 	strcpy(recv_buffer, config.ip_addr);
+	k_mutex_unlock(&state_lock);
 
 	resp->body = recv_buffer;
 	resp->body_len = strlen(recv_buffer);
@@ -304,7 +320,9 @@ static int subnet_mask_handler(struct http_client_ctx *client, enum http_data_st
 		return 0;
 	}
 
+	k_mutex_lock(&state_lock, K_FOREVER);
 	strcpy(recv_buffer, config.subnet_mask);
+	k_mutex_unlock(&state_lock);
 
 	resp->body = recv_buffer;
 	resp->body_len = strlen(recv_buffer);
@@ -334,7 +352,9 @@ static int gateway_handler(struct http_client_ctx *client, enum http_data_status
 			   void *user_data)
 {
 
+	k_mutex_lock(&state_lock, K_FOREVER);
 	strcpy(recv_buffer, config.gateway);
+	k_mutex_unlock(&state_lock);
 
 	resp->body = recv_buffer;
 	resp->body_len = strlen(recv_buffer);
@@ -468,6 +488,7 @@ static int devices_handler(struct http_client_ctx *client, enum http_data_status
 		char *end = recv_buffer;
 
 		end += sprintf(end, "<ul>");
+		k_mutex_lock(&state_lock, K_FOREVER);
 		for (int i = 0; i < ARRAY_LENGTH(astate.state); i++) {
 			end += sprintf(end, "<li><b>#%i</b>: AON:%s ONA:%s BON:%s ONB:%s</li>", i,
 				       RENDER_ON_OFF(astate.state[i].aon),
@@ -475,6 +496,7 @@ static int devices_handler(struct http_client_ctx *client, enum http_data_status
 				       RENDER_ON_OFF(astate.state[i].bon),
 				       RENDER_ON_OFF(astate.state[i].onb));
 		}
+		k_mutex_unlock(&state_lock);
 		end += sprintf(end, "</ul>");
 
 		resp->body = recv_buffer;
@@ -497,11 +519,6 @@ struct http_resource_detail_dynamic devices_resource_detail = {
 
 HTTP_RESOURCE_DEFINE(devices_resource, siot_http_service, "/devices", &devices_resource_detail);
 
-// Zbus stuff
-
-ZBUS_CHAN_DECLARE(z_temp_chan);
-ZBUS_CHAN_DECLARE(z_ats_chan);
-
 ZBUS_SUBSCRIBER_DEFINE(z_web_sub, 8);
 
 void z_web_thread(void *arg1, void *arg2, void *arg3)
@@ -514,12 +531,17 @@ void z_web_thread(void *arg1, void *arg2, void *arg3)
 		const struct zbus_channel *chan;
 		zbus_chan_add_obs(&z_temp_chan, &z_web_sub, K_MSEC(500));
 		zbus_chan_add_obs(&z_ats_chan, &z_web_sub, K_MSEC(500));
+		zbus_chan_add_obs(&z_config_chan, &z_web_sub, K_MSEC(500));
 		while (!zbus_sub_wait(&z_web_sub, &chan, K_FOREVER)) {
+			k_mutex_lock(&state_lock, K_FOREVER);
 			if (chan == &z_temp_chan) {
 				zbus_chan_read(&z_temp_chan, &temp, K_NO_WAIT);
 			} else if (chan == &z_ats_chan) {
 				zbus_chan_read(&z_ats_chan, &astate, K_NO_WAIT);
+			} else if (chan == &z_config_chan) {
+				zbus_chan_read(&z_ats_chan, &config, K_NO_WAIT);
 			}
+			k_mutex_unlock(&state_lock);
 		}
 	}
 }
