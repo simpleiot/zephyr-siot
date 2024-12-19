@@ -4,14 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "fan.h"
+
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>
-#include "fan.h"
+#include <zephyr/devicetree.h>
 
-LOG_MODULE_REGISTER(z_fan, LOG_LEVEL_ERR);
+LOG_MODULE_REGISTER(z_fan, LOG_LEVEL_DBG);
 
 /* size of stack area used by each thread */
 #define STACKSIZE 1024
@@ -21,11 +23,11 @@ LOG_MODULE_REGISTER(z_fan, LOG_LEVEL_ERR);
 
 // #define ZEPHYR_USER_NODE DT_PATH(zephyr_user)
 
-static const struct device *gpio_dev;
-static struct gpio_callback gpio_cb;
-static bool polled_mode = false;
+// static const struct device *gpio_dev;
+// static struct gpio_callback gpio_cb;
+// static bool polled_mode = false;
 static bool alarm = false;
-const struct device *const i2c_dev = DEVICE_DT_GET(DT_NODELABEL(i2c1));
+const static struct device *const i2c_dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
 
 void fan_alarm_asserted(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
@@ -157,86 +159,86 @@ bool fan_init(void)
 	LOG_DBG("Fan controller product ID: %d\n", buf[0]);
 	LOG_DBG("Fan controller manufacturer ID: %d\n", buf[1]);
 	LOG_DBG("Fan controller revision: %d\n", buf[2]);
-	gpio_dev = DEVICE_DT_GET(DT_NODELABEL(gpioe));
-	gpio_pin_configure(gpio_dev, 2, (GPIO_INPUT | GPIO_PULL_UP));
-	gpio_init_callback(&gpio_cb, fan_alarm_asserted, (1 << 13));
-	gpio_add_callback(gpio_dev, &gpio_cb);
-	int ret = gpio_pin_interrupt_configure(gpio_dev, 2, GPIO_INT_EDGE_FALLING);
-	if (ret != 0) {
-		LOG_ERR("Failed to configure fan interrupt, using polled mode");
-		polled_mode = true;
-	}
+	// gpio_dev = DEVICE_DT_GET(DT_NODELABEL(gpioe));
+	// gpio_pin_configure(gpio_dev, 2, (GPIO_INPUT | GPIO_PULL_UP));
+	// gpio_init_callback(&gpio_cb, fan_alarm_asserted, (1 << 13));
+	// gpio_add_callback(gpio_dev, &gpio_cb);
+	// int ret = gpio_pin_interrupt_configure(gpio_dev, 2, GPIO_INT_EDGE_FALLING);
+	// if (ret != 0) {
+	// 	LOG_ERR("Failed to configure fan interrupt, using polled mode");
+	// 	polled_mode = true;
+	// }
 	return true;
 }
 
 void fan_thread(void *arg1, void *arg2, void *arg3)
 {
-	uint16_t tach1 = 0;
-	uint16_t tach2 = 0;
-	uint16_t tach_target = 0xffff;
-	float temp_delta;
-	bool fan1_on = false;
-	bool fan2_on = false;
-	uint16_t fan_change_counter = 0;
+	// uint16_t tach1 = 0;
+	// uint16_t tach2 = 0;
+	// uint16_t tach_target = 0xffff;
+	// float temp_delta;
+	// bool fan1_on = false;
+	// bool fan2_on = false;
+	// uint16_t fan_change_counter = 0;
 
 	LOG_DBG("Fan thread starting\n");
 	fan_init();
 	while (1) {
-		if (!alarm && polled_mode) {
-			if (gpio_pin_get(gpio_dev, 13) == 0) {
-				alarm = true;
-			}
-		}
-		if (alarm) {
-			fan_get_status();
-			if (gpio_pin_get(gpio_dev, 13) == 1) {
-				alarm = false;
-				LOG_DBG("Fan alarm cleared\n");
-			}
-		}
+		// if (!alarm && polled_mode) {
+		// 	if (gpio_pin_get(gpio_dev, 13) == 0) {
+		// 		alarm = true;
+		// 	}
+		// }
+		// if (alarm) {
+		// 	fan_get_status();
+		// 	if (gpio_pin_get(gpio_dev, 13) == 1) {
+		// 		alarm = false;
+		// 		LOG_DBG("Fan alarm cleared\n");
+		// 	}
+		// }
 
-		fan_get_tach_period(&tach1, &tach2);
-		temp_delta = fan_get_temp(TEMP_INPUT) - fan_get_temp(TEMP_OUTPUT);
-		LOG_DBG("TACH: %d, %d, tem_deltap=%.1f\n", tach1, tach2, (double)temp_delta);
-		if (temp_delta > FAN_TEMP_THRESHOLD) {
-			// Only turn on fans if the temperature delta is above the
-			// FAN_TEMP_THRESHOLD
-			float duty = (temp_delta - FAN_TEMP_THRESHOLD) /
-				     (FAN_TEMP_MAX - FAN_TEMP_THRESHOLD);
-			uint16_t new_tach_target =
-				FAN_TACH_PERIOD_MAX -
-				(FAN_TACH_PERIOD_MAX - FAN_TACH_PERIOD_MIN) * duty;
-			if (tach_target != new_tach_target) {
-				tach_target = new_tach_target;
-				if (duty < 0.9f) {
-					// Only run one fan at a time
-					fan_set_tach_target_period(fan1_on ? tach_target : 0xffff,
-								   fan2_on ? tach_target : 0xffff);
-				} else {
-					// Run both fans
-					fan_set_tach_target_period(FAN_TACH_PERIOD_MIN,
-								   FAN_TACH_PERIOD_MIN);
-				}
-			}
-		} else {
-			// Fans off
-			tach_target = 0xffff;
-		}
-		if (++fan_change_counter >= FAN_CHANGE_SECONDS) {
-			// Change which fan is running
-			if (fan1_on) {
-				fan1_on = false;
-				fan2_on = true;
-			} else {
-				fan1_on = true;
-				fan2_on = false;
-			}
-			fan_set_tach_target_period(fan1_on ? tach_target : 0xffff,
-						   fan2_on ? tach_target : 0xffff);
-			fan_change_counter = 0;
-		}
+		// fan_get_tach_period(&tach1, &tach2);
+		// temp_delta = fan_get_temp(TEMP_INPUT) - fan_get_temp(TEMP_OUTPUT);
+		// LOG_DBG("TACH: %d, %d, tem_deltap=%.1f\n", tach1, tach2, (double)temp_delta);
+		// if (temp_delta > FAN_TEMP_THRESHOLD) {
+		// 	// Only turn on fans if the temperature delta is above the
+		// 	// FAN_TEMP_THRESHOLD
+		// 	float duty = (temp_delta - FAN_TEMP_THRESHOLD) /
+		// 		     (FAN_TEMP_MAX - FAN_TEMP_THRESHOLD);
+		// 	uint16_t new_tach_target =
+		// 		FAN_TACH_PERIOD_MAX -
+		// 		(FAN_TACH_PERIOD_MAX - FAN_TACH_PERIOD_MIN) * duty;
+		// 	if (tach_target != new_tach_target) {
+		// 		tach_target = new_tach_target;
+		// 		if (duty < 0.9f) {
+		// 			// Only run one fan at a time
+		// 			fan_set_tach_target_period(fan1_on ? tach_target : 0xffff,
+		// 						   fan2_on ? tach_target : 0xffff);
+		// 		} else {
+		// 			// Run both fans
+		// 			fan_set_tach_target_period(FAN_TACH_PERIOD_MIN,
+		// 						   FAN_TACH_PERIOD_MIN);
+		// 		}
+		// 	}
+		// } else {
+		// 	// Fans off
+		// 	tach_target = 0xffff;
+		// }
+		// if (++fan_change_counter >= FAN_CHANGE_SECONDS) {
+		// 	// Change which fan is running
+		// 	if (fan1_on) {
+		// 		fan1_on = false;
+		// 		fan2_on = true;
+		// 	} else {
+		// 		fan1_on = true;
+		// 		fan2_on = false;
+		// 	}
+		// 	fan_set_tach_target_period(fan1_on ? tach_target : 0xffff,
+		// 				   fan2_on ? tach_target : 0xffff);
+		// 	fan_change_counter = 0;
+		// }
 		k_msleep(1000);
 	}
 }
 
-K_THREAD_DEFINE(fan, STACKSIZE, fan_thread, NULL, NULL, NULL, PRIORITY, 0, 0);
+K_THREAD_DEFINE(z_fan, STACKSIZE, fan_thread, NULL, NULL, NULL, PRIORITY, 0, 0);
