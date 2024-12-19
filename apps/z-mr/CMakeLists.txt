@@ -16,6 +16,7 @@ target_sources(app PRIVATE
 	src/web.c
 	src/dc.c
 	src/config.c
+	src/point.c
 	${CMAKE_CURRENT_SOURCE_DIR}/../common/html.c
 )
 

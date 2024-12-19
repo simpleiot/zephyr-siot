@@ -1,13 +1,14 @@
+#include "html.h"
+#include "config.h"
+#include "ats.h"
+#include "point.h"
+
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/net/http/server.h>
 #include <zephyr/net/http/service.h>
 #include <zephyr/fs/nvs.h>
 #include <zephyr/zbus/zbus.h>
-
-#include "html.h"
-#include "config.h"
-#include "ats.h"
 
 #define STACKSIZE 1024
 #define PRIORITY  7
@@ -17,6 +18,7 @@ LOG_MODULE_REGISTER(z_web, LOG_LEVEL_DBG);
 ZBUS_CHAN_DECLARE(z_temp_chan);
 ZBUS_CHAN_DECLARE(z_ats_chan);
 ZBUS_CHAN_DECLARE(z_config_chan);
+ZBUS_CHAN_DECLARE(z_point_chan);
 
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof((x)[0]))
 
@@ -27,7 +29,7 @@ ZBUS_CHAN_DECLARE(z_config_chan);
 
 K_MUTEX_DEFINE(state_lock);
 
-static z_mr_config config;
+static z_mr_config config = Z_MR_CONFIG_INIT;
 static ats_state astate = INIT_ATS_STATE();
 static float temp;
 
@@ -132,6 +134,8 @@ HTTP_RESOURCE_DEFINE(temp_resource, siot_http_service, "/temp", &temp_resource_d
 
 // ********************************
 // CPU usage handler
+// TODO: CPU usage should be generated somewhere else and put on ZBus so things other
+// than web can use it.
 
 static int cpu_usage_handler(struct http_client_ctx *client, enum http_data_status status,
 			     uint8_t *buffer, size_t len, struct http_response_ctx *resp,
@@ -380,33 +384,26 @@ HTTP_RESOURCE_DEFINE(gateway_resource, siot_http_service, "/gateway", &gateway_r
 
 void settings_callback(char *key, char *value)
 {
-	// LOG_DBG("setting: %s:%s", key, value);
+	LOG_DBG("setting: %s:%s", key, value);
 
-	// uint16_t nvs_id;
+	point p = {0};
 
-	// if (strcmp(key, "did") == 0) {
-	// 	nvs_id = NVS_KEY_DEVICE_ID;
-	// } else if (strcmp(key, "ipstatic") == 0) {
-	// 	nvs_id = NVS_KEY_STATIC_IP;
-	// } else if (strcmp(key, "ipaddr") == 0) {
-	// 	nvs_id = NVS_KEY_IP_ADDR;
-	// } else if (strcmp(key, "subnet-mask") == 0) {
-	// 	nvs_id = NVS_KEY_SUBNET_MASK;
-	// } else if (strcmp(key, "gateway") == 0) {
-	// 	nvs_id = NVS_KEY_GATEWAY;
-	// } else {
-	// 	LOG_ERR("Unhandled setting: %s", key);
-	// 	return;
-	// }
+	point_set_type(&p, key);
+	point_put_string(&p, value);
 
-	// ssize_t cnt = nvs_write(&fs, nvs_id, value, strlen(value) + 1);
-	// // 0 indicates value is already written and nothing to do
-	// if (cnt != 0 && (cnt < 0 || cnt != strlen(value) + 1)) {
-	// 	LOG_ERR("Error writing setting: %s, len: %zu, written: %zu", key, strlen(value) + 1,
-	// 		cnt);
+	// check for values that are not strings
+	if (strcmp(key, POINT_TYPE_STATICIP) == 0) {
+		if (strcmp(value, "true") == 0) {
+			point_put_int(&p, 1);
+		} else {
+			point_put_int(&p, 0);
+		}
+	}
 
-	// 	return;
-	// }
+	char desc[40];
+	point_description(&p, desc, sizeof(desc));
+
+	zbus_chan_pub(&z_point_chan, &p, K_MSEC(500));
 }
 
 static int settings_handler(struct http_client_ctx *client, enum http_data_status status,
@@ -520,18 +517,21 @@ struct http_resource_detail_dynamic devices_resource_detail = {
 HTTP_RESOURCE_DEFINE(devices_resource, siot_http_service, "/devices", &devices_resource_detail);
 
 ZBUS_SUBSCRIBER_DEFINE(z_web_sub, 8);
+ZBUS_CHAN_ADD_OBS(z_temp_chan, z_web_sub, 1);
+ZBUS_CHAN_ADD_OBS(z_ats_chan, z_web_sub, 2);
+ZBUS_CHAN_ADD_OBS(z_config_chan, z_web_sub, 3);
 
 void z_web_thread(void *arg1, void *arg2, void *arg3)
 {
 	LOG_INF("z web thread");
-	z_mr_config_init(&config);
 	http_server_start();
+
+	// zbus_chan_add_obs(&z_temp_chan, &z_web_sub, K_MSEC(500));
+	// zbus_chan_add_obs(&z_ats_chan, &z_web_sub, K_MSEC(500));
+	// zbus_chan_add_obs(&z_config_chan, &z_web_sub, K_MSEC(500));
 
 	while (1) {
 		const struct zbus_channel *chan;
-		zbus_chan_add_obs(&z_temp_chan, &z_web_sub, K_MSEC(500));
-		zbus_chan_add_obs(&z_ats_chan, &z_web_sub, K_MSEC(500));
-		zbus_chan_add_obs(&z_config_chan, &z_web_sub, K_MSEC(500));
 		while (!zbus_sub_wait(&z_web_sub, &chan, K_FOREVER)) {
 			k_mutex_lock(&state_lock, K_FOREVER);
 			if (chan == &z_temp_chan) {

@@ -22,6 +22,5 @@ typedef struct z_mr_config_t {
     .gateway = {0} \
 }
 
-void z_mr_config_init(z_mr_config *c);
 
 #endif  // __CONFIG_H_

@@ -1,6 +1,7 @@
 #include "config.h"
-#include "zephyr/kernel.h"
+#include "point.h"
 
+#include <zephyr/kernel.h>
 #include <zephyr/fs/nvs.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/flash.h>
@@ -13,17 +14,18 @@
 LOG_MODULE_REGISTER(z_config, LOG_LEVEL_DBG);
 
 ZBUS_CHAN_DECLARE(z_config_chan);
+ZBUS_CHAN_DECLARE(z_point_chan);
 
 // ********************************
 // NVS Config storage
 
 // NVS Keys
 #define NVS_KEY_BOOT_CNT    1
-#define NVS_KEY_DEVICE_ID   2
+#define NVS_KEY_DESCRIPTION 2
 #define NVS_KEY_STATIC_IP   3
 #define NVS_KEY_IP_ADDR     4
 #define NVS_KEY_GATEWAY     5
-#define NVS_KEY_SUBNET_MASK 6
+#define NVS_KEY_NETMASK     6
 
 static struct nvs_fs fs;
 
@@ -88,10 +90,10 @@ int nvs_init()
 		(void)nvs_write(&fs, NVS_KEY_BOOT_CNT, &config.bootcount, sizeof(config.bootcount));
 	}
 
-	rc = nvs_read(&fs, NVS_KEY_DEVICE_ID, &config.device_id, sizeof(config.device_id));
+	rc = nvs_read(&fs, NVS_KEY_DESCRIPTION, &config.device_id, sizeof(config.device_id));
 	if (rc < 0) {
 		LOG_ERR("Error reading device id: %i", rc);
-		nvs_write(&fs, NVS_KEY_DEVICE_ID, "", sizeof(""));
+		nvs_write(&fs, NVS_KEY_DESCRIPTION, "", sizeof(""));
 	}
 
 	nvs_read(&fs, NVS_KEY_STATIC_IP, &buf, sizeof(buf));
@@ -109,10 +111,10 @@ int nvs_init()
 		nvs_write(&fs, NVS_KEY_IP_ADDR, "", sizeof(""));
 	}
 
-	nvs_read(&fs, NVS_KEY_SUBNET_MASK, &config.subnet_mask, sizeof(config.subnet_mask));
+	nvs_read(&fs, NVS_KEY_NETMASK, &config.subnet_mask, sizeof(config.subnet_mask));
 	if (rc < 0) {
 		LOG_ERR("Error reading subnet mask: %i", rc);
-		nvs_write(&fs, NVS_KEY_SUBNET_MASK, "", sizeof(""));
+		nvs_write(&fs, NVS_KEY_NETMASK, "", sizeof(""));
 	}
 
 	nvs_read(&fs, NVS_KEY_GATEWAY, &config.gateway, sizeof(config.gateway));
@@ -128,23 +130,67 @@ int nvs_init()
 	return 0;
 }
 
-void z_mr_config_init(z_mr_config *c)
+int point_type_key_to_nvs_id(char *type, char *key)
 {
-	c->bootcount = 0;
-	c->static_ip = false;
-	c->device_id[0] = 0;
-	c->ip_addr[0] = 0;
-	c->subnet_mask[0] = 0;
-	c->gateway[0] = 0;
+	if (strcmp(type, POINT_TYPE_DESCRIPTION) == 0) {
+		return NVS_KEY_DESCRIPTION;
+	} else if (strcmp(type, POINT_TYPE_STATICIP) == 0) {
+		return NVS_KEY_STATIC_IP;
+	} else if (strcmp(type, POINT_TYPE_ADDRESS) == 0) {
+		return NVS_KEY_IP_ADDR;
+	} else if (strcmp(type, POINT_TYPE_NETMASK) == 0) {
+		return NVS_KEY_NETMASK;
+	} else if (strcmp(type, POINT_TYPE_GATEWAY) == 0) {
+		return NVS_KEY_GATEWAY;
+	} else {
+		return -1;
+	}
 }
+
+void z_config_handle_point(point *p)
+{
+
+	int nvs_id = point_type_key_to_nvs_id(p->type, p->key);
+
+	if (nvs_id < 0) {
+		LOG_ERR("Unhandled setting: %s:%s", p->type, p->key);
+		return;
+	}
+
+	int len = point_data_len(p);
+
+	if (len <= 0) {
+		LOG_DBG("Warning, received point with data len: %i", len);
+	}
+
+	ssize_t cnt = nvs_write(&fs, nvs_id, p->data, len);
+	// 0 indicates value is already written and nothing to do
+	if (cnt != 0 && (cnt < 0 || cnt != len)) {
+		LOG_ERR("Error writing setting: %s, len: %i, written: %zu", p->type, len, cnt);
+		return;
+	}
+}
+
+ZBUS_MSG_SUBSCRIBER_DEFINE(z_config_sub);
+
+// For some reason the following does not work, so added a ZBUS_OBS_DECLARE in main.c
+// ZBUS_CHAN_ADD_OBS(z_config_chan, z_config_sub, 3);
 
 void z_config_thread(void *arg1, void *arg2, void *arg3)
 {
 	LOG_INF("z config thread");
 	nvs_init();
 
-	while (1) {
-		k_msleep(1000);
+	const struct zbus_channel *chan;
+	point p;
+
+	while (!zbus_sub_wait_msg(&z_config_sub, &chan, &p, K_FOREVER)) {
+		if (chan == &z_point_chan) {
+			char desc[40];
+			point_description(&p, desc, sizeof(desc));
+			LOG_DBG("CLIFF: config read point: %s", desc);
+			z_config_handle_point(&p);
+		}
 	}
 }
 
