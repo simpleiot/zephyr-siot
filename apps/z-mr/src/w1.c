@@ -7,7 +7,7 @@
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/zbus/zbus.h>
 
-LOG_MODULE_REGISTER(z_w1, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(z_w1, LOG_LEVEL_INF);
 
 #define STACKSIZE 1024
 #define PRIORITY  7
