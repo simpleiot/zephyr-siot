@@ -13,7 +13,7 @@ LOG_MODULE_REGISTER(z_led, LOG_LEVEL_DBG);
 #define I2C0_NODE DT_NODELABEL(mcp23018_20)
 static const struct i2c_dt_spec gpioExpander = I2C_DT_SPEC_GET(I2C0_NODE);
 
-const struct device *i2c_dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
+const static struct device *i2c_dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
 
 void z_led_setup(const struct device *mcp_device)
 {
