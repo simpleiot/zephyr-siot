@@ -40,7 +40,7 @@ In repo root directory:
   `0x27`)
 - DS2484R+T: `0x18`
 - EMC2302-1-AIZL: `0x2E`
-- 8K EEProm: `0x80` to `0x87` (see
+- 8K EEProm: `0x50` to `0x57` (see
   [M+R product spec](https://gitea.zonit.com/Zonit-Dev/product/src/branch/master/mr/mr-product-spec.md#i2c-eeprom))
 
 ## SNMP

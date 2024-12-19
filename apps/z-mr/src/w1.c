@@ -1,14 +1,18 @@
+#include "zephyr/toolchain.h"
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/w1.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/sensor.h>
+#include <zephyr/zbus/zbus.h>
 
-LOG_MODULE_REGISTER(z_w1, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(z_w1, LOG_LEVEL_INF);
 
 #define STACKSIZE 1024
 #define PRIORITY  7
+
+ZBUS_CHAN_DECLARE(z_temp_chan);
 
 /*
  * Get a device structure from a devicetree node with compatible
@@ -59,6 +63,7 @@ void z_w1_thread(void *arg1, void *arg2, void *arg3)
 		}
 
 		float v = sensor_value_to_float(&temp);
+		zbus_chan_pub(&z_temp_chan, &v, K_MSEC(500));
 
 		LOG_DBG("Temp: %.3f", (double)v);
 		k_sleep(K_MSEC(2000));
