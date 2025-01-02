@@ -1,7 +1,10 @@
+#include "ats.h"
+
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/zbus/zbus.h>
 
 #define STACKSIZE 1024
 #define PRIORITY  7
@@ -9,6 +12,9 @@
 #define LED_STATUS (6 + 8)
 
 LOG_MODULE_REGISTER(z_led, LOG_LEVEL_DBG);
+
+ZBUS_CHAN_DECLARE(z_ats_chan);
+ZBUS_CHAN_DECLARE(z_ticker_chan);
 
 #define I2C0_NODE DT_NODELABEL(mcp23018_20)
 static const struct i2c_dt_spec gpioExpander = I2C_DT_SPEC_GET(I2C0_NODE);
@@ -50,10 +56,10 @@ void z_led_setup(const struct device *mcp_device)
 	gpio_pin_set(mcp_device, LED_STATUS, 0);
 }
 
-// LED num starts at 1
+// LED num starts at 0
 void z_led_set(const struct device *mcp_device, bool is_b, int num, bool on)
 {
-	int i = num - 1;
+	int i = num;
 	if (i < 0 || i > 5) {
 		LOG_ERR("Invalid LED number %i, only 6 channels", num);
 		return;
@@ -68,6 +74,37 @@ void z_led_set(const struct device *mcp_device, bool is_b, int num, bool on)
 		LOG_ERR("Failed to configure GPIO pin %i: %d", i + 8, ret);
 	}
 }
+
+void z_leds_test_pattern(const struct device *mcp_device)
+{
+	int cur = 0;
+
+	// display pattern on LEDs
+	while (1) {
+		k_msleep(200);
+		gpio_pin_toggle(mcp_device, LED_STATUS);
+
+		// turn current led off
+		z_led_set(mcp_device, false, cur, false);
+		z_led_set(mcp_device, true, cur, false);
+
+		gpio_pin_set(mcp_device, cur, 0);
+		gpio_pin_set(mcp_device, cur + 8, 0);
+		cur += 1;
+		if (cur > 5) {
+			cur = 0;
+		}
+		// turn next LED on
+		z_led_set(mcp_device, false, cur, true);
+		z_led_set(mcp_device, true, cur, true);
+	}
+}
+
+static ats_state astate = INIT_ATS_STATE();
+
+ZBUS_SUBSCRIBER_DEFINE(z_led_sub, 8);
+ZBUS_CHAN_ADD_OBS(z_ats_chan, z_led_sub, 1);
+ZBUS_CHAN_ADD_OBS(z_ticker_chan, z_led_sub, 2);
 
 void z_leds_thread(void *arg1, void *arg2, void *arg3)
 {
@@ -92,26 +129,63 @@ void z_leds_thread(void *arg1, void *arg2, void *arg3)
 
 	z_led_setup(mcp_device);
 
-	int cur = 1;
+	// z_leds_test_pattern(mcp_device);
 
-	// display pattern on LEDs
+	bool blink_on = false;
+
 	while (1) {
-		k_msleep(200);
-		gpio_pin_toggle(mcp_device, LED_STATUS);
+		k_msleep(1000);
+		const struct zbus_channel *chan;
+		while (!zbus_sub_wait(&z_led_sub, &chan, K_FOREVER)) {
+			if (chan == &z_ats_chan) {
+				zbus_chan_read(&z_ats_chan, &astate, K_NO_WAIT);
+			} else if (chan == &z_ticker_chan) {
+				for (int i = 0; i < sizeof(astate) / sizeof(astate.state[0]); i++) {
+					ats_led_state s = z_ats_get_led_state_a(&astate.state[i]);
+					switch (s) {
+					case ATS_LED_OFF:
+						z_led_set(mcp_device, false, i, false);
+						break;
+					case ATS_LED_ON:
+						z_led_set(mcp_device, false, i, true);
+						break;
+					case ATS_LED_BLINK:
+						if (blink_on) {
+							z_led_set(mcp_device, false, i, true);
+						} else {
+							z_led_set(mcp_device, false, i, false);
+						}
+						break;
+					case ATS_LED_ERROR:
+						// TODO: should fast blink here or something
+						z_led_set(mcp_device, false, i, false);
+						break;
+					}
 
-		// turn current led off
-		z_led_set(mcp_device, false, cur, false);
-		z_led_set(mcp_device, true, cur, false);
-
-		gpio_pin_set(mcp_device, cur, 0);
-		gpio_pin_set(mcp_device, cur + 8, 0);
-		cur += 1;
-		if (cur > 6) {
-			cur = 1;
+					s = z_ats_get_led_state_b(&astate.state[i]);
+					switch (s) {
+					case ATS_LED_OFF:
+						z_led_set(mcp_device, true, i, false);
+						break;
+					case ATS_LED_ON:
+						z_led_set(mcp_device, true, i, true);
+						break;
+					case ATS_LED_BLINK:
+						if (blink_on) {
+							z_led_set(mcp_device, true, i, true);
+						} else {
+							z_led_set(mcp_device, true, i, false);
+						}
+						break;
+					case ATS_LED_ERROR:
+						// TODO: should fast blink here or something
+						z_led_set(mcp_device, true, i, false);
+						break;
+					}
+				}
+				blink_on = !blink_on;
+			}
 		}
-		// turn next LED on
-		z_led_set(mcp_device, false, cur, true);
-		z_led_set(mcp_device, true, cur, true);
 	}
 }
 

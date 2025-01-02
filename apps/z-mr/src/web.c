@@ -579,7 +579,6 @@ void z_web_thread(void *arg1, void *arg2, void *arg3)
 				zbus_chan_read(&z_ats_chan, &astate, K_NO_WAIT);
 			} else if (chan == &z_config_chan) {
 				zbus_chan_read(&z_config_chan, &config, K_NO_WAIT);
-				LOG_DBG("CLIFF: config chan, did: %s", config.device_id);
 			}
 			k_mutex_unlock(&state_lock);
 		}
