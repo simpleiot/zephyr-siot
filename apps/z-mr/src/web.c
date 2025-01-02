@@ -177,17 +177,18 @@ HTTP_RESOURCE_DEFINE(cpu_usage_resource, siot_http_service, "/cpu-usage",
 		     &cpu_usage_resource_detail);
 
 // ********************************
-// Points handler
+// v1 API handler
 
 // static const struct json_obj_descr point_descr[] = {
 // 	JSON_OBJ_DESCR_FIELD(struct point_js_t, type, JSON_TOK_STRING),
 // 	JSON_OBJ_DESCR_FIELD(point_js, key, JSON_TOK_STRING),
 // };
 
-static int points_handler(struct http_client_ctx *client, enum http_data_status status,
-			  uint8_t *buffer, size_t len, struct http_response_ctx *resp,
-			  void *user_data)
+static int v1_handler(struct http_client_ctx *client, enum http_data_status status, uint8_t *buffer,
+		      size_t len, struct http_response_ctx *resp, void *user_data)
 {
+	LOG_DBG("v1 handler: %s", client->url_buffer);
+
 	if (status != HTTP_SERVER_DATA_FINAL) {
 		return 0;
 	}
@@ -200,17 +201,17 @@ static int points_handler(struct http_client_ctx *client, enum http_data_status 
 	return 0;
 }
 
-struct http_resource_detail_dynamic points_resource_detail = {
+struct http_resource_detail_dynamic v1_resource_detail = {
 	.common =
 		{
 			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
 			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
 		},
-	.cb = points_handler,
+	.cb = v1_handler,
 	.user_data = NULL,
 };
 
-HTTP_RESOURCE_DEFINE(points_resource, siot_http_service, "/v1/points", &points_resource_detail);
+HTTP_RESOURCE_DEFINE(points_resource, siot_http_service, "/v1/*", &v1_resource_detail);
 
 // ********************************
 // Board handler
