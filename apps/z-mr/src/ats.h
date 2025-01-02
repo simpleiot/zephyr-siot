@@ -21,4 +21,15 @@ typedef struct {
 #define BON 2
 #define ONB 3
 
+typedef enum {
+	ATS_LED_OFF,
+	ATS_LED_ON,
+	ATS_LED_BLINK,
+	ATS_LED_ERROR,
+} ats_led_state;
+
+ats_led_state z_ats_get_led_state_a(ats * a);
+ats_led_state z_ats_get_led_state_b(ats * a);
+
+
 #endif

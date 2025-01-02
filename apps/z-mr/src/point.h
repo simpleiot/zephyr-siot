@@ -43,4 +43,11 @@ void point_put_string(point *p, char *v);
 int point_data_len(point *p);
 int point_description(point *p, char *buf, int len);
 
+typedef struct {
+	char type[20];
+	char key[20];
+	char typ[3];
+	char data[20];
+} point_js;
+
 #endif // __POINT_H_
