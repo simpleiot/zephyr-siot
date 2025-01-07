@@ -33,7 +33,7 @@ static struct nvs_fs fs;
 #define NVS_PARTITION_OFFSET FIXED_PARTITION_OFFSET(NVS_PARTITION)
 
 // store saved settings in points here
-static point points[10];
+static point state_points[10];
 
 void nvs_dump_settings(point *points, size_t len)
 {
@@ -81,52 +81,52 @@ int nvs_init()
 		return -1;
 	}
 
-	rc = nvs_read(&fs, NVS_KEY_BOOT_CNT, &config.bootcount, sizeof(config.bootcount));
-	if (rc > 0) { /* item was found, show it */
-		LOG_INF("Boot count: %d\n", config.bootcount);
-		config.bootcount++;
-		(void)nvs_write(&fs, NVS_KEY_BOOT_CNT, &config.bootcount, sizeof(config.bootcount));
-	} else { /* item was not found, add it */
-		LOG_INF("No boot counter found, adding it at id %d\n", NVS_KEY_BOOT_CNT);
-		(void)nvs_write(&fs, NVS_KEY_BOOT_CNT, &config.bootcount, sizeof(config.bootcount));
-	}
+	// rc = nvs_read(&fs, NVS_KEY_BOOT_CNT, &config.bootcount, sizeof(config.bootcount));
+	// if (rc > 0) { /* item was found, show it */
+	// 	LOG_INF("Boot count: %d\n", config.bootcount);
+	// 	config.bootcount++;
+	// 	(void)nvs_write(&fs, NVS_KEY_BOOT_CNT, &config.bootcount, sizeof(config.bootcount));
+	// } else { /* item was not found, add it */
+	// 	LOG_INF("No boot counter found, adding it at id %d\n", NVS_KEY_BOOT_CNT);
+	// 	(void)nvs_write(&fs, NVS_KEY_BOOT_CNT, &config.bootcount, sizeof(config.bootcount));
+	// }
 
-	rc = nvs_read(&fs, NVS_KEY_DESCRIPTION, &config.device_id, sizeof(config.device_id));
-	if (rc < 0) {
-		LOG_ERR("Error reading device id: %i", rc);
-		nvs_write(&fs, NVS_KEY_DESCRIPTION, "", sizeof(""));
-	}
+	// rc = nvs_read(&fs, NVS_KEY_DESCRIPTION, &config.device_id, sizeof(config.device_id));
+	// if (rc < 0) {
+	// 	LOG_ERR("Error reading device id: %i", rc);
+	// 	nvs_write(&fs, NVS_KEY_DESCRIPTION, "", sizeof(""));
+	// }
 
-	nvs_read(&fs, NVS_KEY_STATIC_IP, &buf, sizeof(buf));
-	if (rc > 0) {
-		if (strcmp("true", buf)) {
-			config.static_ip = true;
-		} else {
-			config.static_ip = false;
-		}
-	}
+	// nvs_read(&fs, NVS_KEY_STATIC_IP, &buf, sizeof(buf));
+	// if (rc > 0) {
+	// 	if (strcmp("true", buf)) {
+	// 		config.static_ip = true;
+	// 	} else {
+	// 		config.static_ip = false;
+	// 	}
+	// }
 
-	nvs_read(&fs, NVS_KEY_IP_ADDR, &config.ip_addr, sizeof(config.ip_addr));
-	if (rc < 0) {
-		LOG_ERR("Error reading IP address: %i", rc);
-		nvs_write(&fs, NVS_KEY_IP_ADDR, "", sizeof(""));
-	}
+	// nvs_read(&fs, NVS_KEY_IP_ADDR, &config.ip_addr, sizeof(config.ip_addr));
+	// if (rc < 0) {
+	// 	LOG_ERR("Error reading IP address: %i", rc);
+	// 	nvs_write(&fs, NVS_KEY_IP_ADDR, "", sizeof(""));
+	// }
 
-	nvs_read(&fs, NVS_KEY_NETMASK, &config.subnet_mask, sizeof(config.subnet_mask));
-	if (rc < 0) {
-		LOG_ERR("Error reading subnet mask: %i", rc);
-		nvs_write(&fs, NVS_KEY_NETMASK, "", sizeof(""));
-	}
+	// nvs_read(&fs, NVS_KEY_NETMASK, &config.subnet_mask, sizeof(config.subnet_mask));
+	// if (rc < 0) {
+	// 	LOG_ERR("Error reading subnet mask: %i", rc);
+	// 	nvs_write(&fs, NVS_KEY_NETMASK, "", sizeof(""));
+	// }
 
-	nvs_read(&fs, NVS_KEY_GATEWAY, &config.gateway, sizeof(config.gateway));
-	if (rc < 0) {
-		LOG_ERR("Error reading gateway: %i", rc);
-		nvs_write(&fs, NVS_KEY_GATEWAY, "", sizeof(""));
-	}
+	// nvs_read(&fs, NVS_KEY_GATEWAY, &config.gateway, sizeof(config.gateway));
+	// if (rc < 0) {
+	// 	LOG_ERR("Error reading gateway: %i", rc);
+	// 	nvs_write(&fs, NVS_KEY_GATEWAY, "", sizeof(""));
+	// }
 
-	nvs_dump_settings(&config);
+	// nvs_dump_settings(&config);
 
-	zbus_chan_pub(&z_config_chan, &config, K_MSEC(500));
+	// zbus_chan_pub(&z_config_chan, &config, K_MSEC(500));
 
 	return 0;
 }
