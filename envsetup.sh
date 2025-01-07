@@ -105,3 +105,7 @@ siot_defconfig_diff() {
 siot_defconfig_save() {
 	cp $GENERATED_DEFCONFIG $SAVED_DEFCONFIG
 }
+
+siot_test_common() {
+	../zephyr/scripts/twister -T apps/common/tests/ --inline-logs
+}

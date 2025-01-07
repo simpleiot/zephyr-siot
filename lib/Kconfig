@@ -1,0 +1,22 @@
+mainmenu "SIOT library"
+
+config LIB_SIOT
+	bool "Enable the JSON codec"
+	select JSON_LIBRARY
+
+if LIB_SIOT
+
+config SIOT_LOG_LEVEL
+	int "Default log level for SIOT"
+	default 4
+	help
+		The default log level, which is used to filter log messages.
+
+		0: None
+		1: Error
+		2: Warn
+		3: Info
+		4: Debug
+		5: Verbose
+
+endif #LIB_SIOT

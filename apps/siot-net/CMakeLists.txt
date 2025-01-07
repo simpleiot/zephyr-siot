@@ -9,7 +9,10 @@ zephyr_include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common)
 
 target_sources(app PRIVATE 
 	src/main.c 
+	src/state.c
+	src/web.c
 	${CMAKE_CURRENT_SOURCE_DIR}/../common/html.c
+	${CMAKE_CURRENT_SOURCE_DIR}/../common/point.c
 )
 
 set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)
