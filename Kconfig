@@ -1,0 +1,5 @@
+menu "Zephyr Simple IoT"
+
+rsource "lib/Kconfig"
+
+endmenu
