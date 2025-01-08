@@ -3,6 +3,16 @@ siot_setup() {
 	west blobs fetch hal_espressif
 }
 
+siot_build_native_sim() {
+	APP=$1
+	west build -b native_sim "${APP}"
+}
+
+# run all library tests on host platform
+siot_test_native() {
+	siot_build_native_sim tests && ./build/zephyr/zephyr.exe
+}
+
 # See https://community.tmpdir.org/t/zephyr-on-the-esp32/1310 for a comparison of ESP hardware
 
 # https://www.olimex.com/Products/IoT/ESP32/ESP32-POE/open-source-hardware
@@ -104,8 +114,4 @@ siot_defconfig_diff() {
 
 siot_defconfig_save() {
 	cp $GENERATED_DEFCONFIG $SAVED_DEFCONFIG
-}
-
-siot_test_common() {
-	../zephyr/scripts/twister -T apps/common/tests/ --inline-logs
 }
