@@ -59,5 +59,6 @@ int point_description(point *p, char *buf, int len);
 
 int point_json_encode(point *p, char *buf, size_t len);
 int point_json_decode(char *json, size_t json_len, point *p);
+int point_json_encode_points(point *pts_in, int count, char *buf, size_t len);
 
 #endif // __POINT_H_

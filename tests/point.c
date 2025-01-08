@@ -1,3 +1,4 @@
+#include "zephyr/sys/util.h"
 #include "zephyr/ztest_assert.h"
 #include <point.h>
 
@@ -5,7 +6,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/data/json.h>
 
-LOG_MODULE_REGISTER(point_tests);
+LOG_MODULE_REGISTER(point_tests, LOG_LEVEL_INF);
 
 ZTEST_SUITE(point_tests, NULL, NULL, NULL, NULL, NULL);
 
@@ -156,6 +157,33 @@ ZTEST(point_tests, encode_point_string)
 	char *exp = "{\"time\":\"\",\"type\":\"description\",\"key\":\"\",\"data_type\":\"STR\","
 		    "\"data\":\"device #3\"}";
 	zassert_str_equal(buf, exp, "did not get expected JSON data");
+
+	LOG_DBG("Encoded data: %s", buf);
+}
+
+point test_points[] = {
+	{0, POINT_TYPE_TEMPERATURE, ""},
+	{0, POINT_TYPE_TEMPERATURE, ""},
+	{0, POINT_TYPE_DESCRIPTION, ""},
+};
+
+ZTEST(point_tests, encode_point_array)
+{
+	point_put_int(&test_points[0], -232);
+	point_put_float(&test_points[1], -572.2923);
+	point_put_string(&test_points[2], "device #4");
+
+	char buf[512];
+
+	int ret = point_json_encode_points(test_points, ARRAY_SIZE(test_points), buf, sizeof(buf));
+	zassert_ok(ret);
+
+	char exp[] = "[{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data_type\":\"INT\","
+		     "\"data\":-232},{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data_type\":"
+		     "\"FLT\",\"data\":-572.292297},{\"time\":\"\",\"type\":\"description\","
+		     "\"key\":\"\",\"data_type\":\"STR\",\"data\":\"device #4\"}]";
+
+	zassert_str_equal(exp, buf, "encoded string not correct");
 
 	LOG_DBG("Encoded data: %s", buf);
 }
