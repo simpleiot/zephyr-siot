@@ -77,14 +77,43 @@ ZTEST(point_tests, json_test)
 	LOG_INF("JSON encoded buffer: %s", buf);
 }
 
+struct float_value {
+	struct json_obj_token value;
+	int value_int;
+};
+
+static const struct json_obj_descr float_value_descr[] = {
+	JSON_OBJ_DESCR_PRIM(struct float_value, value, JSON_TOK_FLOAT),
+	JSON_OBJ_DESCR_PRIM(struct float_value, value_int, JSON_TOK_NUMBER),
+};
+
+ZTEST(point_tests, json_float)
+{
+	char buf[128];
+
+	struct float_value fv = {.value_int = -92781};
+
+	char float_buffer[20];
+
+	snprintf(float_buffer, sizeof(float_buffer), "%f", -123.23);
+
+	fv.value.start = float_buffer;
+	fv.value.length = strlen(float_buffer);
+
+	int ret = json_obj_encode_buf(float_value_descr, ARRAY_SIZE(float_value_descr), &fv, buf,
+				      sizeof(buf));
+
+	zassert_ok(ret, "encode failed");
+
+	LOG_INF("Encoded float falue: %s", buf);
+}
+
 ZTEST(point_tests, encode)
 {
 	LOG_INF("Points encode tests");
-	struct point_js test_point = {.time = "",
-				      .type = POINT_TYPE_DESCRIPTION,
-				      .key = "",
-				      .data_type = "str",
-				      .data = "test description"};
+	point test_point = {
+		.type = POINT_TYPE_DESCRIPTION,
+	};
 
 	char buf[128];
 
