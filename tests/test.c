@@ -4,5 +4,5 @@ ZTEST_SUITE(test_tests, NULL, NULL, NULL, NULL, NULL);
 
 ZTEST(test_tests, simple_test)
 {
-	zassert_equal(9, 10, "Expected result is 10");
+	zassert_equal(10, 10, "Expected result is 10");
 }

@@ -114,18 +114,29 @@ int point_description(point *p, char *buf, int len)
 }
 
 static const struct json_obj_descr point_js_descr[] = {
-	JSON_OBJ_DESCR_PRIM(point_js, time, JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(point_js, type, JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(point_js, key, JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(point_js, data_type, JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(point_js, data, JSON_TOK_STRING)};
+	JSON_OBJ_DESCR_PRIM(struct point_js, time, JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct point_js, type, JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct point_js, key, JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct point_js, data_type, JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct point_js, data, JSON_TOK_STRING)};
 
-int point_json_encode(point_js *p, char *buf, size_t len)
+int point_json_encode(struct point_js *p, char *buf, size_t len)
 {
-	return json_obj_encode_buf(point_js_descr, ARRAY_SIZE(point_js_descr), &p, buf, len);
+
+	/* Calculate the encoded length. (could be smaller) */
+	ssize_t enc_len = json_calc_encoded_len(point_js_descr, ARRAY_SIZE(point_js_descr), p);
+
+	LOG_INF("CLIFF: point_json_encode: len: %zu", enc_len);
+	if (enc_len > len) {
+		return -ENOMEM;
+	}
+
+	return 0;
+
+	// return json_obj_encode_buf(point_js_descr, ARRAY_SIZE(point_js_descr), &p, buf, len);
 }
 
-int point_json_decode(char *json, size_t json_len, point_js *p)
+int point_json_decode(char *json, size_t json_len, struct point_js *p)
 {
 	return json_obj_parse(json, json_len, point_js_descr, ARRAY_SIZE(point_js_descr), &p);
 }

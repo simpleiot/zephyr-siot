@@ -52,15 +52,15 @@ int point_description(point *p, char *buf, int len);
 
 // When transmitting points over web APIs using JSON, we encode
 // then using all text fields.
-typedef struct {
+struct point_js {
 	char time[21];
 	char type[20];
 	char key[20];
 	char data_type[3];
 	char data[20];
-} point_js;
+};
 
-int point_json_encode(point_js *p, char *buf, size_t len);
-int point_json_decode(char *json, size_t json_len, point_js *p);
+int point_json_encode(struct point_js *p, char *buf, size_t len);
+int point_json_decode(char *json, size_t json_len, struct point_js *p);
 
 #endif // __POINT_H_
