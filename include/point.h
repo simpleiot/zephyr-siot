@@ -24,6 +24,12 @@ typedef struct {
 #define POINT_DATA_TYPE_STRING 3
 #define POINT_DATA_TYPE_JSON 4
 
+// We use 3 letter codes for data types in JSON packets so they are easier to read
+#define POINT_DATA_TYPE_FLOAT_S "FLT"
+#define POINT_DATA_TYPE_INT_S "INT"
+#define POINT_DATA_TYPE_STRING_S "STR"
+#define POINT_DATA_TYPE_JSON_S "JSN"
+
 // ==================================================
 // Point types
 // These defines should match those in the SIOT schema
@@ -35,6 +41,7 @@ typedef struct {
 #define POINT_TYPE_NETMASK "netmask"
 #define POINT_TYPE_GATEWAY "gateway"
 #define POINT_TYPE_METRIC_SYS_CPU_PERCENT "metricSysCPUPercent"
+#define POINT_TYPE_TEMPERATURE "temp"
 
 void point_set_type(point *p, char *t);
 void point_set_key(point *p, char *k);

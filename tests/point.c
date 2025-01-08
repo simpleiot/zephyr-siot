@@ -61,7 +61,7 @@ ZTEST(point_tests, json_test)
 	ssize_t len = json_calc_encoded_len(example_json_payload_descr,
 					    ARRAY_SIZE(example_json_payload_descr), &payload);
 
-	LOG_INF("calc encoded len: %zu", len);
+	LOG_DBG("calc encoded len: %zu", len);
 
 	/* Return error if buffer isn't correctly sized */
 	zassert(sizeof(buf) > len, "buffer is not long enough");
@@ -74,7 +74,7 @@ ZTEST(point_tests, json_test)
 	zassert_ok(ret, "encode failed");
 
 	/* Return the length if possible*/
-	LOG_INF("JSON encoded buffer: %s", buf);
+	LOG_DBG("JSON encoded buffer: %s", buf);
 }
 
 struct float_value {
@@ -105,20 +105,57 @@ ZTEST(point_tests, json_float)
 
 	zassert_ok(ret, "encode failed");
 
-	LOG_INF("Encoded float falue: %s", buf);
+	LOG_DBG("Encoded float falue: %s", buf);
 }
 
-ZTEST(point_tests, encode)
+ZTEST(point_tests, encode_point_int)
 {
-	LOG_INF("Points encode tests");
-	point test_point = {
-		.type = POINT_TYPE_DESCRIPTION,
-	};
+	point tp = {.type = POINT_TYPE_TEMPERATURE};
+	point_put_int(&tp, -32);
 
 	char buf[128];
 
-	int ret = point_json_encode(&test_point, buf, sizeof(buf));
+	int ret = point_json_encode(&tp, buf, sizeof(buf));
 	zassert_ok(ret);
 
-	LOG_INF("Encoded data: %s", buf);
+	char *exp =
+		"{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data_type\":\"INT\",\"data\":-32}";
+	zassert_str_equal(buf, exp, "did not get expected JSON data");
+
+	LOG_DBG("Encoded data: %s", buf);
+}
+
+ZTEST(point_tests, encode_point_float)
+{
+	point tp = {.type = POINT_TYPE_TEMPERATURE};
+	point_put_float(&tp, -32.23);
+
+	char buf[128];
+
+	int ret = point_json_encode(&tp, buf, sizeof(buf));
+	zassert_ok(ret);
+
+	char *exp =
+		"{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data_type\":\"FLT\",\"data\":-32."
+		"230000}";
+	zassert_str_equal(buf, exp, "did not get expected JSON data");
+
+	LOG_DBG("Encoded data: %s", buf);
+}
+
+ZTEST(point_tests, encode_point_string)
+{
+	point tp = {.type = POINT_TYPE_DESCRIPTION};
+	point_put_string(&tp, "device #3");
+
+	char buf[128];
+
+	int ret = point_json_encode(&tp, buf, sizeof(buf));
+	zassert_ok(ret);
+
+	char *exp = "{\"time\":\"\",\"type\":\"description\",\"key\":\"\",\"data_type\":\"STR\","
+		    "\"data\":\"device #3\"}";
+	zassert_str_equal(buf, exp, "did not get expected JSON data");
+
+	LOG_DBG("Encoded data: %s", buf);
 }

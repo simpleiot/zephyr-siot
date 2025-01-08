@@ -121,7 +121,7 @@ struct point_js {
 	char *type;
 	char *key;
 	char *data_type;
-	char *data;
+	struct json_obj_token data;
 };
 
 static const struct json_obj_descr point_js_descr[] = {
@@ -129,7 +129,9 @@ static const struct json_obj_descr point_js_descr[] = {
 	JSON_OBJ_DESCR_PRIM(struct point_js, type, JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct point_js, key, JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct point_js, data_type, JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct point_js, data, JSON_TOK_STRING)};
+	// We use float for the data field as it does not put quotes around
+	// the value in the string, and we have to manually populate it anyway.
+	JSON_OBJ_DESCR_PRIM(struct point_js, data, JSON_TOK_FLOAT)};
 
 // all of the point_js fields MUST be filled in or the encoder will crash
 int point_json_encode(point *p, char *buf, size_t len)
@@ -139,8 +141,33 @@ int point_json_encode(point *p, char *buf, size_t len)
 		.type = p->type,
 		.key = p->key,
 		.data_type = "",
-		.data = "",
 	};
+
+	char data_buf[20];
+
+	switch (p->data_type) {
+	case POINT_DATA_TYPE_FLOAT:
+		p_js.data_type = POINT_DATA_TYPE_FLOAT_S;
+		snprintf(data_buf, sizeof(data_buf), "%f", (double)point_get_float(p));
+		p_js.data.start = data_buf;
+		p_js.data.length = strlen(data_buf);
+		break;
+	case POINT_DATA_TYPE_INT:
+		p_js.data_type = POINT_DATA_TYPE_INT_S;
+		snprintf(data_buf, sizeof(data_buf), "%i", point_get_int(p));
+		p_js.data.start = data_buf;
+		p_js.data.length = strlen(data_buf);
+		break;
+	case POINT_DATA_TYPE_STRING:
+		p_js.data_type = POINT_DATA_TYPE_STRING_S;
+		snprintf(data_buf, sizeof(data_buf), "\"%s\"", p->data);
+		p_js.data.start = data_buf;
+		p_js.data.length = strlen(data_buf);
+		break;
+	default:
+		p_js.data.start = NULL;
+		p_js.data.length = 0;
+	}
 
 	/* Calculate the encoded length. (could be smaller) */
 	ssize_t enc_len = json_calc_encoded_len(point_js_descr, ARRAY_SIZE(point_js_descr), &p_js);
