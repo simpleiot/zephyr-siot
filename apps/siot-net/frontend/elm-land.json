@@ -37,7 +37,7 @@
       "useHashRouting": false
     },
     "proxy": {
-      "/api": "http://10.0.0.136"
+      "/v1": "http://10.0.0.136"
     }
   }
 }

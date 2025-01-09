@@ -1,11 +1,15 @@
 module Pages.Home_ exposing (Model, Msg, page)
 
+import Api
+import Api.Point as Point exposing (Point)
 import Effect exposing (Effect)
 import Element exposing (..)
 import Element.Font as Font
+import Http
 import Page exposing (Page)
 import Route exposing (Route)
 import Shared
+import Task
 import Time
 import View exposing (View)
 
@@ -24,38 +28,46 @@ page _ _ =
 -- INIT
 
 
-type alias Point =
-    { typ : String
-    , key : String
-    , time : Time.Posix
-    , dataType : String
-    , data : String
-    }
-
-
 type alias Model =
-    {}
+    { points : List Point.Point
+    }
 
 
 init : () -> ( Model, Effect Msg )
 init () =
-    ( {}
-    , Effect.none
+    ( Model []
+    , Effect.batch <|
+        [ Effect.sendCmd <| Point.get { onResponse = ApiRespPointList }
+        , Effect.sendCmd <| Task.perform Tick Time.now
+        ]
     )
-
-
-
--- UPDATE
 
 
 type Msg
     = NoOp
+    | Tick Time.Posix
+    | ApiRespPointList (Result Http.Error (List Point.Point))
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
         NoOp ->
+            ( model
+            , Effect.none
+            )
+
+        Tick _ ->
+            ( model
+            , Effect.sendCmd <| Point.get { onResponse = ApiRespPointList }
+            )
+
+        ApiRespPointList (Ok points) ->
+            ( model
+            , Effect.none
+            )
+
+        ApiRespPointList (Err httpError) ->
             ( model
             , Effect.none
             )
@@ -67,7 +79,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    Time.every 3000 Tick
 
 
 
@@ -76,16 +88,15 @@ subscriptions _ =
 
 view : Model -> View Msg
 view _ =
-    { title = "Z-MR"
+    { title = "sIoT"
     , attributes = []
     , element =
         column [ spacing 20, padding 60, width (fill |> maximum 1280), height fill, centerX ]
             [ row [ spacing 32 ]
-                [ image []
-                    { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
-                    , description = "zonit logo"
+                [ image [ width (px 140) ]
+                    { src = "https://docs.simpleiot.org/docs/images/siot-logo.png?raw=true"
+                    , description = "SIOT logo"
                     }
-                , el [ Font.size 60, Font.bold ] <| text "Z-MR"
                 ]
             , h1 "Status"
             , column [ spacing 10, padding 20 ]
