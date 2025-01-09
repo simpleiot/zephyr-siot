@@ -149,7 +149,9 @@ struct point_js {
 	char *time;
 	char *type;
 	char *key;
-	char *data_type;
+	// we depart from C naming conventions so that the JSON data fields
+	// match Javscript conventions (camelCase).
+	char *dataType;
 	struct json_obj_token data;
 };
 
@@ -164,7 +166,7 @@ static const struct json_obj_descr point_js_descr[] = {
 	JSON_OBJ_DESCR_PRIM(struct point_js, time, JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct point_js, type, JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct point_js, key, JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct point_js, data_type, JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct point_js, dataType, JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct point_js, data, JSON_TOK_OPAQUE)};
 
 static const struct json_obj_descr point_js_array_descr[] = {
@@ -180,19 +182,19 @@ void point_js_pop_data(point *p, struct point_js *p_js, char *buf, size_t buf_le
 
 	switch (p->data_type) {
 	case POINT_DATA_TYPE_FLOAT:
-		p_js->data_type = POINT_DATA_TYPE_FLOAT_S;
+		p_js->dataType = POINT_DATA_TYPE_FLOAT_S;
 		snprintf(buf, buf_len, "%f", (double)point_get_float(p));
 		p_js->data.start = buf;
 		p_js->data.length = strlen(buf);
 		break;
 	case POINT_DATA_TYPE_INT:
-		p_js->data_type = POINT_DATA_TYPE_INT_S;
+		p_js->dataType = POINT_DATA_TYPE_INT_S;
 		snprintf(buf, buf_len, "%i", point_get_int(p));
 		p_js->data.start = buf;
 		p_js->data.length = strlen(buf);
 		break;
 	case POINT_DATA_TYPE_STRING:
-		p_js->data_type = POINT_DATA_TYPE_STRING_S;
+		p_js->dataType = POINT_DATA_TYPE_STRING_S;
 		snprintf(buf, buf_len, "%s", p->data);
 		p_js->data.start = buf;
 		p_js->data.length = strlen(buf);
