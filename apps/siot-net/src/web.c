@@ -73,10 +73,6 @@ static int v1_handler(struct http_client_ctx *client, enum http_data_status stat
 	}
 
 	if (strcmp(client->url_buffer, "/v1/points") == 0) {
-		char buf[64];
-		points_dump(web_points, ARRAY_SIZE(web_points), buf, sizeof(buf));
-		LOG_DBG("web points: %s", buf);
-
 		int ret = points_json_encode(web_points, ARRAY_SIZE(web_points), recv_buffer,
 					     sizeof(recv_buffer));
 		if (ret != 0) {
@@ -122,10 +118,6 @@ void web_thread(void *arg1, void *arg2, void *arg3)
 			if (ret != 0) {
 				LOG_ERR("Error storing point in web point cache: %i", ret);
 			}
-
-			char buf[64];
-			points_dump(web_points, ARRAY_SIZE(web_points), buf, sizeof(buf));
-			LOG_DBG("web points: %s", buf);
 		}
 	}
 }
