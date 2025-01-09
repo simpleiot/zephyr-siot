@@ -1,4 +1,5 @@
 #include "point.h"
+#include "zephyr/kernel.h"
 #include "zephyr/sys/util.h"
 
 #include <string.h>
@@ -64,10 +65,11 @@ int point_data_len(point *p)
 	return 0;
 }
 
-// point_description generates a human readable description of the point
+// point_dump generates a human readable description of the point
 // useful for logging or debugging.
 // you must pass in a buf that gets populated with the description
-int point_description(point *p, char *buf, int len)
+// returns amount of space used in buffer
+int point_dump(point *p, char *buf, size_t len)
 {
 	int offset = 0;
 	int remaining = len - 1; // leave space for null term
@@ -114,6 +116,26 @@ int point_description(point *p, char *buf, int len)
 	return offset;
 }
 
+// points_dump takes an array of points and dumps descriptions into buf
+// all strings in pts must be initialized to null strings
+int points_dump(point *pts, size_t pts_len, char *buf, size_t buf_len)
+{
+	int offset = 0;
+	int remaining = buf_len - 1; // leave space for null term
+
+	int cnt;
+
+	for (int i = 0; i < pts_len; i++) {
+		if (pts[i].type[0] != 0) {
+			cnt = point_dump(&pts[i], buf + offset, remaining);
+			offset += cnt;
+			remaining -= cnt;
+		}
+	}
+
+	return offset;
+}
+
 // When transmitting points over web APIs using JSON, we encode
 // then using all text fields. The JSON encoder cannot encode fixed
 // length char fields, so we have use pointers for now.
@@ -125,7 +147,7 @@ struct point_js {
 	struct json_obj_token data;
 };
 
-#define POINT_JS_ARRAY_MAX 15
+#define POINT_JS_ARRAY_MAX 25
 
 struct point_js_array {
 	struct point_js points[POINT_JS_ARRAY_MAX];
@@ -200,19 +222,55 @@ int point_json_decode(char *json, size_t json_len, point *p)
 	return json_obj_parse(json, json_len, point_js_descr, ARRAY_SIZE(point_js_descr), &p);
 }
 
-int point_json_encode_points(point *pts_in, int count, char *buf, size_t len)
+int points_json_encode(point *pts_in, int count, char *buf, size_t len)
 {
 	// buffers for data types and fields
 	char data_buf[POINT_JS_ARRAY_MAX][20];
-	struct point_js_array pts_out = {.len = count};
+	struct point_js_array pts_out = {.len = 0};
 
 	if (count > POINT_JS_ARRAY_MAX) {
 		return -ENOMEM;
 	}
 
 	for (int i = 0; i < count; i++) {
-		point_js_pop_data(&pts_in[i], &pts_out.points[i], data_buf[i], sizeof(data_buf[i]));
+		// make sure it is not an empty point
+		if (pts_in[i].type[0] != 0) {
+			point_js_pop_data(&pts_in[i], &pts_out.points[pts_out.len],
+					  data_buf[pts_out.len], sizeof(data_buf[pts_out.len]));
+			pts_out.len++;
+		}
 	}
 
+	LOG_DBG("CLIFF: out pts len: %zu", pts_out.len);
+
 	return json_arr_encode_buf(point_js_array_descr, &pts_out, buf, len);
+}
+
+// pts must be initialized and not have random data in the string fields
+int points_merge(point *pts, size_t pts_len, point *p)
+{
+	// look for existing points
+	int empty_i = -1;
+
+	for (int i = 0; i < pts_len; i++) {
+		if (pts[i].type[0] == 0) {
+			if (empty_i < 0) {
+				empty_i = i;
+			}
+			continue;
+		} else if (strncmp(pts[i].type, p->type, sizeof(p->type)) == 0 &&
+			   strncmp(pts[i].key, p->key, sizeof(p->key)) == 0) {
+			// we have a match
+			p[i] = *p;
+			return 0;
+		}
+	}
+
+	// need to add a new point
+	if (empty_i >= 0) {
+		p[empty_i] = *p;
+		return 0;
+	}
+
+	return -ENOMEM;
 }

@@ -175,7 +175,7 @@ ZTEST(point_tests, encode_point_array)
 
 	char buf[512];
 
-	int ret = point_json_encode_points(test_points, ARRAY_SIZE(test_points), buf, sizeof(buf));
+	int ret = points_json_encode(test_points, ARRAY_SIZE(test_points), buf, sizeof(buf));
 	zassert_ok(ret);
 
 	char exp[] = "[{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data_type\":\"INT\","

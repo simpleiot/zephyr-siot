@@ -13,7 +13,7 @@
 
 LOG_MODULE_REGISTER(siot_state, LOG_LEVEL_DBG);
 
-ZBUS_CHAN_DECLARE(siot_point_chan);
+ZBUS_CHAN_DECLARE(point_chan);
 
 // ********************************
 // NVS Config storage
@@ -154,7 +154,6 @@ void z_config_handle_point(point *p)
 	int nvs_id = point_type_key_to_nvs_id(p->type, p->key);
 
 	if (nvs_id < 0) {
-		LOG_ERR("Unhandled setting: %s:%s", p->type, p->key);
 		return;
 	}
 
@@ -172,12 +171,13 @@ void z_config_handle_point(point *p)
 	}
 }
 
-ZBUS_MSG_SUBSCRIBER_DEFINE(z_config_sub);
+ZBUS_MSG_SUBSCRIBER_DEFINE(state_sub);
+ZBUS_CHAN_ADD_OBS(point_chan, state_sub, 3);
 
 // For some reason the following does not work, so added a ZBUS_OBS_DECLARE in main.c
 // ZBUS_CHAN_ADD_OBS(z_config_chan, z_config_sub, 3);
 
-void z_config_thread(void *arg1, void *arg2, void *arg3)
+void state_thread(void *arg1, void *arg2, void *arg3)
 {
 	LOG_INF("z config thread");
 	nvs_init();
@@ -185,14 +185,13 @@ void z_config_thread(void *arg1, void *arg2, void *arg3)
 	const struct zbus_channel *chan;
 	point p;
 
-	while (!zbus_sub_wait_msg(&z_config_sub, &chan, &p, K_FOREVER)) {
-		if (chan == &siot_point_chan) {
+	while (!zbus_sub_wait_msg(&state_sub, &chan, &p, K_FOREVER)) {
+		if (chan == &point_chan) {
 			char desc[40];
-			point_description(&p, desc, sizeof(desc));
-			LOG_DBG("CLIFF: config read point: %s", desc);
+			point_dump(&p, desc, sizeof(desc));
 			z_config_handle_point(&p);
 		}
 	}
 }
 
-K_THREAD_DEFINE(z_config, STACKSIZE, z_config_thread, NULL, NULL, NULL, PRIORITY, K_ESSENTIAL, 0);
+K_THREAD_DEFINE(state, STACKSIZE, state_thread, NULL, NULL, NULL, PRIORITY, K_ESSENTIAL, 0);

@@ -55,10 +55,12 @@ void point_put_float(point *p, float v);
 void point_put_string(point *p, char *v);
 
 int point_data_len(point *p);
-int point_description(point *p, char *buf, int len);
+int point_dump(point *p, char *buf, size_t len);
+int points_dump(point *pts, size_t pts_len, char *buf, size_t len);
+int points_merge(point *pts, size_t pts_len, point *p);
 
 int point_json_encode(point *p, char *buf, size_t len);
 int point_json_decode(char *json, size_t json_len, point *p);
-int point_json_encode_points(point *pts_in, int count, char *buf, size_t len);
+int points_json_encode(point *pts_in, int count, char *buf, size_t len);
 
 #endif // __POINT_H_
