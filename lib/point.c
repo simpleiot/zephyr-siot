@@ -165,9 +165,7 @@ static const struct json_obj_descr point_js_descr[] = {
 	JSON_OBJ_DESCR_PRIM(struct point_js, type, JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct point_js, key, JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct point_js, data_type, JSON_TOK_STRING),
-	// We use float for the data field as it does not put quotes around
-	// the value in the string, and we have to manually populate it anyway.
-	JSON_OBJ_DESCR_PRIM(struct point_js, data, JSON_TOK_FLOAT)};
+	JSON_OBJ_DESCR_PRIM(struct point_js, data, JSON_TOK_OPAQUE)};
 
 static const struct json_obj_descr point_js_array_descr[] = {
 	JSON_OBJ_DESCR_OBJ_ARRAY(struct point_js_array, points, POINT_JS_ARRAY_MAX, len,
@@ -195,7 +193,7 @@ void point_js_pop_data(point *p, struct point_js *p_js, char *buf, size_t buf_le
 		break;
 	case POINT_DATA_TYPE_STRING:
 		p_js->data_type = POINT_DATA_TYPE_STRING_S;
-		snprintf(buf, buf_len, "\"%s\"", p->data);
+		snprintf(buf, buf_len, "%s", p->data);
 		p_js->data.start = buf;
 		p_js->data.length = strlen(buf);
 		break;

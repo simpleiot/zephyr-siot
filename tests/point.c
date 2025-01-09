@@ -134,8 +134,8 @@ ZTEST(point_tests, encode_point_int)
 	int ret = point_json_encode(&tp, buf, sizeof(buf));
 	zassert_ok(ret);
 
-	char *exp =
-		"{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data_type\":\"INT\",\"data\":-32}";
+	char *exp = "{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data_type\":\"INT\",\"data\":"
+		    "\"-32\"}";
 	zassert_str_equal(buf, exp, "did not get expected JSON data");
 
 	LOG_DBG("Encoded data: %s", buf);
@@ -151,9 +151,8 @@ ZTEST(point_tests, encode_point_float)
 	int ret = point_json_encode(&tp, buf, sizeof(buf));
 	zassert_ok(ret);
 
-	char *exp =
-		"{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data_type\":\"FLT\",\"data\":-32."
-		"230000}";
+	char *exp = "{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data_type\":\"FLT\",\"data\":"
+		    "\"-32.230000\"}";
 	zassert_str_equal(buf, exp, "did not get expected JSON data");
 
 	LOG_DBG("Encoded data: %s", buf);
@@ -183,10 +182,11 @@ ZTEST(point_tests, encode_point_array)
 	int ret = points_json_encode(test_points, ARRAY_SIZE(test_points), buf, sizeof(buf));
 	zassert_ok(ret);
 
-	char exp[] = "[{\"time\":\"\",\"type\":\"metricSysCPUPercent\",\"key\":\"\",\"data_type\":"
-		     "\"INT\",\"data\":-232},{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data_"
-		     "type\":\"FLT\",\"data\":-572.292297},{\"time\":\"\",\"type\":\"description\","
-		     "\"key\":\"\",\"data_type\":\"STR\",\"data\":\"device #4\"}]";
+	char exp[] =
+		"[{\"time\":\"\",\"type\":\"metricSysCPUPercent\",\"key\":\"\",\"data_type\":"
+		"\"INT\",\"data\":\"-232\"},{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data_"
+		"type\":\"FLT\",\"data\":\"-572.292297\"},{\"time\":\"\",\"type\":\"description\","
+		"\"key\":\"\",\"data_type\":\"STR\",\"data\":\"device #4\"}]";
 
 	zassert_str_equal(exp, buf, "encoded string not correct");
 
