@@ -122,8 +122,14 @@ int points_dump(point *pts, size_t pts_len, char *buf, size_t buf_len)
 {
 	int offset = 0;
 	int remaining = buf_len - 1; // leave space for null term
-
 	int cnt;
+
+	if (buf_len <= 0) {
+		return -ENOMEM;
+	}
+
+	// null terminate string in case there are no points
+	buf[0] = 0;
 
 	for (int i = 0; i < pts_len; i++) {
 		if (pts[i].type[0] != 0) {
@@ -241,8 +247,6 @@ int points_json_encode(point *pts_in, int count, char *buf, size_t len)
 		}
 	}
 
-	LOG_DBG("CLIFF: out pts len: %zu", pts_out.len);
-
 	return json_arr_encode_buf(point_js_array_descr, &pts_out, buf, len);
 }
 
@@ -261,14 +265,14 @@ int points_merge(point *pts, size_t pts_len, point *p)
 		} else if (strncmp(pts[i].type, p->type, sizeof(p->type)) == 0 &&
 			   strncmp(pts[i].key, p->key, sizeof(p->key)) == 0) {
 			// we have a match
-			p[i] = *p;
+			pts[i] = *p;
 			return 0;
 		}
 	}
 
 	// need to add a new point
 	if (empty_i >= 0) {
-		p[empty_i] = *p;
+		pts[empty_i] = *p;
 		return 0;
 	}
 

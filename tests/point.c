@@ -8,7 +8,22 @@
 
 LOG_MODULE_REGISTER(point_tests, LOG_LEVEL_INF);
 
-ZTEST_SUITE(point_tests, NULL, NULL, NULL, NULL, NULL);
+point test_points[] = {
+	{0, POINT_TYPE_METRIC_SYS_CPU_PERCENT, ""},
+	{0, POINT_TYPE_TEMPERATURE, ""},
+	{0, POINT_TYPE_DESCRIPTION, ""},
+};
+
+void *init_test_points(void)
+{
+	point_put_int(&test_points[0], -232);
+	point_put_float(&test_points[1], -572.2923);
+	point_put_string(&test_points[2], "device #4");
+
+	return NULL;
+}
+
+ZTEST_SUITE(point_tests, NULL, init_test_points, NULL, NULL, NULL);
 
 ZTEST(point_tests, test)
 {
@@ -161,29 +176,42 @@ ZTEST(point_tests, encode_point_string)
 	LOG_DBG("Encoded data: %s", buf);
 }
 
-point test_points[] = {
-	{0, POINT_TYPE_TEMPERATURE, ""},
-	{0, POINT_TYPE_TEMPERATURE, ""},
-	{0, POINT_TYPE_DESCRIPTION, ""},
-};
-
 ZTEST(point_tests, encode_point_array)
 {
-	point_put_int(&test_points[0], -232);
-	point_put_float(&test_points[1], -572.2923);
-	point_put_string(&test_points[2], "device #4");
-
 	char buf[512];
 
 	int ret = points_json_encode(test_points, ARRAY_SIZE(test_points), buf, sizeof(buf));
 	zassert_ok(ret);
 
-	char exp[] = "[{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data_type\":\"INT\","
-		     "\"data\":-232},{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data_type\":"
-		     "\"FLT\",\"data\":-572.292297},{\"time\":\"\",\"type\":\"description\","
+	char exp[] = "[{\"time\":\"\",\"type\":\"metricSysCPUPercent\",\"key\":\"\",\"data_type\":"
+		     "\"INT\",\"data\":-232},{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data_"
+		     "type\":\"FLT\",\"data\":-572.292297},{\"time\":\"\",\"type\":\"description\","
 		     "\"key\":\"\",\"data_type\":\"STR\",\"data\":\"device #4\"}]";
 
 	zassert_str_equal(exp, buf, "encoded string not correct");
 
 	LOG_DBG("Encoded data: %s", buf);
+}
+
+ZTEST(point_tests, merge)
+{
+	point pts[5] = {0};
+
+	int ret = points_merge(pts, ARRAY_SIZE(pts), &test_points[0]);
+	zassert_ok(ret);
+
+	point p = pts[0];
+	point_put_int(&p, 55);
+
+	ret = points_merge(pts, ARRAY_SIZE(pts), &p);
+	zassert_ok(ret);
+
+	zassert_not_equal(point_get_int(&p), point_get_int(&test_points[0]));
+
+	zassert_equal(55, point_get_int(&pts[0]));
+
+	ret = points_merge(pts, ARRAY_SIZE(pts), &test_points[1]);
+	zassert_ok(ret);
+
+	zassert_equal((float)-572.2923, point_get_float(&pts[1]));
 }
