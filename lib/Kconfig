@@ -3,6 +3,12 @@ mainmenu "SIOT library"
 config LIB_SIOT
 	bool "Enable the JSON codec"
 	select JSON_LIBRARY
+	select THREAD_MONITOR
+	select THREAD_RUNTIME_STATS
+	select ZBUS
+	select ZBUS_RUNTIME_OBSERVERS
+	select ZBUS_MSG_SUBSCRIBER
+	select NVS
 
 if LIB_SIOT
 

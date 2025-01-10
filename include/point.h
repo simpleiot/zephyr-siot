@@ -15,6 +15,8 @@ typedef struct {
 	char data[20];
 } point;
 
+// TODO: find a way to initialize new points with key set to "0"
+
 // Point Data Types should match those in SIOT (not merged to master yet)
 // https://github.com/simpleiot/simpleiot/blob/feat/js-subject-point-changes/data/point.go
 
@@ -41,10 +43,14 @@ typedef struct {
 #define POINT_TYPE_NETMASK "netmask"
 #define POINT_TYPE_GATEWAY "gateway"
 #define POINT_TYPE_METRIC_SYS_CPU_PERCENT "metricSysCPUPercent"
+#define POINT_TYPE_UPTIME "uptime"
 #define POINT_TYPE_TEMPERATURE "temp"
+#define POINT_TYPE_BOARD "board"
+#define POINT_TYPE_BOOT_COUNT "bootCount"
 
 void point_set_type(point *p, char *t);
 void point_set_key(point *p, char *k);
+void point_set_type_key(point *p, char *t, char *k);
 
 int point_get_int(point *p);
 float point_get_float(point *p);
@@ -55,10 +61,12 @@ void point_put_float(point *p, float v);
 void point_put_string(point *p, char *v);
 
 int point_data_len(point *p);
-int point_description(point *p, char *buf, int len);
+int point_dump(point *p, char *buf, size_t len);
+int points_dump(point *pts, size_t pts_len, char *buf, size_t len);
+int points_merge(point *pts, size_t pts_len, point *p);
 
 int point_json_encode(point *p, char *buf, size_t len);
 int point_json_decode(char *json, size_t json_len, point *p);
-int point_json_encode_points(point *pts_in, int count, char *buf, size_t len);
+int points_json_encode(point *pts_in, int count, char *buf, size_t len);
 
 #endif // __POINT_H_

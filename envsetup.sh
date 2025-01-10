@@ -3,6 +3,17 @@ siot_setup() {
 	west blobs fetch hal_espressif
 }
 
+siot_net_frontend_watch() {
+	TARGET_IP=$1
+	if [ "$TARGET_IP" = "" ]; then
+		echo "target IP must be provided"
+		return 1
+	fi
+
+	export TARGET_IP=$TARGET_IP
+	(cd apps/siot-net/frontend && elm-land server)
+}
+
 siot_build_native_sim() {
 	APP=$1
 	west build -b native_sim "${APP}"
