@@ -4,9 +4,11 @@ import Api
 import Api.Point as Point exposing (Point)
 import Effect exposing (Effect)
 import Element exposing (..)
+import Element.Border as Border
 import Element.Font as Font
 import Http
 import Page exposing (Page)
+import Round
 import Route exposing (Route)
 import Shared
 import Task
@@ -29,15 +31,15 @@ page _ _ =
 
 
 type alias Model =
-    { points : List Point.Point
+    { points : Api.Data (List Point.Point)
     }
 
 
 init : () -> ( Model, Effect Msg )
 init () =
-    ( Model []
+    ( Model Api.Loading
     , Effect.batch <|
-        [ Effect.sendCmd <| Point.get { onResponse = ApiRespPointList }
+        [ Effect.sendCmd <| Point.fetchList { onResponse = ApiRespPointList }
         , Effect.sendCmd <| Task.perform Tick Time.now
         ]
     )
@@ -46,7 +48,7 @@ init () =
 type Msg
     = NoOp
     | Tick Time.Posix
-    | ApiRespPointList (Result Http.Error (List Point.Point))
+    | ApiRespPointList (Result Http.Error (List Point))
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -59,16 +61,16 @@ update msg model =
 
         Tick _ ->
             ( model
-            , Effect.sendCmd <| Point.get { onResponse = ApiRespPointList }
+            , Effect.sendCmd <| Point.fetchList { onResponse = ApiRespPointList }
             )
 
         ApiRespPointList (Ok points) ->
-            ( model
+            ( { model | points = Api.Success points }
             , Effect.none
             )
 
         ApiRespPointList (Err httpError) ->
-            ( model
+            ( { model | points = Api.Failure httpError }
             , Effect.none
             )
 
@@ -87,7 +89,7 @@ subscriptions _ =
 
 
 view : Model -> View Msg
-view _ =
+view model =
     { title = "sIoT"
     , attributes = []
     , element =
@@ -99,12 +101,7 @@ view _ =
                     }
                 ]
             , h1 "Status"
-            , column [ spacing 10, padding 20 ]
-                [ text "• Board: "
-                , text "• Boot count: "
-                , text "• CPU Usage: "
-                , text "• Temperature: "
-                ]
+            , status model
             , h1 "Settings"
             , h1 "Devices"
             ]
@@ -114,3 +111,42 @@ view _ =
 h1 : String -> Element Msg
 h1 txt =
     el [ Font.size 32, Font.bold ] <| text txt
+
+
+status : Model -> Element Msg
+status model =
+    case model.points of
+        Api.Loading ->
+            text "Loading ..."
+
+        Api.Success points ->
+            statusTable points
+
+        Api.Failure httpError ->
+            text <| "Lost connection: " ++ Api.toUserFriendlyMessage httpError
+
+
+statusTable : List Point -> Element Msg
+statusTable points =
+    let
+        cell =
+            el [ paddingXY 15 5, Border.width 1 ]
+
+        data =
+            [ { name = "Board", value = Point.getText points Point.typeBoard "0" }
+            , { name = "CPU Usage", value = Round.round 2 (Point.getNum points Point.typeMetricSysCPUPercent "0") ++ "%" }
+            ]
+    in
+    table [ padding 0, Border.width 1, width shrink ]
+        { data = data
+        , columns =
+            [ { header = text ""
+              , width = shrink
+              , view = \m -> cell <| text m.name
+              }
+            , { header = text ""
+              , width = shrink
+              , view = \m -> cell <| text m.value
+              }
+            ]
+        }
