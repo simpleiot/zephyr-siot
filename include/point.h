@@ -15,6 +15,8 @@ typedef struct {
 	char data[20];
 } point;
 
+// TODO: find a way to initialize new points with key set to "0"
+
 // Point Data Types should match those in SIOT (not merged to master yet)
 // https://github.com/simpleiot/simpleiot/blob/feat/js-subject-point-changes/data/point.go
 
@@ -42,9 +44,12 @@ typedef struct {
 #define POINT_TYPE_GATEWAY "gateway"
 #define POINT_TYPE_METRIC_SYS_CPU_PERCENT "metricSysCPUPercent"
 #define POINT_TYPE_TEMPERATURE "temp"
+#define POINT_TYPE_BOARD "board"
+#define POINT_TYPE_BOOT_COUNT "bootCount"
 
 void point_set_type(point *p, char *t);
 void point_set_key(point *p, char *k);
+void point_set_type_key(point *p, char *t, char *k);
 
 int point_get_int(point *p);
 float point_get_float(point *p);

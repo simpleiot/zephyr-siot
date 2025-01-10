@@ -1,11 +1,11 @@
-#include "point.h"
-#include "zephyr/kernel.h"
-#include "zephyr/sys/util.h"
+#include <point.h>
 
-#include <string.h>
-#include <stdio.h>
+#include <zephyr/kernel.h>
+#include <zephyr/sys/util.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/data/json.h>
+#include <string.h>
+#include <stdio.h>
 
 LOG_MODULE_REGISTER(z_point, LOG_LEVEL_DBG);
 
@@ -16,6 +16,12 @@ void point_set_type(point *p, char *t)
 
 void point_set_key(point *p, char *k)
 {
+	strncpy(p->key, k, sizeof(p->key));
+}
+
+void point_set_type_key(point *p, char *t, char *k)
+{
+	strncpy(p->type, t, sizeof(p->type));
 	strncpy(p->key, k, sizeof(p->key));
 }
 
@@ -255,6 +261,11 @@ int points_merge(point *pts, size_t pts_len, point *p)
 {
 	// look for existing points
 	int empty_i = -1;
+
+	// make sure key is set to "0" if blank
+	if (p->key[0] == 0) {
+		strcpy(p->key, "0");
+	}
 
 	for (int i = 0; i < pts_len; i++) {
 		if (pts[i].type[0] == 0) {

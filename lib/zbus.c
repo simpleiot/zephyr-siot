@@ -1,3 +1,4 @@
+#include "zephyr/kernel.h"
 #include <point.h>
 #include <zephyr/zbus/zbus.h>
 
@@ -12,11 +13,18 @@ void ticker_callback(struct k_timer *timer_id)
 
 K_TIMER_DEFINE(ticker, ticker_callback, NULL);
 
-int timer_init()
+int bus_init()
 {
 	k_timer_start(&ticker, K_MSEC(500), K_MSEC(500));
+
+	point p;
+
+	point_set_type_key(&p, POINT_TYPE_BOARD, "0");
+	point_put_string(&p, CONFIG_BOARD_TARGET);
+
+	zbus_chan_pub(&point_chan, &p, K_FOREVER);
 
 	return 0;
 }
 
-SYS_INIT(timer_init, APPLICATION, 99);
+SYS_INIT(bus_init, APPLICATION, 99);
