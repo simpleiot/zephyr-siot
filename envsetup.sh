@@ -14,6 +14,19 @@ siot_net_frontend_watch() {
 	(cd apps/siot-net/frontend && elm-land server)
 }
 
+siot_net_frontend_build() {
+	(
+		cd apps/siot-net/frontend &&
+			(
+				elm-land build &&
+					mv dist/assets/index*.js dist/ &&
+					for file in dist/index-*.js; do mv "$file" "${file/index-*./index.}"; done &&
+					sed -i 's/assets\/index-[A-Za-z0-9]\+-\.js/index.js/g' dist/index.html ||
+					return 1
+			)
+	)
+}
+
 siot_build_native_sim() {
 	APP=$1
 	west build -b native_sim "${APP}"

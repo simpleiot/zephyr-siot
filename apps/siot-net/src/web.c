@@ -36,6 +36,10 @@ static uint8_t index_html_gz[] = {
 #include "index.html.gz.inc"
 };
 
+static uint8_t index_js_gz[] = {
+#include "index.js.gz.inc"
+};
+
 // ==================================================
 // index.html resource
 
@@ -53,6 +57,21 @@ struct http_resource_detail_static index_html_gz_resource_detail = {
 
 HTTP_RESOURCE_DEFINE(index_html_gz_resource, siot_http_service, "/",
 		     &index_html_gz_resource_detail);
+
+struct http_resource_detail_static index_js_gz_resource_detail = {
+	.common =
+		{
+			.type = HTTP_RESOURCE_TYPE_STATIC,
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
+			.content_encoding = "gzip",
+			.content_type = "application/javascript",
+		},
+	.static_data = index_js_gz,
+	.static_data_len = sizeof(index_js_gz),
+};
+
+HTTP_RESOURCE_DEFINE(index_js_gz_resource, siot_http_service, "/index.js",
+		     &index_js_gz_resource_detail);
 
 // ********************************
 // v1 API handler
