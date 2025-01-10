@@ -15,6 +15,24 @@ In repo root directory:
 - `z_build_zmr`
 - `z_flash_zmr <serial port>`
 
+## Upgrading/Flashing
+
+- Make sure [esptool](https://docs.espressif.com/projects/esptool/en/latest/esp32/) is installed on your laptop.
+
+- `pip install esptool`
+
+and test it by asking for it's ID:
+
+- `esptool.py -p <serial port> flash_id`
+
+where `<serial port>` will normally be `/dev/ttyUSB0`
+
+Use the following command line to upgrade the ESP32:
+
+`esptool.py --chip auto --port <serial port> --baud 921600 --before default_reset --after hard_reset write_flash -u --flash_mode dio --flash_freq 40m --flash_size detect 0x1000 <bin file>`
+
+where `<bin file>` is the binary image of the flash.
+
 ## Operation
 
 - open a serial console on the USB serial port
