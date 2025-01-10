@@ -43,6 +43,7 @@ typedef struct {
 #define POINT_TYPE_NETMASK "netmask"
 #define POINT_TYPE_GATEWAY "gateway"
 #define POINT_TYPE_METRIC_SYS_CPU_PERCENT "metricSysCPUPercent"
+#define POINT_TYPE_UPTIME "uptime"
 #define POINT_TYPE_TEMPERATURE "temp"
 #define POINT_TYPE_BOARD "board"
 #define POINT_TYPE_BOOT_COUNT "bootCount"

@@ -27,10 +27,14 @@ void siot_metrics_thread(void *arg1, void *arg2, void *arg3)
 		float cpu_usage = (double)stats.total_cycles * 100 / stats.execution_cycles;
 		LOG_DBG("cpu usage: %0.2f%%", (double)cpu_usage);
 
-		point p = {.key = ""};
-
-		point_set_type(&p, POINT_TYPE_METRIC_SYS_CPU_PERCENT);
+		point p;
+		point_set_type_key(&p, POINT_TYPE_METRIC_SYS_CPU_PERCENT, "");
 		point_put_float(&p, cpu_usage);
+		zbus_chan_pub(&point_chan, &p, K_MSEC(500));
+
+		uint32_t uptime = k_uptime_seconds();
+		point_set_type_key(&p, POINT_TYPE_UPTIME, "");
+		point_put_int(&p, uptime);
 		zbus_chan_pub(&point_chan, &p, K_MSEC(500));
 	}
 }

@@ -13,6 +13,7 @@ module Api.Point exposing
     , typeNetmask
     , typeStaticIP
     , typeTemperature
+    , typeUptime
     )
 
 import Http
@@ -137,3 +138,8 @@ typeBoard =
 typeBootCount : String
 typeBootCount =
     "bootCount"
+
+
+typeUptime : String
+typeUptime =
+    "uptime"
