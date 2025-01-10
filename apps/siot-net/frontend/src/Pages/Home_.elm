@@ -134,6 +134,7 @@ statusTable points =
 
         data =
             [ { name = "Board", value = Point.getText points Point.typeBoard "0" }
+            , { name = "Boot count", value = Point.getText points Point.typeBootCount "0" }
             , { name = "CPU Usage", value = Round.round 2 (Point.getNum points Point.typeMetricSysCPUPercent "0") ++ "%" }
             ]
     in
