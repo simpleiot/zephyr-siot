@@ -6,6 +6,9 @@ config LIB_SIOT
 	select THREAD_MONITOR
 	select THREAD_RUNTIME_STATS
 	select ZBUS
+	select ZBUS_RUNTIME_OBSERVERS
+	select ZBUS_MSG_SUBSCRIBER
+	select NVS
 
 if LIB_SIOT
 
