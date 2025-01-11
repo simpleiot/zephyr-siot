@@ -14,6 +14,7 @@ module Api.Point exposing
     , typeStaticIP
     , typeTemperature
     , typeUptime
+    , updatePoints
     )
 
 import Http
@@ -93,6 +94,30 @@ getText points typ key =
 
         Nothing ->
             ""
+
+
+updatePoint : List Point -> Point -> List Point
+updatePoint points point =
+    case
+        List.Extra.findIndex
+            (\p ->
+                point.typ == p.typ && point.key == p.key
+            )
+            points
+    of
+        Just index ->
+            List.Extra.setAt index point points
+
+        Nothing ->
+            point :: points
+
+
+updatePoints : List Point -> List Point -> List Point
+updatePoints points newPoints =
+    List.foldr
+        (\newPoint updatedPoints -> updatePoint updatedPoints newPoint)
+        points
+        newPoints
 
 
 typeDescription : String
