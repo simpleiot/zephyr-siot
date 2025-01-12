@@ -85,17 +85,21 @@ static int v1_handler(struct http_client_ctx *client, enum http_data_status stat
 		      const struct http_request_ctx *request_ctx, struct http_response_ctx *resp,
 		      void *user_data)
 {
-	LOG_DBG("v1 handler: %s", client->url_buffer);
-
 	if (status != HTTP_SERVER_DATA_FINAL) {
 		return 0;
 	}
 
 	if (strcmp(client->url_buffer, "/v1/points") == 0) {
-		int ret = points_json_encode(web_points, ARRAY_SIZE(web_points), recv_buffer,
-					     sizeof(recv_buffer));
-		if (ret != 0) {
-			LOG_ERR("Error returning JSON points: %i", ret);
+		if (client->method == HTTP_GET) {
+			int ret = points_json_encode(web_points, ARRAY_SIZE(web_points),
+						     recv_buffer, sizeof(recv_buffer));
+			if (ret != 0) {
+				LOG_ERR("Error returning JSON points: %i", ret);
+			}
+		} else {
+			// must be a post
+			LOG_DBG("CLIFF: points post: %s", request_ctx->data);
+			strcpy(recv_buffer, "{}");
 		}
 	} else {
 		sprintf(recv_buffer, "%s", CONFIG_BOARD_TARGET);
@@ -112,7 +116,7 @@ struct http_resource_detail_dynamic v1_resource_detail = {
 	.common =
 		{
 			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
-			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET) | BIT(HTTP_POST),
 		},
 	.cb = v1_handler,
 	.user_data = NULL,
