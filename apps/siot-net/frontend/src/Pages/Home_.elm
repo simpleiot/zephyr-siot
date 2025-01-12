@@ -43,7 +43,7 @@ init : () -> ( Model, Effect Msg )
 init () =
     ( Model Api.Loading []
     , Effect.batch <|
-        [ Effect.sendCmd <| Point.fetchList { onResponse = ApiRespPointList }
+        [ Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
         , Effect.sendCmd <| Task.perform Tick Time.now
         ]
     )
@@ -53,6 +53,7 @@ type Msg
     = NoOp
     | Tick Time.Posix
     | ApiRespPointList (Result Http.Error (List Point))
+    | ApiRespPointPost (Result Http.Error Point.Resp)
     | EditPoint (List Point)
     | ApiPostPoints (List Point)
     | DiscardEdits
@@ -68,7 +69,7 @@ update msg model =
 
         Tick _ ->
             ( model
-            , Effect.sendCmd <| Point.fetchList { onResponse = ApiRespPointList }
+            , Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
             )
 
         ApiRespPointList (Ok points) ->
@@ -81,6 +82,16 @@ update msg model =
             , Effect.none
             )
 
+        ApiRespPointPost (Ok _) ->
+            ( model
+            , Effect.none
+            )
+
+        ApiRespPointPost (Err httpError) ->
+            ( { model | points = Api.Failure httpError }
+            , Effect.none
+            )
+
         EditPoint points ->
             ( { model | pointMods = Point.updatePoints model.pointMods points }
             , Effect.none
@@ -89,7 +100,7 @@ update msg model =
         ApiPostPoints points ->
             -- optimistically update points?
             ( { model | points = Api.Success points, pointMods = [] }
-            , Effect.none
+            , Effect.sendCmd <| Point.post { points = model.pointMods, onResponse = ApiRespPointPost }
             )
 
         DiscardEdits ->
