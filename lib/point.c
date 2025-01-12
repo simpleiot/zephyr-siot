@@ -180,10 +180,12 @@ static const struct json_obj_descr point_js_array_descr[] = {
 				 point_js_descr, ARRAY_SIZE(point_js_descr)),
 };
 
-void point_js_pop_data(point *p, struct point_js *p_js, char *buf, size_t buf_len)
+// point_js has pointers to strings, so the buf is used to store these strings
+void point_to_point_js(point *p, struct point_js *p_js, char *buf, size_t buf_len)
 {
 	p_js->time = "";
 	p_js->type = p->type;
+	// FIXME: type is probably always a string constant, but not sure about key
 	p_js->key = p->key;
 
 	switch (p->data_type) {
@@ -211,6 +213,38 @@ void point_js_pop_data(point *p, struct point_js *p_js, char *buf, size_t buf_le
 	}
 }
 
+void point_js_to_point(struct point_js *p_js, point *p)
+{
+	char buf[30];
+	p->time = 0;
+	strncpy(p->type, p_js->type, sizeof(p->type));
+	strncpy(p->key, p_js->key, sizeof(p->key));
+
+	if (strcmp(p_js->dataType, POINT_DATA_TYPE_FLOAT_S) == 0) {
+		p->data_type = POINT_DATA_TYPE_FLOAT;
+		// null terminate string so we can scan it
+		int cnt = MIN(p_js->data.length, sizeof(buf) - 1);
+		memcpy(buf, p_js->data.start, cnt);
+		buf[cnt] = 0;
+		sscanf(buf, "%f", (float *)p->data);
+	} else if (strcmp(p_js->dataType, POINT_DATA_TYPE_INT_S) == 0) {
+		p->data_type = POINT_DATA_TYPE_INT;
+		// null terminate string so we can scan it
+		int cnt = MIN(p_js->data.length, sizeof(buf) - 1);
+		memcpy(buf, p_js->data.start, cnt);
+		buf[cnt] = 0;
+		sscanf(p_js->data.start, "%i", (int *)p->data);
+	} else if (strcmp(p_js->dataType, POINT_DATA_TYPE_STRING_S) == 0) {
+		p->data_type = POINT_DATA_TYPE_STRING;
+		int cnt = MIN(p_js->data.length, sizeof(p->data) - 1);
+		memcpy(p->data, p_js->data.start, cnt);
+		// make sure string is null terminated
+		p->data[cnt] = 0;
+	} else {
+		p->data_type = POINT_DATA_TYPE_UNKNOWN;
+	}
+}
+
 // all of the point_js fields MUST be filled in or the encoder will crash
 int point_json_encode(point *p, char *buf, size_t len)
 {
@@ -218,7 +252,7 @@ int point_json_encode(point *p, char *buf, size_t len)
 
 	char data_buf[20];
 
-	point_js_pop_data(p, &p_js, data_buf, sizeof(data_buf));
+	point_to_point_js(p, &p_js, data_buf, sizeof(data_buf));
 
 	/* Calculate the encoded length. (could be smaller) */
 	ssize_t enc_len = json_calc_encoded_len(point_js_descr, ARRAY_SIZE(point_js_descr), &p_js);
@@ -231,7 +265,14 @@ int point_json_encode(point *p, char *buf, size_t len)
 
 int point_json_decode(char *json, size_t json_len, point *p)
 {
-	return json_obj_parse(json, json_len, point_js_descr, ARRAY_SIZE(point_js_descr), &p);
+	struct point_js p_js;
+	int ret = json_obj_parse(json, json_len, point_js_descr, ARRAY_SIZE(point_js_descr), &p_js);
+	if (ret < 0) {
+		return ret;
+	}
+
+	point_js_to_point(&p_js, p);
+	return 0;
 }
 
 int points_json_encode(point *pts_in, int count, char *buf, size_t len)
@@ -247,7 +288,7 @@ int points_json_encode(point *pts_in, int count, char *buf, size_t len)
 	for (int i = 0; i < count; i++) {
 		// make sure it is not an empty point
 		if (pts_in[i].type[0] != 0) {
-			point_js_pop_data(&pts_in[i], &pts_out.points[pts_out.len],
+			point_to_point_js(&pts_in[i], &pts_out.points[pts_out.len],
 					  data_buf[pts_out.len], sizeof(data_buf[pts_out.len]));
 			pts_out.len++;
 		}

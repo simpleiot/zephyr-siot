@@ -6,7 +6,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/data/json.h>
 
-LOG_MODULE_REGISTER(point_tests, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(point_tests, LOG_LEVEL_DBG);
 
 point test_points[] = {
 	{0, POINT_TYPE_METRIC_SYS_CPU_PERCENT, ""},
@@ -22,6 +22,24 @@ void *init_test_points(void)
 
 	return NULL;
 }
+
+char test_point1_json[] =
+	"{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"dataType\":\"INT\",\"data\":"
+	"\"-32\"}";
+
+char test_point2_json[] =
+	"{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"dataType\":\"FLT\",\"data\":"
+	"\"-32.230000\"}";
+
+char test_point3_json[] =
+	"{\"time\":\"\",\"type\":\"description\",\"key\":\"\",\"dataType\":\"STR\","
+	"\"data\":\"device #3\"}";
+
+char test_point_all_json[] =
+	"[{\"time\":\"\",\"type\":\"metricSysCPUPercent\",\"key\":\"\",\"dataType\":"
+	"\"INT\",\"data\":\"-232\"},{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data"
+	"Type\":\"FLT\",\"data\":\"-572.292297\"},{\"time\":\"\",\"type\":\"description\","
+	"\"key\":\"\",\"dataType\":\"STR\",\"data\":\"device #4\"}]";
 
 ZTEST_SUITE(point_tests, NULL, init_test_points, NULL, NULL, NULL);
 
@@ -134,9 +152,10 @@ ZTEST(point_tests, encode_point_int)
 	int ret = point_json_encode(&tp, buf, sizeof(buf));
 	zassert_ok(ret);
 
-	char *exp = "{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"dataType\":\"INT\",\"data\":"
-		    "\"-32\"}";
-	zassert_str_equal(buf, exp, "did not get expected JSON data");
+	LOG_DBG("EXP: %s", test_point1_json);
+	LOG_DBG("GOT: %s", buf);
+
+	zassert_str_equal(buf, test_point1_json, "did not get expected JSON data");
 
 	LOG_DBG("Encoded data: %s", buf);
 }
@@ -151,9 +170,7 @@ ZTEST(point_tests, encode_point_float)
 	int ret = point_json_encode(&tp, buf, sizeof(buf));
 	zassert_ok(ret);
 
-	char *exp = "{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"dataType\":\"FLT\",\"data\":"
-		    "\"-32.230000\"}";
-	zassert_str_equal(buf, exp, "did not get expected JSON data");
+	zassert_str_equal(buf, test_point2_json, "did not get expected JSON data");
 
 	LOG_DBG("Encoded data: %s", buf);
 }
@@ -168,9 +185,7 @@ ZTEST(point_tests, encode_point_string)
 	int ret = point_json_encode(&tp, buf, sizeof(buf));
 	zassert_ok(ret);
 
-	char *exp = "{\"time\":\"\",\"type\":\"description\",\"key\":\"\",\"dataType\":\"STR\","
-		    "\"data\":\"device #3\"}";
-	zassert_str_equal(buf, exp, "did not get expected JSON data");
+	zassert_str_equal(buf, test_point3_json, "did not get expected JSON data");
 
 	LOG_DBG("Encoded data: %s", buf);
 }
@@ -182,13 +197,7 @@ ZTEST(point_tests, encode_point_array)
 	int ret = points_json_encode(test_points, ARRAY_SIZE(test_points), buf, sizeof(buf));
 	zassert_ok(ret);
 
-	char exp[] =
-		"[{\"time\":\"\",\"type\":\"metricSysCPUPercent\",\"key\":\"\",\"dataType\":"
-		"\"INT\",\"data\":\"-232\"},{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data"
-		"Type\":\"FLT\",\"data\":\"-572.292297\"},{\"time\":\"\",\"type\":\"description\","
-		"\"key\":\"\",\"dataType\":\"STR\",\"data\":\"device #4\"}]";
-
-	zassert_str_equal(exp, buf, "encoded string not correct");
+	zassert_str_equal(buf, test_point_all_json, "encoded string not correct");
 
 	LOG_DBG("Encoded data: %s", buf);
 }
@@ -214,4 +223,55 @@ ZTEST(point_tests, merge)
 	zassert_ok(ret);
 
 	zassert_equal((float)-572.2923, point_get_float(&pts[1]));
+}
+
+ZTEST(point_tests, decode_point_int)
+{
+	point p;
+
+	char buf[128];
+	strncpy(buf, test_point1_json, sizeof(buf));
+
+	int ret = point_json_decode(buf, sizeof(test_point1_json), &p);
+	zassert(ret >= 0, "decode returned error");
+
+	point_dump(&p, buf, sizeof(buf));
+	LOG_DBG("Point: %s", buf);
+
+	zassert(point_get_int(&p) == -32, "point value is not -32");
+	zassert_str_equal(p.type, POINT_TYPE_TEMPERATURE, "point type is not correct");
+}
+
+ZTEST(point_tests, decode_point_float)
+{
+	point p;
+
+	char buf[128];
+	strncpy(buf, test_point2_json, sizeof(buf));
+
+	int ret = point_json_decode(buf, sizeof(test_point2_json), &p);
+	zassert(ret >= 0, "decode returned error");
+
+	point_dump(&p, buf, sizeof(buf));
+	LOG_DBG("Point: %s", buf);
+
+	zassert(point_get_float(&p) == (float)-32.23, "point value is not -32.23");
+	zassert_str_equal(p.type, POINT_TYPE_TEMPERATURE, "point type is not correct");
+}
+
+ZTEST(point_tests, decode_point_string)
+{
+	point p;
+
+	char buf[128];
+	strncpy(buf, test_point3_json, sizeof(buf));
+
+	int ret = point_json_decode(buf, sizeof(test_point3_json), &p);
+	zassert(ret >= 0, "decode returned error");
+
+	point_dump(&p, buf, sizeof(buf));
+	LOG_DBG("Point: %s", buf);
+
+	zassert_str_equal(p.data, "device #3");
+	zassert_str_equal(p.type, POINT_TYPE_DESCRIPTION, "point type is not correct");
 }
