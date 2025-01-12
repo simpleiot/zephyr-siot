@@ -1,9 +1,11 @@
 module Api.Point exposing
     ( Point
-    , fetchList
+    , Resp
+    , fetch
     , get
     , getNum
     , getText
+    , post
     , typeAddress
     , typeBoard
     , typeBootCount
@@ -20,6 +22,7 @@ module Api.Point exposing
 import Http
 import Json.Decode as Decode
 import Json.Decode.Pipeline exposing (optional, required)
+import Json.Encode as Encode
 import List.Extra
 import Url.Builder
 
@@ -33,20 +36,49 @@ type alias Point =
     }
 
 
-fetchList :
+type alias Resp =
+    { error : String
+    }
+
+
+fetch :
     { onResponse : Result Http.Error (List Point) -> msg
     }
     -> Cmd msg
-fetchList options =
+fetch options =
     Http.get
         { url = Url.Builder.absolute [ "v1", "points" ] []
         , expect = Http.expectJson options.onResponse listDecoder
         }
 
 
-listDecoder : Decode.Decoder (List Point)
-listDecoder =
-    Decode.list decoder
+post :
+    { points : List Point
+    , onResponse : Result Http.Error Resp -> msg
+    }
+    -> Cmd msg
+post options =
+    Http.post
+        { url = Url.Builder.absolute [ "v1", "points" ] []
+        , body = Http.jsonBody <| encodeList options.points
+        , expect = Http.expectJson options.onResponse decodeResp
+        }
+
+
+encode : Point -> Encode.Value
+encode p =
+    Encode.object
+        [ ( "time", Encode.string <| p.time )
+        , ( "type", Encode.string <| p.typ )
+        , ( "key", Encode.string <| p.key )
+        , ( "dataType", Encode.string <| p.dataType )
+        , ( "data", Encode.string <| p.data )
+        ]
+
+
+encodeList : List Point -> Encode.Value
+encodeList p =
+    Encode.list encode p
 
 
 decoder : Decode.Decoder Point
@@ -57,6 +89,17 @@ decoder =
         |> required "key" Decode.string
         |> required "dataType" Decode.string
         |> required "data" Decode.string
+
+
+listDecoder : Decode.Decoder (List Point)
+listDecoder =
+    Decode.list decoder
+
+
+decodeResp : Decode.Decoder Resp
+decodeResp =
+    Decode.succeed Resp
+        |> optional "error" Decode.string ""
 
 
 get : List Point -> String -> String -> Maybe Point
