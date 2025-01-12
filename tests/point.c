@@ -229,6 +229,7 @@ ZTEST(point_tests, decode_point_int)
 {
 	point p;
 
+	// JSON decoding seems to destroy the JSON data, so make a copy of it first
 	char buf[128];
 	strncpy(buf, test_point1_json, sizeof(buf));
 
@@ -246,6 +247,7 @@ ZTEST(point_tests, decode_point_float)
 {
 	point p;
 
+	// JSON decoding seems to destroy the JSON data, so make a copy of it first
 	char buf[128];
 	strncpy(buf, test_point2_json, sizeof(buf));
 
@@ -263,6 +265,7 @@ ZTEST(point_tests, decode_point_string)
 {
 	point p;
 
+	// JSON decoding seems to destroy the JSON data, so make a copy of it first
 	char buf[128];
 	strncpy(buf, test_point3_json, sizeof(buf));
 
@@ -274,4 +277,20 @@ ZTEST(point_tests, decode_point_string)
 
 	zassert_str_equal(p.data, "device #3");
 	zassert_str_equal(p.type, POINT_TYPE_DESCRIPTION, "point type is not correct");
+}
+
+ZTEST(point_tests, decode_point_array)
+{
+	char buf[256];
+	strncpy(buf, test_point_all_json, sizeof(buf));
+
+	point pts[5];
+
+	int ret = points_json_decode(buf, sizeof(test_point_all_json), pts, ARRAY_SIZE(pts));
+	zassert(ret == 3, "did not decode 3 points");
+
+	// spot check a few points
+	zassert(point_get_int(&pts[0]) == -232, "point 0 not correct value");
+	zassert(point_get_float(&pts[1]) == (float)-572.292297, "point 1 not correct value");
+	zassert_str_equal(pts[2].data, "device #4");
 }

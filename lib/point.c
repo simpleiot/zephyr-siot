@@ -297,6 +297,24 @@ int points_json_encode(point *pts_in, int count, char *buf, size_t len)
 	return json_arr_encode_buf(point_js_array_descr, &pts_out, buf, len);
 }
 
+// returns the number of points decoded, or less than 0 for error
+int points_json_decode(char *json, size_t json_len, point *pts, size_t p_cnt)
+{
+	struct point_js_array pts_js;
+
+	int ret = json_arr_parse(json, json_len, point_js_array_descr, &pts_js);
+	if (ret != 0) {
+		return ret;
+	}
+
+	int i;
+	for (i = 0; i < pts_js.len; i++) {
+		point_js_to_point(&pts_js.points[i], &pts[i]);
+	}
+
+	return i;
+}
+
 // pts must be initialized and not have random data in the string fields
 int points_merge(point *pts, size_t pts_len, point *p)
 {

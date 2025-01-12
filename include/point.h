@@ -68,5 +68,6 @@ int points_merge(point *pts, size_t pts_len, point *p);
 int point_json_encode(point *p, char *buf, size_t len);
 int point_json_decode(char *json, size_t json_len, point *p);
 int points_json_encode(point *pts_in, int count, char *buf, size_t len);
+int points_json_decode(char *json, size_t json_len, point *pts, size_t p_cnt);
 
 #endif // __POINT_H_
