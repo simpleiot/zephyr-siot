@@ -1,11 +1,11 @@
 #include <point.h>
 
-#include <zephyr/kernel.h>
-#include <zephyr/sys/util.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/data/json.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+#include <zephyr/data/json.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/util.h>
 
 LOG_MODULE_REGISTER(z_point, LOG_LEVEL_DBG);
 
@@ -115,8 +115,16 @@ int point_dump(point *p, char *buf, size_t len)
 		offset += cnt;
 		remaining -= cnt;
 		break;
+	case POINT_DATA_TYPE_UNKNOWN:
+		cnt = snprintf(buf + offset, remaining, "unknown point type");
+		offset += cnt;
+		remaining -= cnt;
+		break;
 	default:
-		LOG_ERR("Invalid point data type: %i", p->data_type);
+		cnt = snprintf(buf + offset, remaining, "invalid point type");
+		offset += cnt;
+		remaining -= cnt;
+		break;
 	}
 
 	return offset;

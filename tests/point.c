@@ -2,9 +2,9 @@
 #include "zephyr/ztest_assert.h"
 #include <point.h>
 
-#include <zephyr/ztest.h>
-#include <zephyr/logging/log.h>
 #include <zephyr/data/json.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/ztest.h>
 
 LOG_MODULE_REGISTER(point_tests, LOG_LEVEL_DBG);
 
@@ -23,22 +23,25 @@ void *init_test_points(void)
 	return NULL;
 }
 
-char test_point1_json[] =
-	"{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"dataType\":\"INT\",\"data\":"
-	"\"-32\"}";
+char test_point1_json[] = "{\"time\":\"\",\"type\":\"temp\",\"key\":\"\","
+			  "\"dataType\":\"INT\",\"data\":"
+			  "\"-32\"}";
 
-char test_point2_json[] =
-	"{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"dataType\":\"FLT\",\"data\":"
-	"\"-32.230000\"}";
+char test_point2_json[] = "{\"time\":\"\",\"type\":\"temp\",\"key\":\"\","
+			  "\"dataType\":\"FLT\",\"data\":"
+			  "\"-32.230000\"}";
 
 char test_point3_json[] =
 	"{\"time\":\"\",\"type\":\"description\",\"key\":\"\",\"dataType\":\"STR\","
 	"\"data\":\"device #3\"}";
 
 char test_point_all_json[] =
-	"[{\"time\":\"\",\"type\":\"metricSysCPUPercent\",\"key\":\"\",\"dataType\":"
-	"\"INT\",\"data\":\"-232\"},{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"data"
-	"Type\":\"FLT\",\"data\":\"-572.292297\"},{\"time\":\"\",\"type\":\"description\","
+	"[{\"time\":\"\",\"type\":\"metricSysCPUPercent\",\"key\":\"\","
+	"\"dataType\":"
+	"\"INT\",\"data\":\"-232\"},{\"time\":\"\",\"type\":\"temp\",\"key\":\"\","
+	"\"data"
+	"Type\":\"FLT\",\"data\":\"-572.292297\"},{\"time\":\"\",\"type\":"
+	"\"description\","
 	"\"key\":\"\",\"dataType\":\"STR\",\"data\":\"device #4\"}]";
 
 ZTEST_SUITE(point_tests, NULL, init_test_points, NULL, NULL, NULL);
@@ -293,4 +296,26 @@ ZTEST(point_tests, decode_point_array)
 	zassert(point_get_int(&pts[0]) == -232, "point 0 not correct value");
 	zassert(point_get_float(&pts[1]) == (float)-572.292297, "point 1 not correct value");
 	zassert_str_equal(pts[2].data, "device #4");
+}
+
+char test_point1_no_datatype_json[] =
+	"{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"dataType\":\"\",\"data\":"
+	"\"-32\"}";
+
+ZTEST(point_tests, decode_point_with_no_datatype)
+{
+
+	point p;
+
+	// JSON decoding seems to destroy the JSON data, so make a copy of it first
+	char buf[128];
+	strncpy(buf, test_point1_no_datatype_json, sizeof(buf));
+
+	int ret = point_json_decode(buf, sizeof(test_point1_no_datatype_json), &p);
+	zassert(ret >= 0, "decode returned error");
+
+	point_dump(&p, buf, sizeof(buf));
+	LOG_DBG("Point: %s", buf);
+
+	zassert_str_equal(p.type, POINT_TYPE_TEMPERATURE, "point type is not correct");
 }
