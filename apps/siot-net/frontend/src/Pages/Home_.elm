@@ -199,6 +199,7 @@ settings : List Point -> Bool -> Element Msg
 settings points edit =
     column [ spacing 20, Form.onEnterEsc (ApiPostPoints points) DiscardEdits ]
         [ inputText points "0" Point.typeDescription "Description" "desc"
+        , inputText points "0" Point.typeAddress "IP Address" "ip addr"
         , viewIf edit <|
             Form.buttonRow <|
                 [ Form.button
@@ -228,7 +229,7 @@ inputText pts key typ lbl placeholder =
         []
         { onChange =
             \d ->
-                EditPoint [ Point "" typ key "" d ]
+                EditPoint [ Point "" typ key Point.dataTypeString d ]
         , text =
             if textRaw == "123BLANK123" then
                 ""

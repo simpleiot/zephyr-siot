@@ -1,6 +1,10 @@
 module Api.Point exposing
     ( Point
     , Resp
+    , dataTypeFloat
+    , dataTypeInt
+    , dataTypeJSON
+    , dataTypeString
     , fetch
     , get
     , getNum
@@ -34,6 +38,26 @@ type alias Point =
     , dataType : String
     , data : String
     }
+
+
+dataTypeInt : String
+dataTypeInt =
+    "INT"
+
+
+dataTypeFloat : String
+dataTypeFloat =
+    "FLT"
+
+
+dataTypeString : String
+dataTypeString =
+    "STR"
+
+
+dataTypeJSON : String
+dataTypeJSON =
+    "JSN"
 
 
 type alias Resp =
