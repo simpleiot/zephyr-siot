@@ -221,6 +221,68 @@ void point_to_point_js(point *p, struct point_js *p_js, char *buf, size_t buf_le
 	}
 }
 
+int string_to_int(const char *str)
+{
+	int result = 0;
+	int sign = 1;
+	int i = 0;
+
+	// Handle negative numbers
+	if (str[0] == '-') {
+		sign = -1;
+		i++;
+	}
+
+	// Convert each digit
+	while (str[i] != '\0') {
+		if (str[i] >= '0' && str[i] <= '9') {
+			result = result * 10 + (str[i] - '0');
+		} else {
+			break; // Stop at non-digit character
+		}
+		i++;
+	}
+
+	return sign * result;
+}
+
+float string_to_float(const char *str)
+{
+	float result = 0.0f;
+	float fraction = 0.1f;
+	int sign = 1;
+	int i = 0;
+	int in_fraction = 0;
+
+	// Handle negative numbers
+	if (str[0] == '-') {
+		sign = -1;
+		i++;
+	}
+
+	// Convert digits
+	while (str[i] != '\0') {
+		if (str[i] >= '0' && str[i] <= '9') {
+			if (!in_fraction) {
+				result = result * 10.0f + (str[i] - '0');
+			} else {
+				result += (str[i] - '0') * fraction;
+				fraction *= 0.1f;
+			}
+		} else if (str[i] == '.') {
+			if (in_fraction) {
+				break; // Multiple decimal points, invalid
+			}
+			in_fraction = 1;
+		} else {
+			break; // Stop at non-digit, non-decimal point character
+		}
+		i++;
+	}
+
+	return sign * result;
+}
+
 void point_js_to_point(struct point_js *p_js, point *p)
 {
 	char buf[30];
@@ -234,14 +296,14 @@ void point_js_to_point(struct point_js *p_js, point *p)
 		int cnt = MIN(p_js->data.length, sizeof(buf) - 1);
 		memcpy(buf, p_js->data.start, cnt);
 		buf[cnt] = 0;
-		sscanf(buf, "%f", (float *)p->data);
+		*(float *)p->data = string_to_float(buf);
 	} else if (strcmp(p_js->dataType, POINT_DATA_TYPE_INT_S) == 0) {
 		p->data_type = POINT_DATA_TYPE_INT;
 		// null terminate string so we can scan it
 		int cnt = MIN(p_js->data.length, sizeof(buf) - 1);
 		memcpy(buf, p_js->data.start, cnt);
 		buf[cnt] = 0;
-		sscanf(p_js->data.start, "%i", (int *)p->data);
+		*(int *)p->data = string_to_int(buf);
 	} else if (strcmp(p_js->dataType, POINT_DATA_TYPE_STRING_S) == 0) {
 		p->data_type = POINT_DATA_TYPE_STRING;
 		int cnt = MIN(p_js->data.length, sizeof(p->data) - 1);
@@ -316,8 +378,14 @@ int points_json_decode(char *json, size_t json_len, point *pts, size_t p_cnt)
 		return ret;
 	}
 
+	if (pts_js.len > p_cnt) {
+		LOG_ERR("Points array decode, decoded more points than target array: %zu",
+			pts_js.len);
+	}
+
+	int len = MIN(p_cnt, pts_js.len);
 	int i;
-	for (i = 0; i < pts_js.len; i++) {
+	for (i = 0; i < len; i++) {
 		point_js_to_point(&pts_js.points[i], &pts[i]);
 	}
 
