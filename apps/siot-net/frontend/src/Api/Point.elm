@@ -1,9 +1,16 @@
 module Api.Point exposing
     ( Point
-    , fetchList
+    , Resp
+    , dataTypeFloat
+    , dataTypeInt
+    , dataTypeJSON
+    , dataTypeString
+    , fetch
     , get
+    , getBool
     , getNum
     , getText
+    , post
     , typeAddress
     , typeBoard
     , typeBootCount
@@ -14,11 +21,13 @@ module Api.Point exposing
     , typeStaticIP
     , typeTemperature
     , typeUptime
+    , updatePoints
     )
 
 import Http
 import Json.Decode as Decode
 import Json.Decode.Pipeline exposing (optional, required)
+import Json.Encode as Encode
 import List.Extra
 import Url.Builder
 
@@ -32,20 +41,69 @@ type alias Point =
     }
 
 
-fetchList :
+dataTypeInt : String
+dataTypeInt =
+    "INT"
+
+
+dataTypeFloat : String
+dataTypeFloat =
+    "FLT"
+
+
+dataTypeString : String
+dataTypeString =
+    "STR"
+
+
+dataTypeJSON : String
+dataTypeJSON =
+    "JSN"
+
+
+type alias Resp =
+    { error : String
+    }
+
+
+fetch :
     { onResponse : Result Http.Error (List Point) -> msg
     }
     -> Cmd msg
-fetchList options =
+fetch options =
     Http.get
         { url = Url.Builder.absolute [ "v1", "points" ] []
         , expect = Http.expectJson options.onResponse listDecoder
         }
 
 
-listDecoder : Decode.Decoder (List Point)
-listDecoder =
-    Decode.list decoder
+post :
+    { points : List Point
+    , onResponse : Result Http.Error Resp -> msg
+    }
+    -> Cmd msg
+post options =
+    Http.post
+        { url = Url.Builder.absolute [ "v1", "points" ] []
+        , body = Http.jsonBody <| encodeList options.points
+        , expect = Http.expectJson options.onResponse decodeResp
+        }
+
+
+encode : Point -> Encode.Value
+encode p =
+    Encode.object
+        [ ( "time", Encode.string <| p.time )
+        , ( "type", Encode.string <| p.typ )
+        , ( "key", Encode.string <| p.key )
+        , ( "dataType", Encode.string <| p.dataType )
+        , ( "data", Encode.string <| p.data )
+        ]
+
+
+encodeList : List Point -> Encode.Value
+encodeList p =
+    Encode.list encode p
 
 
 decoder : Decode.Decoder Point
@@ -56,6 +114,17 @@ decoder =
         |> required "key" Decode.string
         |> required "dataType" Decode.string
         |> required "data" Decode.string
+
+
+listDecoder : Decode.Decoder (List Point)
+listDecoder =
+    Decode.list decoder
+
+
+decodeResp : Decode.Decoder Resp
+decodeResp =
+    Decode.succeed Resp
+        |> optional "error" Decode.string ""
 
 
 get : List Point -> String -> String -> Maybe Point
@@ -85,6 +154,11 @@ getNum points typ key =
             0
 
 
+getBool : List Point -> String -> String -> Bool
+getBool points typ key =
+    getNum points typ key == 1
+
+
 getText : List Point -> String -> String -> String
 getText points typ key =
     case get points typ key of
@@ -93,6 +167,30 @@ getText points typ key =
 
         Nothing ->
             ""
+
+
+updatePoint : List Point -> Point -> List Point
+updatePoint points point =
+    case
+        List.Extra.findIndex
+            (\p ->
+                point.typ == p.typ && point.key == p.key
+            )
+            points
+    of
+        Just index ->
+            List.Extra.setAt index point points
+
+        Nothing ->
+            point :: points
+
+
+updatePoints : List Point -> List Point -> List Point
+updatePoints points newPoints =
+    List.foldr
+        (\newPoint updatedPoints -> updatePoint updatedPoints newPoint)
+        points
+        newPoints
 
 
 typeDescription : String

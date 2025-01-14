@@ -1,11 +1,11 @@
 #include <point.h>
 
-#include <zephyr/kernel.h>
-#include <zephyr/sys/util.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/data/json.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+#include <zephyr/data/json.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/util.h>
 
 LOG_MODULE_REGISTER(z_point, LOG_LEVEL_DBG);
 
@@ -115,8 +115,16 @@ int point_dump(point *p, char *buf, size_t len)
 		offset += cnt;
 		remaining -= cnt;
 		break;
+	case POINT_DATA_TYPE_UNKNOWN:
+		cnt = snprintf(buf + offset, remaining, "unknown point type");
+		offset += cnt;
+		remaining -= cnt;
+		break;
 	default:
-		LOG_ERR("Invalid point data type: %i", p->data_type);
+		cnt = snprintf(buf + offset, remaining, "invalid point type");
+		offset += cnt;
+		remaining -= cnt;
+		break;
 	}
 
 	return offset;
@@ -180,10 +188,12 @@ static const struct json_obj_descr point_js_array_descr[] = {
 				 point_js_descr, ARRAY_SIZE(point_js_descr)),
 };
 
-void point_js_pop_data(point *p, struct point_js *p_js, char *buf, size_t buf_len)
+// point_js has pointers to strings, so the buf is used to store these strings
+void point_to_point_js(point *p, struct point_js *p_js, char *buf, size_t buf_len)
 {
 	p_js->time = "";
 	p_js->type = p->type;
+	// FIXME: type is probably always a string constant, but not sure about key
 	p_js->key = p->key;
 
 	switch (p->data_type) {
@@ -211,6 +221,101 @@ void point_js_pop_data(point *p, struct point_js *p_js, char *buf, size_t buf_le
 	}
 }
 
+int string_to_int(const char *str)
+{
+	int result = 0;
+	int sign = 1;
+	int i = 0;
+
+	// Handle negative numbers
+	if (str[0] == '-') {
+		sign = -1;
+		i++;
+	}
+
+	// Convert each digit
+	while (str[i] != '\0') {
+		if (str[i] >= '0' && str[i] <= '9') {
+			result = result * 10 + (str[i] - '0');
+		} else {
+			break; // Stop at non-digit character
+		}
+		i++;
+	}
+
+	return sign * result;
+}
+
+float string_to_float(const char *str)
+{
+	float result = 0.0f;
+	float fraction = 0.1f;
+	int sign = 1;
+	int i = 0;
+	int in_fraction = 0;
+
+	// Handle negative numbers
+	if (str[0] == '-') {
+		sign = -1;
+		i++;
+	}
+
+	// Convert digits
+	while (str[i] != '\0') {
+		if (str[i] >= '0' && str[i] <= '9') {
+			if (!in_fraction) {
+				result = result * 10.0f + (str[i] - '0');
+			} else {
+				result += (str[i] - '0') * fraction;
+				fraction *= 0.1f;
+			}
+		} else if (str[i] == '.') {
+			if (in_fraction) {
+				break; // Multiple decimal points, invalid
+			}
+			in_fraction = 1;
+		} else {
+			break; // Stop at non-digit, non-decimal point character
+		}
+		i++;
+	}
+
+	return sign * result;
+}
+
+void point_js_to_point(struct point_js *p_js, point *p)
+{
+	char buf[30];
+	p->time = 0;
+	strncpy(p->type, p_js->type, sizeof(p->type));
+	strncpy(p->key, p_js->key, sizeof(p->key));
+
+	if (strcmp(p_js->dataType, POINT_DATA_TYPE_FLOAT_S) == 0) {
+		p->data_type = POINT_DATA_TYPE_FLOAT;
+		// null terminate string so we can scan it
+		int cnt = MIN(p_js->data.length, sizeof(buf) - 1);
+		memcpy(buf, p_js->data.start, cnt);
+		buf[cnt] = 0;
+		*(float *)p->data = string_to_float(buf);
+	} else if (strcmp(p_js->dataType, POINT_DATA_TYPE_INT_S) == 0) {
+		p->data_type = POINT_DATA_TYPE_INT;
+		// null terminate string so we can scan it
+		int cnt = MIN(p_js->data.length, sizeof(buf) - 1);
+		memcpy(buf, p_js->data.start, cnt);
+		buf[cnt] = 0;
+		*(int *)p->data = string_to_int(buf);
+	} else if (strcmp(p_js->dataType, POINT_DATA_TYPE_STRING_S) == 0) {
+		p->data_type = POINT_DATA_TYPE_STRING;
+		int cnt = MIN(p_js->data.length, sizeof(p->data) - 1);
+		memcpy(p->data, p_js->data.start, cnt);
+		// make sure string is null terminated
+		p->data[cnt] = 0;
+	} else {
+		p->data_type = POINT_DATA_TYPE_UNKNOWN;
+		p->data[0] = 0;
+	}
+}
+
 // all of the point_js fields MUST be filled in or the encoder will crash
 int point_json_encode(point *p, char *buf, size_t len)
 {
@@ -218,7 +323,7 @@ int point_json_encode(point *p, char *buf, size_t len)
 
 	char data_buf[20];
 
-	point_js_pop_data(p, &p_js, data_buf, sizeof(data_buf));
+	point_to_point_js(p, &p_js, data_buf, sizeof(data_buf));
 
 	/* Calculate the encoded length. (could be smaller) */
 	ssize_t enc_len = json_calc_encoded_len(point_js_descr, ARRAY_SIZE(point_js_descr), &p_js);
@@ -231,7 +336,14 @@ int point_json_encode(point *p, char *buf, size_t len)
 
 int point_json_decode(char *json, size_t json_len, point *p)
 {
-	return json_obj_parse(json, json_len, point_js_descr, ARRAY_SIZE(point_js_descr), &p);
+	struct point_js p_js;
+	int ret = json_obj_parse(json, json_len, point_js_descr, ARRAY_SIZE(point_js_descr), &p_js);
+	if (ret < 0) {
+		return ret;
+	}
+
+	point_js_to_point(&p_js, p);
+	return 0;
 }
 
 int points_json_encode(point *pts_in, int count, char *buf, size_t len)
@@ -247,13 +359,37 @@ int points_json_encode(point *pts_in, int count, char *buf, size_t len)
 	for (int i = 0; i < count; i++) {
 		// make sure it is not an empty point
 		if (pts_in[i].type[0] != 0) {
-			point_js_pop_data(&pts_in[i], &pts_out.points[pts_out.len],
+			point_to_point_js(&pts_in[i], &pts_out.points[pts_out.len],
 					  data_buf[pts_out.len], sizeof(data_buf[pts_out.len]));
 			pts_out.len++;
 		}
 	}
 
 	return json_arr_encode_buf(point_js_array_descr, &pts_out, buf, len);
+}
+
+// returns the number of points decoded, or less than 0 for error
+int points_json_decode(char *json, size_t json_len, point *pts, size_t p_cnt)
+{
+	struct point_js_array pts_js;
+
+	int ret = json_arr_parse(json, json_len, point_js_array_descr, &pts_js);
+	if (ret != 0) {
+		return ret;
+	}
+
+	if (pts_js.len > p_cnt) {
+		LOG_ERR("Points array decode, decoded more points than target array: %zu",
+			pts_js.len);
+	}
+
+	int len = MIN(p_cnt, pts_js.len);
+	int i;
+	for (i = 0; i < len; i++) {
+		point_js_to_point(&pts_js.points[i], &pts[i]);
+	}
+
+	return i;
 }
 
 // pts must be initialized and not have random data in the string fields
@@ -272,6 +408,11 @@ int points_merge(point *pts, size_t pts_len, point *p)
 			if (empty_i < 0) {
 				empty_i = i;
 			}
+			continue;
+		} else if (pts[i].data_type == POINT_DATA_TYPE_UNKNOWN ||
+			   pts[i].data_type >= POINT_DATA_TYPE_END) {
+			LOG_ERR("not merging unknown point type: %s:%s, type:%i", pts[i].type,
+				pts[i].key, pts[i].data_type);
 			continue;
 		} else if (strncmp(pts[i].type, p->type, sizeof(p->type)) == 0 &&
 			   strncmp(pts[i].key, p->key, sizeof(p->key)) == 0) {

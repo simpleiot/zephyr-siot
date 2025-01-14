@@ -4,13 +4,14 @@ siot_setup() {
 }
 
 siot_net_frontend_watch() {
-	TARGET_IP=$1
-	if [ "$TARGET_IP" = "" ]; then
-		echo "target IP must be provided"
-		return 1
-	fi
+	# TARGET_IP is not working yet in elm-land.json
+	# TARGET_IP=$1
+	# if [ "$TARGET_IP" = "" ]; then
+	# 	echo "target IP must be provided"
+	# 	return 1
+	# fi
 
-	export TARGET_IP=$TARGET_IP
+	# export TARGET_IP=$TARGET_IP
 	(cd apps/siot-net/frontend && elm-land server)
 }
 

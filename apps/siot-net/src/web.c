@@ -1,13 +1,15 @@
 #include <point.h>
 
+#include <zephyr/data/json.h>
+#include <zephyr/fs/nvs.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/net/http/server.h>
 #include <zephyr/net/http/service.h>
-#include <zephyr/fs/nvs.h>
-#include <zephyr/zbus/zbus.h>
-#include <zephyr/data/json.h>
 #include <zephyr/sys/util.h>
+#include <zephyr/zbus/zbus.h>
+
+#include <string.h>
 
 #define STACKSIZE 1024
 #define PRIORITY  7
@@ -85,25 +87,72 @@ static int v1_handler(struct http_client_ctx *client, enum http_data_status stat
 		      const struct http_request_ctx *request_ctx, struct http_response_ctx *resp,
 		      void *user_data)
 {
-	LOG_DBG("v1 handler: %s", client->url_buffer);
 
-	if (status != HTTP_SERVER_DATA_FINAL) {
+	static uint8_t v1_payload_buf[128];
+	static size_t cursor;
+
+	if (client->method == HTTP_POST) {
+		// Copy payload to our buffer. Note that even for a small payload, it
+		// may arrive split into chunks (e.g. if the header size was such that
+		// the whole HTTP request exceeds the size of the client buffer).
+		if (request_ctx->data_len + cursor > sizeof(v1_payload_buf)) {
+			cursor = 0;
+			return -ENOMEM;
+		}
+
+		memcpy(v1_payload_buf + cursor, request_ctx->data, request_ctx->data_len);
+		cursor += request_ctx->data_len;
+	}
+
+	if (status == HTTP_SERVER_DATA_ABORTED) {
+		cursor = 0;
 		return 0;
 	}
 
-	if (strcmp(client->url_buffer, "/v1/points") == 0) {
-		int ret = points_json_encode(web_points, ARRAY_SIZE(web_points), recv_buffer,
-					     sizeof(recv_buffer));
-		if (ret != 0) {
-			LOG_ERR("Error returning JSON points: %i", ret);
-		}
-	} else {
-		sprintf(recv_buffer, "%s", CONFIG_BOARD_TARGET);
-	}
+	if (status == HTTP_SERVER_DATA_FINAL) {
+		if (strcmp(client->url_buffer, "/v1/points") == 0) {
+			if (client->method == HTTP_GET) {
+				k_mutex_lock(&web_points_lock, K_FOREVER);
+				int ret = points_json_encode(web_points, ARRAY_SIZE(web_points),
+							     recv_buffer, sizeof(recv_buffer));
+				k_mutex_unlock(&web_points_lock);
+				if (ret != 0) {
+					LOG_ERR("Error returning JSON points: %i", ret);
+				}
+			} else {
+				// must be a post
+				v1_payload_buf[cursor] = 0;
+				LOG_DBG("data: %s", v1_payload_buf);
 
-	resp->body = recv_buffer;
-	resp->body_len = strlen(recv_buffer);
-	resp->final_chunk = true;
+				point pts[5] = {};
+				int ret = points_json_decode(v1_payload_buf, cursor, pts,
+							     ARRAY_SIZE(pts));
+
+				if (ret < 0) {
+					LOG_DBG("Post error decoding data: %i", ret);
+					strcpy(recv_buffer, "{\"error\":\"error decoding data\"}");
+				} else {
+					// char buf[64];
+					// points_dump(pts, ret, buf, sizeof(buf));
+					// LOG_DBG("points received: %s", buf);
+					// k_mutex_lock(&web_points_lock, K_FOREVER);
+					for (int i = 0; i < ret; i++) {
+						points_merge(web_points, ARRAY_SIZE(web_points),
+							     &pts[i]);
+					}
+					k_mutex_unlock(&web_points_lock);
+				}
+				strcpy(recv_buffer, "{\"error\":\"\"}");
+			}
+		} else {
+			sprintf(recv_buffer, "%s", CONFIG_BOARD_TARGET);
+		}
+
+		resp->body = recv_buffer;
+		resp->body_len = strlen(recv_buffer);
+		resp->final_chunk = true;
+		cursor = 0;
+	}
 
 	return 0;
 }
@@ -112,7 +161,7 @@ struct http_resource_detail_dynamic v1_resource_detail = {
 	.common =
 		{
 			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
-			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET) | BIT(HTTP_POST),
 		},
 	.cb = v1_handler,
 	.user_data = NULL,
@@ -133,7 +182,10 @@ void web_thread(void *arg1, void *arg2, void *arg3)
 	const struct zbus_channel *chan;
 	while (!zbus_sub_wait_msg(&web_sub, &chan, &p, K_FOREVER)) {
 		if (chan == &point_chan) {
+
+			k_mutex_lock(&web_points_lock, K_FOREVER);
 			int ret = points_merge(web_points, ARRAY_SIZE(web_points), &p);
+			k_mutex_unlock(&web_points_lock);
 			if (ret != 0) {
 				LOG_ERR("Error storing point in web point cache: %i", ret);
 			}
