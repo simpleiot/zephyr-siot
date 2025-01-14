@@ -1,2 +1,4 @@
 build
 .cache
+twister*
+flash.bin

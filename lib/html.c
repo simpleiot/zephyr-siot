@@ -1,4 +1,3 @@
-
 #include <ctype.h>
 #include <zephyr/kernel.h>
 #include <string.h>
