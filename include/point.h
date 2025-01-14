@@ -25,6 +25,8 @@ typedef struct {
 #define POINT_DATA_TYPE_INT 2
 #define POINT_DATA_TYPE_STRING 3
 #define POINT_DATA_TYPE_JSON 4
+// always keep _END at the end of this list
+#define POINT_DATA_TYPE_END 5 
 
 // We use 3 letter codes for data types in JSON packets so they are easier to read
 #define POINT_DATA_TYPE_FLOAT_S "FLT"

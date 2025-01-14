@@ -319,3 +319,27 @@ ZTEST(point_tests, decode_point_with_no_datatype)
 
 	zassert_str_equal(p.type, POINT_TYPE_TEMPERATURE, "point type is not correct");
 }
+
+ZTEST(point_tests, merge_with_no_datatype)
+{
+	point pts[5] = {0};
+
+	int ret = points_merge(pts, ARRAY_SIZE(pts), &test_points[0]);
+	zassert_ok(ret);
+
+	point p = test_points[0];
+	point_put_int(&p, 55);
+	// set the data_type to ""
+	p.data_type = 0;
+
+	ret = points_merge(pts, ARRAY_SIZE(pts), &p);
+	zassert_ok(ret);
+
+	zassert_not_equal(point_get_int(&p), point_get_int(&test_points[0]));
+
+	zassert_equal(55, point_get_int(&pts[0]));
+
+	char buf[64];
+	points_dump(pts, ARRAY_SIZE(pts), buf, sizeof(buf));
+	LOG_DBG("pts: %s", buf);
+}

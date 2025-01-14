@@ -250,6 +250,7 @@ void point_js_to_point(struct point_js *p_js, point *p)
 		p->data[cnt] = 0;
 	} else {
 		p->data_type = POINT_DATA_TYPE_UNKNOWN;
+		p->data[0] = 0;
 	}
 }
 
@@ -339,6 +340,11 @@ int points_merge(point *pts, size_t pts_len, point *p)
 			if (empty_i < 0) {
 				empty_i = i;
 			}
+			continue;
+		} else if (pts[i].data_type == POINT_DATA_TYPE_UNKNOWN ||
+			   pts[i].data_type >= POINT_DATA_TYPE_END) {
+			LOG_ERR("not merging unknown point type: %s:%s, type:%i", pts[i].type,
+				pts[i].key, pts[i].data_type);
 			continue;
 		} else if (strncmp(pts[i].type, p->type, sizeof(p->type)) == 0 &&
 			   strncmp(pts[i].key, p->key, sizeof(p->key)) == 0) {
