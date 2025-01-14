@@ -1,0 +1,4 @@
+tests:
+  point_tests.test_test:
+    platform_allow: native_posix
+    tags: point

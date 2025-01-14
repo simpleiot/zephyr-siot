@@ -9,12 +9,19 @@ zephyr_include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common)
 
 target_sources(app PRIVATE 
 	src/main.c 
-	${CMAKE_CURRENT_SOURCE_DIR}/../common/html.c
+	src/web.c
 )
 
 set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)
-set(source_file_index src/index.html)
-generate_inc_file_for_target(app ${source_file_index} ${gen_dir}/index.html.gz.inc --gzip)
+
+foreach(web_resource index.html index.js)
+	generate_inc_file_for_target(
+		app
+		frontend/dist/${web_resource}
+		${gen_dir}/${web_resource}.gz.inc
+		--gzip
+	)
+endforeach()
 
 zephyr_linker_sources(SECTIONS sections-rom.ld)
 

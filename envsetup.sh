@@ -3,6 +3,41 @@ siot_setup() {
 	west blobs fetch hal_espressif
 }
 
+siot_net_frontend_watch() {
+	# TARGET_IP is not working yet in elm-land.json
+	# TARGET_IP=$1
+	# if [ "$TARGET_IP" = "" ]; then
+	# 	echo "target IP must be provided"
+	# 	return 1
+	# fi
+
+	# export TARGET_IP=$TARGET_IP
+	(cd apps/siot-net/frontend && elm-land server)
+}
+
+siot_net_frontend_build() {
+	(
+		cd apps/siot-net/frontend &&
+			(
+				elm-land build &&
+					mv dist/assets/index*.js dist/ &&
+					for file in dist/index-*.js; do mv "$file" "${file/index-*./index.}"; done &&
+					sed -i 's/assets\/index-[A-Za-z0-9]\+-\.js/index.js/g' dist/index.html ||
+					return 1
+			)
+	)
+}
+
+siot_build_native_sim() {
+	APP=$1
+	west build -b native_sim "${APP}"
+}
+
+# run all library tests on host platform
+siot_test_native() {
+	siot_build_native_sim tests && ./build/zephyr/zephyr.exe
+}
+
 # See https://community.tmpdir.org/t/zephyr-on-the-esp32/1310 for a comparison of ESP hardware
 
 # https://www.olimex.com/Products/IoT/ESP32/ESP32-POE/open-source-hardware
