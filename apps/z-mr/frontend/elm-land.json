@@ -1,0 +1,45 @@
+{
+  "app": {
+    "elm": {
+      "development": {
+        "debugger": true
+      },
+      "production": {
+        "debugger": false
+      }
+    },
+    "env": [
+      "TARGET_URL"
+    ],
+    "html": {
+      "attributes": {
+        "html": {
+          "lang": "en"
+        },
+        "head": {}
+      },
+      "title": "Z-MR UI",
+      "meta": [
+        {
+          "charset": "UTF-8"
+        },
+        {
+          "http-equiv": "X-UA-Compatible",
+          "content": "IE=edge"
+        },
+        {
+          "name": "viewport",
+          "content": "width=device-width, initial-scale=1.0"
+        }
+      ],
+      "link": [],
+      "script": []
+    },
+    "router": {
+      "useHashRouting": false
+    },
+    "proxy": {
+      "/v1": "http://10.0.0.136"
+    }
+  }
+}
