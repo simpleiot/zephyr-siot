@@ -298,6 +298,18 @@ ZTEST(point_tests, decode_point_array)
 	zassert_str_equal(pts[2].data, "device #4");
 }
 
+ZTEST(point_tests, decode_point_array_size_one)
+{
+	char buf[] = "[{\"time\":\"\",\"type\":\"staticIP\",\"key\":\"0\",\"dataType\":\"INT\","
+		     "\"data\":\"1\"}]";
+	point pts[5];
+
+	int ret = points_json_decode(buf, sizeof(test_point_all_json), pts, ARRAY_SIZE(pts));
+	zassert(ret == 1, "did not decode 1 points");
+
+	zassert(point_get_int(&pts[0]) == 1, "point 0 not correct value");
+}
+
 char test_point1_no_datatype_json[] =
 	"{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"dataType\":\"\",\"data\":"
 	"\"-32\"}";
