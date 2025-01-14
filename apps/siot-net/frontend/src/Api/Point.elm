@@ -7,6 +7,7 @@ module Api.Point exposing
     , dataTypeString
     , fetch
     , get
+    , getBool
     , getNum
     , getText
     , post
@@ -151,6 +152,11 @@ getNum points typ key =
 
         Nothing ->
             0
+
+
+getBool : List Point -> String -> String -> Bool
+getBool points typ key =
+    getNum points typ key == 1
 
 
 getText : List Point -> String -> String -> String

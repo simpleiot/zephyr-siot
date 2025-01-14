@@ -199,7 +199,7 @@ settings : List Point -> Bool -> Element Msg
 settings points edit =
     column [ spacing 20, Form.onEnterEsc (ApiPostPoints points) DiscardEdits ]
         [ inputText points "0" Point.typeDescription "Description" "desc"
-        , inputText points "0" Point.typeAddress "IP Address" "ip addr"
+        , inputCheckbox points "0" Point.typeStaticIP "Static IP"
         , viewIf edit <|
             Form.buttonRow <|
                 [ Form.button
@@ -251,6 +251,41 @@ inputText pts key typ lbl placeholder =
 
             else
                 Input.labelLeft [ width (px labelWidth) ] <| el [ alignRight ] <| text <| lbl ++ ":"
+        }
+
+
+inputCheckbox : List Point -> String -> String -> String -> Element Msg
+inputCheckbox pts key typ lbl =
+    let
+        labelWidth =
+            120
+    in
+    Input.checkbox
+        []
+        { onChange =
+            \d ->
+                let
+                    v =
+                        if d then
+                            "1"
+
+                        else
+                            "0"
+                in
+                EditPoint [ Point "" typ key Point.dataTypeInt v ]
+        , checked =
+            Point.getBool pts typ key
+        , icon = Input.defaultCheckbox
+        , label =
+            if lbl /= "" then
+                Input.labelLeft [ width (px labelWidth) ] <|
+                    el [ alignRight ] <|
+                        text <|
+                            lbl
+                                ++ ":"
+
+            else
+                Input.labelHidden ""
         }
 
 
