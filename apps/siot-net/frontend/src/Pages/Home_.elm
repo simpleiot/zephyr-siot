@@ -197,9 +197,19 @@ statusTable points =
 
 settings : List Point -> Bool -> Element Msg
 settings points edit =
-    column [ spacing 20, Form.onEnterEsc (ApiPostPoints points) DiscardEdits ]
+    let
+        staticIP =
+            Point.getBool points Point.typeStaticIP ""
+    in
+    column [ spacing 15, Form.onEnterEsc (ApiPostPoints points) DiscardEdits ]
         [ inputText points "0" Point.typeDescription "Description" "desc"
         , inputCheckbox points "0" Point.typeStaticIP "Static IP"
+        , viewIf staticIP <|
+            column [ spacing 15 ]
+                [ inputText points "0" Point.typeAddress "IP Addr" "ex: 10.0.0.23"
+                , inputText points "0" Point.typeNetmask "Netmask" "ex: 255.255.255.0"
+                , inputText points "0" Point.typeGateway "Gateway" "ex: 10.0.0.1"
+                ]
         , viewIf edit <|
             Form.buttonRow <|
                 [ Form.button
@@ -219,9 +229,6 @@ settings points edit =
 inputText : List Point -> String -> String -> String -> String -> Element Msg
 inputText pts key typ lbl placeholder =
     let
-        textRaw =
-            Point.getText pts typ key
-
         labelWidth =
             120
     in
@@ -230,20 +237,7 @@ inputText pts key typ lbl placeholder =
         { onChange =
             \d ->
                 EditPoint [ Point "" typ key Point.dataTypeString d ]
-        , text =
-            if textRaw == "123BLANK123" then
-                ""
-
-            else
-                let
-                    v =
-                        Point.getNum pts typ key
-                in
-                if v /= 0 then
-                    ""
-
-                else
-                    textRaw
+        , text = Point.getText pts typ key
         , placeholder = Just <| Input.placeholder [] <| text placeholder
         , label =
             if lbl == "" then
