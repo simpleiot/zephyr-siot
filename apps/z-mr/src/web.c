@@ -11,7 +11,7 @@
 
 #include <string.h>
 
-#define STACKSIZE 2048
+#define STACKSIZE 1024
 #define PRIORITY  7
 
 LOG_MODULE_REGISTER(siot_web, LOG_LEVEL_DBG);
