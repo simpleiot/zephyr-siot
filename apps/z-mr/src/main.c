@@ -25,6 +25,8 @@ int main(void)
 {
 	LOG_INF("Zonit M+R: %s %s", CONFIG_BOARD_TARGET, APP_VERSION_EXTENDED_STRING);
 
+	LOG_DBG("CLIFF: test float: %f", 12.342);
+
 	// In your initialization code:
 	net_mgmt_init_event_callback(&mgmt_cb, net_event_handler, NET_EVENT_L4_CONNECTED);
 	net_mgmt_add_event_callback(&mgmt_cb);

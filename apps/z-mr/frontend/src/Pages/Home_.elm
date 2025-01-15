@@ -236,7 +236,7 @@ inputText pts key typ lbl placeholder =
         []
         { onChange =
             \d ->
-                EditPoint [ Point "" typ key Point.dataTypeString d ]
+                EditPoint [ Point typ key Point.dataTypeString d ]
         , text = Point.getText pts typ key
         , placeholder = Just <| Input.placeholder [] <| text placeholder
         , label =
@@ -266,7 +266,7 @@ inputCheckbox pts key typ lbl =
                         else
                             "0"
                 in
-                EditPoint [ Point "" typ key Point.dataTypeInt v ]
+                EditPoint [ Point typ key Point.dataTypeInt v ]
         , checked =
             Point.getBool pts typ key
         , icon = Input.defaultCheckbox
