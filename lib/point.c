@@ -1,4 +1,5 @@
 #include <point.h>
+#include <siot-string.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -184,97 +185,6 @@ static const struct json_obj_descr point_js_array_descr[] = {
 				 point_js_descr, ARRAY_SIZE(point_js_descr)),
 };
 
-void ftoa(float num, char *str, int precision)
-{
-	int whole = (int)num;
-	float fraction = num - whole;
-	int i = 0;
-
-	// Convert whole part
-	if (whole == 0) {
-		str[i++] = '0';
-	} else {
-		int temp = whole;
-		while (temp > 0) {
-			temp /= 10;
-			i++;
-		}
-		int j = i - 1;
-		temp = whole;
-		while (temp > 0) {
-			str[j--] = (temp % 10) + '0';
-			temp /= 10;
-		}
-	}
-
-	// Add decimal point
-	if (precision > 0) {
-		str[i++] = '.';
-
-		// Convert fractional part
-		while (precision > 0) {
-			fraction *= 10;
-			int digit = (int)fraction;
-			str[i++] = digit + '0';
-			fraction -= digit;
-			precision--;
-		}
-	}
-
-	str[i] = '\0';
-}
-
-void reverse(char *str, int length)
-{
-	int start = 0;
-	int end = length - 1;
-	while (start < end) {
-		char temp = str[start];
-		str[start] = str[end];
-		str[end] = temp;
-		start++;
-		end--;
-	}
-}
-
-char *itoa(int num, char *str, int base)
-{
-	int i = 0;
-	int isNegative = 0;
-
-	// Handle 0 explicitly
-	if (num == 0) {
-		str[i++] = '0';
-		str[i] = '\0';
-		return str;
-	}
-
-	// Handle negative numbers for base 10
-	if (num < 0 && base == 10) {
-		isNegative = 1;
-		num = -num;
-	}
-
-	// Process individual digits
-	while (num != 0) {
-		int rem = num % base;
-		str[i++] = (rem > 9) ? (rem - 10) + 'a' : rem + '0';
-		num = num / base;
-	}
-
-	// Append negative sign for base 10
-	if (isNegative) {
-		str[i++] = '-';
-	}
-
-	str[i] = '\0';
-
-	// Reverse the string
-	reverse(str, i);
-
-	return str;
-}
-
 // point_js has pointers to strings, so the buf is used to store these strings
 // Note: this functions assumes the input point will be valid for the duration of
 // of the p_js lifecycle, as we are populating points to strings in the original
@@ -310,68 +220,6 @@ void point_to_point_js(point *p, struct point_js *p_js, char *buf, size_t buf_le
 	}
 }
 
-int string_to_int(const char *str)
-{
-	int result = 0;
-	int sign = 1;
-	int i = 0;
-
-	// Handle negative numbers
-	if (str[0] == '-') {
-		sign = -1;
-		i++;
-	}
-
-	// Convert each digit
-	while (str[i] != '\0') {
-		if (str[i] >= '0' && str[i] <= '9') {
-			result = result * 10 + (str[i] - '0');
-		} else {
-			break; // Stop at non-digit character
-		}
-		i++;
-	}
-
-	return sign * result;
-}
-
-float string_to_float(const char *str)
-{
-	float result = 0.0f;
-	float fraction = 0.1f;
-	int sign = 1;
-	int i = 0;
-	int in_fraction = 0;
-
-	// Handle negative numbers
-	if (str[0] == '-') {
-		sign = -1;
-		i++;
-	}
-
-	// Convert digits
-	while (str[i] != '\0') {
-		if (str[i] >= '0' && str[i] <= '9') {
-			if (!in_fraction) {
-				result = result * 10.0f + (str[i] - '0');
-			} else {
-				result += (str[i] - '0') * fraction;
-				fraction *= 0.1f;
-			}
-		} else if (str[i] == '.') {
-			if (in_fraction) {
-				break; // Multiple decimal points, invalid
-			}
-			in_fraction = 1;
-		} else {
-			break; // Stop at non-digit, non-decimal point character
-		}
-		i++;
-	}
-
-	return sign * result;
-}
-
 void point_js_to_point(struct point_js *p_js, point *p)
 {
 	char buf[30];
@@ -385,14 +233,14 @@ void point_js_to_point(struct point_js *p_js, point *p)
 		int cnt = MIN(p_js->d.length, sizeof(buf) - 1);
 		memcpy(buf, p_js->d.start, cnt);
 		buf[cnt] = 0;
-		*(float *)p->data = string_to_float(buf);
+		*(float *)p->data = atof(buf);
 	} else if (strcmp(p_js->dt, POINT_DATA_TYPE_INT_S) == 0) {
 		p->data_type = POINT_DATA_TYPE_INT;
 		// null terminate string so we can scan it
 		int cnt = MIN(p_js->d.length, sizeof(buf) - 1);
 		memcpy(buf, p_js->d.start, cnt);
 		buf[cnt] = 0;
-		*(int *)p->data = string_to_int(buf);
+		*(int *)p->data = atoi(buf);
 	} else if (strcmp(p_js->dt, POINT_DATA_TYPE_STRING_S) == 0) {
 		p->data_type = POINT_DATA_TYPE_STRING;
 		int cnt = MIN(p_js->d.length, sizeof(p->data) - 1);
