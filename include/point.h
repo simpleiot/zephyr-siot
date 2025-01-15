@@ -50,17 +50,17 @@ typedef struct {
 #define POINT_TYPE_BOARD "board"
 #define POINT_TYPE_BOOT_COUNT "bootCount"
 
-void point_set_type(point *p, char *t);
-void point_set_key(point *p, char *k);
-void point_set_type_key(point *p, char *t, char *k);
+void point_set_type(point *p, const char *t);
+void point_set_key(point *p, const char *k);
+void point_set_type_key(point *p, const char *t, const char *k);
 
 int point_get_int(point *p);
 float point_get_float(point *p);
 void point_get_string(point *p, char *dest, int len);
 
-void point_put_int(point *p, int v);
-void point_put_float(point *p, float v);
-void point_put_string(point *p, char *v);
+void point_put_int(point *p, const int v);
+void point_put_float(point *p, const float v);
+void point_put_string(point *p, const char *v);
 
 int point_data_len(point *p);
 int point_dump(point *p, char *buf, size_t len);

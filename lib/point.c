@@ -9,17 +9,17 @@
 
 LOG_MODULE_REGISTER(z_point, LOG_LEVEL_DBG);
 
-void point_set_type(point *p, char *t)
+void point_set_type(point *p, const char *t)
 {
 	strncpy(p->type, t, sizeof(p->type));
 }
 
-void point_set_key(point *p, char *k)
+void point_set_key(point *p, const char *k)
 {
 	strncpy(p->key, k, sizeof(p->key));
 }
 
-void point_set_type_key(point *p, char *t, char *k)
+void point_set_type_key(point *p, const char *t, const char *k)
 {
 	strncpy(p->type, t, sizeof(p->type));
 	strncpy(p->key, k, sizeof(p->key));
@@ -40,19 +40,19 @@ void point_get_string(point *p, char *dest, int len)
 	strncpy(dest, p->data, len);
 }
 
-void point_put_int(point *p, int v)
+void point_put_int(point *p, const int v)
 {
 	p->data_type = POINT_DATA_TYPE_INT;
 	*((int *)(p->data)) = v;
 }
 
-void point_put_float(point *p, float v)
+void point_put_float(point *p, const float v)
 {
 	p->data_type = POINT_DATA_TYPE_FLOAT;
 	*((float *)(p->data)) = v;
 }
 
-void point_put_string(point *p, char *v)
+void point_put_string(point *p, const char *v)
 {
 	p->data_type = POINT_DATA_TYPE_STRING;
 	strncpy(p->data, v, sizeof(p->data));
