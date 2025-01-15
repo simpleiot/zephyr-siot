@@ -88,17 +88,12 @@ void z_dc_thread(void *arg1, void *arg2, void *arg3)
 			snprintf(index, sizeof(index), "%i", i);
 			point_set_type_key(&p, ats_states[j], index);
 			point_put_int(&p, 0);
-			char buf[30];
-			point_dump(&p, buf, sizeof(buf));
-			LOG_DBG("CLIFF: dc point: %s", buf);
 			int ret = zbus_chan_pub(&point_chan, &p, K_MSEC(500));
 			if (ret != 0) {
 				LOG_ERR("Error sending initial ats state: %i", ret);
 			}
 		}
 	}
-
-	LOG_DBG("CLIFF: after send initial states()");
 
 	struct input_event evt;
 
