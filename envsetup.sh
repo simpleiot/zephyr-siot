@@ -3,6 +3,38 @@ siot_setup() {
 	west blobs fetch hal_espressif
 }
 
+############################
+# Utility functions
+############################
+
+siot_ram_report() {
+	west build -t ram_report
+}
+
+siot_rom_reportm_report() {
+	west build -t rom_report
+}
+
+siot_peek_generated_confg() {
+	$EDITOR build/zephyr/include/generated/zephyr/autoconf.h
+}
+
+siot_peek_generated_dts() {
+	$EDITOR build/zephyr/zephyr.dts
+}
+
+siot_clean() {
+	rm -rf build
+}
+
+siot_menuconfig() {
+	west build -t menuconfig
+}
+
+############################
+# Target build functions
+############################
+
 siot_net_frontend_watch() {
 	# TARGET_IP is not working yet in elm-land.json
 	# TARGET_IP=$1
@@ -22,7 +54,7 @@ siot_net_frontend_build() {
 				elm-land build &&
 					mv dist/assets/index*.js dist/ &&
 					for file in dist/index-*.js; do mv "$file" "${file/index-*./index.}"; done &&
-					sed -i 's/assets\/index-[A-Za-z0-9]\+-\.js/index.js/g' dist/index.html ||
+					sed -i 's/assets\/index.*\.js/index.js/g' dist/index.html ||
 					return 1
 			)
 	)
@@ -112,22 +144,6 @@ siot_flash_esp() {
 
 siot_flash_esp_cliff() {
 	siot_flash_esp /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
-}
-
-siot_peek_generated_confg() {
-	$EDITOR build/zephyr/include/generated/zephyr/autoconf.h
-}
-
-siot_peek_generated_dts() {
-	$EDITOR build/zephyr/zephyr.dts
-}
-
-siot_clean() {
-	rm -rf build
-}
-
-siot_menuconfig() {
-	west build -t menuconfig
 }
 
 GENERATED_DEFCONFIG=build/zephyr/kconfig/defconfig
