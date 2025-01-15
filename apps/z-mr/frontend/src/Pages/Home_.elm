@@ -133,6 +133,7 @@ view model =
                     { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
                     , description = "Z-MR"
                     }
+                , el [ Font.size 43, Font.bold ] <| text "Z-MR"
                 ]
             , deviceContent model
             , h1 "Devices"
@@ -178,6 +179,7 @@ statusTable points =
             , { name = "Boot count", value = Point.getText points Point.typeBootCount "0" }
             , { name = "CPU Usage", value = Round.round 2 (Point.getNum points Point.typeMetricSysCPUPercent "0") ++ "%" }
             , { name = "Uptime", value = Point.getText points Point.typeUptime "0" ++ "s" }
+            , { name = "Temperature", value = Round.round 2 (Point.getNum points Point.typeTemperature "0") ++ " °C" }
             ]
     in
     table [ padding 0, Border.width 1, width shrink ]
