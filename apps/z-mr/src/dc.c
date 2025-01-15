@@ -11,7 +11,7 @@
 #include <zephyr/input/input.h>
 #include <zephyr/zbus/zbus.h>
 
-#define STACKSIZE 512
+#define STACKSIZE 1024
 #define PRIORITY  7
 
 LOG_MODULE_REGISTER(z_dc, LOG_LEVEL_DBG);
