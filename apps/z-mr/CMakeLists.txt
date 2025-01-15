@@ -11,7 +11,7 @@ zephyr_include_directories(
 
 target_sources(app PRIVATE 
 	src/main.c 
-	# src/led.c
+	src/led.c
 	src/w1.c
 	src/web.c
 	src/dc.c

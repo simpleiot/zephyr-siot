@@ -1,4 +1,7 @@
 #include "ats.h"
+#include "zpoint.h"
+#include <point.h>
+#include <siot-string.h>
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -13,8 +16,8 @@
 
 LOG_MODULE_REGISTER(z_led, LOG_LEVEL_DBG);
 
-ZBUS_CHAN_DECLARE(z_ats_chan);
-ZBUS_CHAN_DECLARE(z_ticker_chan);
+ZBUS_CHAN_DECLARE(point_chan);
+ZBUS_CHAN_DECLARE(ticker_chan);
 
 #define I2C0_NODE DT_NODELABEL(mcp23018_20)
 static const struct i2c_dt_spec gpioExpander = I2C_DT_SPEC_GET(I2C0_NODE);
@@ -102,9 +105,9 @@ void z_leds_test_pattern(const struct device *mcp_device)
 
 static ats_state astate = INIT_ATS_STATE();
 
-ZBUS_SUBSCRIBER_DEFINE(z_led_sub, 8);
-ZBUS_CHAN_ADD_OBS(z_ats_chan, z_led_sub, 1);
-ZBUS_CHAN_ADD_OBS(z_ticker_chan, z_led_sub, 2);
+ZBUS_MSG_SUBSCRIBER_DEFINE(z_led_sub);
+ZBUS_CHAN_ADD_OBS(point_chan, z_led_sub, 3);
+ZBUS_CHAN_ADD_OBS(ticker_chan, z_led_sub, 4);
 
 void z_leds_thread(void *arg1, void *arg2, void *arg3)
 {
@@ -131,60 +134,106 @@ void z_leds_thread(void *arg1, void *arg2, void *arg3)
 
 	// z_leds_test_pattern(mcp_device);
 
+	// while (1) {
+	// 	k_msleep(1000);
+	// }
+
 	bool blink_on = false;
 
-	while (1) {
-		k_msleep(1000);
-		const struct zbus_channel *chan;
-		while (!zbus_sub_wait(&z_led_sub, &chan, K_FOREVER)) {
-			if (chan == &z_ats_chan) {
-				zbus_chan_read(&z_ats_chan, &astate, K_NO_WAIT);
-			} else if (chan == &z_ticker_chan) {
-				for (int i = 0; i < sizeof(astate) / sizeof(astate.state[0]); i++) {
-					ats_led_state s = z_ats_get_led_state_a(&astate.state[i]);
-					switch (s) {
-					case ATS_LED_OFF:
-						z_led_set(mcp_device, false, i, false);
-						break;
-					case ATS_LED_ON:
-						z_led_set(mcp_device, false, i, true);
-						break;
-					case ATS_LED_BLINK:
-						if (blink_on) {
-							z_led_set(mcp_device, false, i, true);
-						} else {
-							z_led_set(mcp_device, false, i, false);
-						}
-						break;
-					case ATS_LED_ERROR:
-						// TODO: should fast blink here or something
-						z_led_set(mcp_device, false, i, false);
-						break;
-					}
+	point p;
+	const struct zbus_channel *chan;
 
-					s = z_ats_get_led_state_b(&astate.state[i]);
-					switch (s) {
-					case ATS_LED_OFF:
-						z_led_set(mcp_device, true, i, false);
-						break;
-					case ATS_LED_ON:
-						z_led_set(mcp_device, true, i, true);
-						break;
-					case ATS_LED_BLINK:
-						if (blink_on) {
-							z_led_set(mcp_device, true, i, true);
-						} else {
-							z_led_set(mcp_device, true, i, false);
-						}
-						break;
-					case ATS_LED_ERROR:
-						// TODO: should fast blink here or something
-						z_led_set(mcp_device, true, i, false);
-						break;
-					}
-				}
-				blink_on = !blink_on;
+	while (!zbus_sub_wait_msg(&z_led_sub, &chan, &p, K_FOREVER)) {
+		if (chan == &point_chan) {
+			bool ats_point = false;
+			int dc;
+			if (strcmp(p.type, POINT_TYPE_ATS_AON) == 0) {
+				ats_point = true;
+				dc = AON;
+			} else if (strcmp(p.type, POINT_TYPE_ATS_ONA) == 0) {
+				ats_point = true;
+				dc = ONA;
+			} else if (strcmp(p.type, POINT_TYPE_ATS_BON) == 0) {
+				ats_point = true;
+				dc = BON;
+			} else if (strcmp(p.type, POINT_TYPE_ATS_ONB) == 0) {
+				ats_point = true;
+				dc = ONB;
 			}
+			if (!ats_point) {
+				continue;
+			}
+
+			int ats = atoi(p.key);
+
+			if (ats < 0 || ats > 5) {
+				LOG_ERR("ats index out of range: %i", ats);
+				continue;
+			}
+
+			bool state = point_get_int(&p);
+
+			switch (dc) {
+			case AON:
+				astate.state[ats].aon = state;
+				break;
+			case ONA:
+				astate.state[ats].ona = state;
+				break;
+			case BON:
+				astate.state[ats].bon = state;
+				break;
+			case ONB:
+				astate.state[ats].onb = state;
+				break;
+			};
+
+			LOG_DBG("got point, ats: %i, DC: %s, state: %i", ats, p.type, state);
+		} else if (chan == &ticker_chan) {
+			for (int i = 0; i < sizeof(astate) / sizeof(astate.state[0]); i++) {
+				ats_led_state s = z_ats_get_led_state_a(&astate.state[i]);
+				switch (s) {
+				case ATS_LED_OFF:
+					z_led_set(mcp_device, false, i, false);
+					break;
+				case ATS_LED_ON:
+					z_led_set(mcp_device, false, i, true);
+					break;
+				case ATS_LED_BLINK:
+					if (blink_on) {
+						z_led_set(mcp_device, false, i, true);
+					} else {
+						z_led_set(mcp_device, false, i, false);
+					}
+					break;
+				case ATS_LED_ERROR:
+					// TODO: should fast blink here or something
+					z_led_set(mcp_device, false, i, false);
+					break;
+				}
+
+				s = z_ats_get_led_state_b(&astate.state[i]);
+				switch (s) {
+				case ATS_LED_OFF:
+					z_led_set(mcp_device, true, i, false);
+					break;
+				case ATS_LED_ON:
+					z_led_set(mcp_device, true, i, true);
+					break;
+				case ATS_LED_BLINK:
+					if (blink_on) {
+						z_led_set(mcp_device, true, i, true);
+					} else {
+						z_led_set(mcp_device, true, i, false);
+					}
+					break;
+				case ATS_LED_ERROR:
+					// TODO: should fast blink here or something
+					z_led_set(mcp_device, true, i, false);
+					break;
+				}
+			}
+			blink_on = !blink_on;
 		}
 	}
 }
