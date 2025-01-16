@@ -42,13 +42,11 @@ INPUT_CALLBACK_DEFINE(keymap_dev, keymap_callback, NULL);
 void send_initial_states(void)
 {
 	char *ats_states[] = {
-		POINT_TYPE_ATS_AON,
-		POINT_TYPE_ATS_ONA,
-		POINT_TYPE_ATS_BON,
-		POINT_TYPE_ATS_ONB,
+		POINT_TYPE_ATS_A,
+		POINT_TYPE_ATS_B,
 	};
 
-	for (int i = 0; i < 1; i++) {
+	for (int i = 0; i < 6; i++) {
 		for (int j = 0; j < ARRAY_SIZE(ats_states); j++) {
 			point p;
 			char index[10];
@@ -75,10 +73,8 @@ void z_dc_thread(void *arg1, void *arg2, void *arg3)
 	// send_initial_states();
 
 	char *ats_states[] = {
-		POINT_TYPE_ATS_AON,
-		POINT_TYPE_ATS_ONA,
-		POINT_TYPE_ATS_BON,
-		POINT_TYPE_ATS_ONB,
+		POINT_TYPE_ATS_A,
+		POINT_TYPE_ATS_B,
 	};
 
 	for (int i = 0; i < 6; i++) {
@@ -112,29 +108,29 @@ void z_dc_thread(void *arg1, void *arg2, void *arg3)
 			const char *msg = "unknown";
 			const char *point_type = "unknown";
 
+			bool on_b = false;
+
 			switch (ats_event) {
 			case AON:
 				msg = MSG_AON;
-				point_type = POINT_TYPE_ATS_AON;
 				astate.state[ats].aon = evt.value;
 				break;
 
 			case ONA:
 				msg = MSG_ONA;
-				point_type = POINT_TYPE_ATS_ONA;
 				astate.state[ats].ona = evt.value;
 				break;
 
 			case BON:
 				msg = MSG_BON;
-				point_type = POINT_TYPE_ATS_BON;
 				astate.state[ats].bon = evt.value;
+				on_b = true;
 				break;
 
 			case ONB:
 				msg = MSG_ONB;
-				point_type = POINT_TYPE_ATS_ONB;
 				astate.state[ats].onb = evt.value;
+				on_b = true;
 				break;
 			}
 
@@ -143,8 +139,14 @@ void z_dc_thread(void *arg1, void *arg2, void *arg3)
 			char index[10];
 			sprintf(index, "%i", ats);
 
-			point_set_type_key(&p, point_type, index);
-			point_put_int(&p, evt.value);
+			if (!on_b) {
+				point_set_type_key(&p, POINT_TYPE_ATS_A, index);
+				point_put_int(&p, z_ats_get_state_a(&astate.state[ats]));
+			} else {
+				point_set_type_key(&p, POINT_TYPE_ATS_B, index);
+				point_put_int(&p, z_ats_get_state_b(&astate.state[ats]));
+			}
+
 			zbus_chan_pub(&point_chan, &p, K_MSEC(500));
 
 			LOG_DBG("ATS #%i: %s: %i", ats + 1, msg, evt.value);

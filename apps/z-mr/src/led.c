@@ -1,4 +1,5 @@
 #include "ats.h"
+#include "zephyr/sys/util.h"
 #include "zpoint.h"
 #include <point.h>
 #include <siot-string.h>
@@ -103,7 +104,8 @@ void z_leds_test_pattern(const struct device *mcp_device)
 	}
 }
 
-static ats_state astate = INIT_ATS_STATE();
+static ats_chan_state ats_chan_state_a[6];
+static ats_chan_state ats_chan_state_b[6];
 
 ZBUS_MSG_SUBSCRIBER_DEFINE(z_led_sub);
 ZBUS_CHAN_ADD_OBS(point_chan, z_led_sub, 3);
@@ -145,89 +147,60 @@ void z_leds_thread(void *arg1, void *arg2, void *arg3)
 
 	while (!zbus_sub_wait_msg(&z_led_sub, &chan, &p, K_FOREVER)) {
 		if (chan == &point_chan) {
-			bool ats_point = false;
-			int dc;
-			if (strcmp(p.type, POINT_TYPE_ATS_AON) == 0) {
-				ats_point = true;
-				dc = AON;
-			} else if (strcmp(p.type, POINT_TYPE_ATS_ONA) == 0) {
-				ats_point = true;
-				dc = ONA;
-			} else if (strcmp(p.type, POINT_TYPE_ATS_BON) == 0) {
-				ats_point = true;
-				dc = BON;
-			} else if (strcmp(p.type, POINT_TYPE_ATS_ONB) == 0) {
-				ats_point = true;
-				dc = ONB;
+			if (strcmp(p.type, POINT_TYPE_ATS_A) == 0) {
+				int ats = atoi(p.key);
+				if (ats >= ARRAY_SIZE(ats_chan_state_a)) {
+					LOG_ERR("Point index exceeds state array size");
+					continue;
+				}
+				ats_chan_state_a[ats] = point_get_int(&p);
+			} else if (strcmp(p.type, POINT_TYPE_ATS_B) == 0) {
+				int ats = atoi(p.key);
+				if (ats >= ARRAY_SIZE(ats_chan_state_b)) {
+					LOG_ERR("Point index exceeds state array size");
+					continue;
+				}
+				ats_chan_state_b[ats] = point_get_int(&p);
 			}
-			if (!ats_point) {
-				continue;
-			}
-
-			int ats = atoi(p.key);
-
-			if (ats < 0 || ats > 5) {
-				LOG_ERR("ats index out of range: %i", ats);
-				continue;
-			}
-
-			bool state = point_get_int(&p);
-
-			switch (dc) {
-			case AON:
-				astate.state[ats].aon = state;
-				break;
-			case ONA:
-				astate.state[ats].ona = state;
-				break;
-			case BON:
-				astate.state[ats].bon = state;
-				break;
-			case ONB:
-				astate.state[ats].onb = state;
-				break;
-			};
-
-			LOG_DBG("got point, ats: %i, DC: %s, state: %i", ats, p.type, state);
 		} else if (chan == &ticker_chan) {
-			for (int i = 0; i < sizeof(astate) / sizeof(astate.state[0]); i++) {
-				ats_led_state s = z_ats_get_led_state_a(&astate.state[i]);
+			for (int i = 0; i < ARRAY_SIZE(ats_chan_state_a); i++) {
+				ats_chan_state s = ats_chan_state_a[i];
 				switch (s) {
-				case ATS_LED_OFF:
+				case ATS_OFF:
 					z_led_set(mcp_device, false, i, false);
 					break;
-				case ATS_LED_ON:
+				case ATS_ON:
 					z_led_set(mcp_device, false, i, true);
 					break;
-				case ATS_LED_BLINK:
+				case ATS_ACTIVE:
 					if (blink_on) {
 						z_led_set(mcp_device, false, i, true);
 					} else {
 						z_led_set(mcp_device, false, i, false);
 					}
 					break;
-				case ATS_LED_ERROR:
+				case ATS_ERROR:
 					// TODO: should fast blink here or something
 					z_led_set(mcp_device, false, i, false);
 					break;
 				}
 
-				s = z_ats_get_led_state_b(&astate.state[i]);
+				s = ats_chan_state_b[i];
 				switch (s) {
-				case ATS_LED_OFF:
+				case ATS_OFF:
 					z_led_set(mcp_device, true, i, false);
 					break;
-				case ATS_LED_ON:
+				case ATS_ON:
 					z_led_set(mcp_device, true, i, true);
 					break;
-				case ATS_LED_BLINK:
+				case ATS_ACTIVE:
 					if (blink_on) {
 						z_led_set(mcp_device, true, i, true);
 					} else {
 						z_led_set(mcp_device, true, i, false);
 					}
 					break;
-				case ATS_LED_ERROR:
+				case ATS_ERROR:
 					// TODO: should fast blink here or something
 					z_led_set(mcp_device, true, i, false);
 					break;
