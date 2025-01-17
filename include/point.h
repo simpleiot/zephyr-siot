@@ -11,7 +11,7 @@ typedef struct {
 	uint64_t time;
 	char type[24];
 	char key[20];
-	int data_type;
+	uint8_t data_type;
 	char data[20];
 } point;
 
@@ -50,6 +50,22 @@ typedef struct {
 #define POINT_TYPE_BOARD "board"
 #define POINT_TYPE_BOOT_COUNT "bootCount"
 
+typedef struct {
+	char * type;
+	int data_type;	
+} point_def;
+
+extern const point_def point_def_description;
+extern const point_def point_def_staticip;
+extern const point_def point_def_address;
+extern const point_def point_def_netmask;
+extern const point_def point_def_gateway;
+extern const point_def point_def_metric_sys_cpu_percent;
+extern const point_def point_def_uptime;
+extern const point_def point_def_temperature;
+extern const point_def point_def_board;
+extern const point_def point_def_boot_count;
+
 void point_set_type(point *p, const char *t);
 void point_set_key(point *p, const char *k);
 void point_set_type_key(point *p, const char *t, const char *k);
@@ -73,9 +89,23 @@ int points_json_encode(point *pts_in, int count, char *buf, size_t len);
 int points_json_decode(char *json, size_t json_len, point *pts, size_t p_cnt);
 
 #define LOG_DBG_POINT(msg, p) \
-char buf[40]; \
-point_dump(p, buf, sizeof(buf)); \
-LOG_DBG("%s: %s", msg, buf);
+    Z_LOG_EVAL(LOG_LEVEL_DBG, \
+    ({ \
+        char buf[40]; \
+        point_dump(p, buf, sizeof(buf)); \
+        LOG_DBG("%s: %s", msg, buf); \
+    }), \
+    ())
+
+
+#define LOG_DBG_POINTS(msg, pts, len) \
+    Z_LOG_EVAL(LOG_LEVEL_DBG, \
+    ({ \
+        char buf[128]; \
+        points_dump(pts, len, buf, sizeof(buf)); \
+        LOG_DBG("%s: %s", msg, buf); \
+    }), \
+    ())
 
 
 
