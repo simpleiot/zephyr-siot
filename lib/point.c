@@ -10,6 +10,18 @@
 
 LOG_MODULE_REGISTER(z_point, LOG_LEVEL_DBG);
 
+const point_def point_def_description = {POINT_TYPE_DESCRIPTION, POINT_DATA_TYPE_STRING};
+const point_def point_def_staticip = {POINT_TYPE_STATICIP, POINT_DATA_TYPE_INT};
+const point_def point_def_address = {POINT_TYPE_ADDRESS, POINT_DATA_TYPE_STRING};
+const point_def point_def_netmask = {POINT_TYPE_NETMASK, POINT_DATA_TYPE_STRING};
+const point_def point_def_gateway = {POINT_TYPE_GATEWAY, POINT_DATA_TYPE_STRING};
+const point_def point_def_metric_sys_cpu_percent = {POINT_TYPE_METRIC_SYS_CPU_PERCENT,
+						    POINT_DATA_TYPE_FLOAT};
+const point_def point_def_uptime = {POINT_TYPE_UPTIME, POINT_DATA_TYPE_INT};
+const point_def point_def_temperature = {POINT_TYPE_TEMPERATURE, POINT_DATA_TYPE_FLOAT};
+const point_def point_def_board = {POINT_TYPE_BOARD, POINT_DATA_TYPE_STRING};
+const point_def point_def_boot_count = {POINT_TYPE_BOOT_COUNT, POINT_DATA_TYPE_INT};
+
 void point_set_type(point *p, const char *t)
 {
 	strncpy(p->type, t, sizeof(p->type));
@@ -148,6 +160,12 @@ int points_dump(point *pts, size_t pts_len, char *buf, size_t buf_len)
 
 	for (int i = 0; i < pts_len; i++) {
 		if (pts[i].type[0] != 0) {
+			if (remaining < 6) {
+				return offset;
+			}
+			strncpy(buf + offset, "\r\n\t- ", remaining);
+			offset += 5;
+			remaining -= 5;
 			cnt = point_dump(&pts[i], buf + offset, remaining);
 			offset += cnt;
 			remaining -= cnt;
