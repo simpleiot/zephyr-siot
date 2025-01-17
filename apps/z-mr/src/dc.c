@@ -106,8 +106,6 @@ void z_dc_thread(void *arg1, void *arg2, void *arg3)
 			int ats_event = code_z % 4;
 
 			const char *msg = "unknown";
-			const char *point_type = "unknown";
-
 			bool on_b = false;
 
 			switch (ats_event) {
