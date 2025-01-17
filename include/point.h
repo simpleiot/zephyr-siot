@@ -11,7 +11,7 @@ typedef struct {
 	uint64_t time;
 	char type[24];
 	char key[20];
-	int data_type;
+	uint8_t data_type;
 	char data[20];
 } point;
 
@@ -49,6 +49,22 @@ typedef struct {
 #define POINT_TYPE_TEMPERATURE "temp"
 #define POINT_TYPE_BOARD "board"
 #define POINT_TYPE_BOOT_COUNT "bootCount"
+
+typedef struct {
+	char * type;
+	int data_type;	
+} point_def;
+
+extern const point_def point_def_description;
+extern const point_def point_def_staticip;
+extern const point_def point_def_address;
+extern const point_def point_def_netmask;
+extern const point_def point_def_gateway;
+extern const point_def point_def_metric_sys_cpu_percent;
+extern const point_def point_def_uptime;
+extern const point_def point_def_temperature;
+extern const point_def point_def_board;
+extern const point_def point_def_boot_count;
 
 void point_set_type(point *p, const char *t);
 void point_set_key(point *p, const char *k);
