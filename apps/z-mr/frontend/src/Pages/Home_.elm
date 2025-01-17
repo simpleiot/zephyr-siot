@@ -404,12 +404,12 @@ circleRed =
 
 circleBlue : Element Msg
 circleBlue =
-    circle Style.colors.ledgreen
+    circle Style.colors.ledblue
 
 
 circleGreen : Element Msg
 circleGreen =
-    circle Style.colors.ledblue
+    circle Style.colors.ledgreen
 
 
 circleGray : Element Msg
