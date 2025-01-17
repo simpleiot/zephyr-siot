@@ -176,7 +176,7 @@ statusTable points =
         data =
             [ { name = "Board", value = Point.getText points Point.typeBoard "0" }
             , { name = "Boot count", value = Point.getText points Point.typeBootCount "0" }
-            , { name = "CPU Usage", value = Round.round 2 (Point.getNum points Point.typeMetricSysCPUPercent "0") ++ "%" }
+            , { name = "CPU Usage", value = Round.round 2 (Point.getFloat points Point.typeMetricSysCPUPercent "0") ++ "%" }
             , { name = "Uptime", value = Point.getText points Point.typeUptime "0" ++ "s" }
             ]
     in
@@ -236,7 +236,7 @@ inputText pts key typ lbl placeholder =
         []
         { onChange =
             \d ->
-                EditPoint [ Point "" typ key Point.dataTypeString d ]
+                EditPoint [ Point typ key Point.dataTypeString d ]
         , text = Point.getText pts typ key
         , placeholder = Just <| Input.placeholder [] <| text placeholder
         , label =
@@ -266,7 +266,7 @@ inputCheckbox pts key typ lbl =
                         else
                             "0"
                 in
-                EditPoint [ Point "" typ key Point.dataTypeInt v ]
+                EditPoint [ Point typ key Point.dataTypeInt v ]
         , checked =
             Point.getBool pts typ key
         , icon = Input.defaultCheckbox
