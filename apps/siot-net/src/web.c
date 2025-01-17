@@ -88,7 +88,7 @@ static int v1_handler(struct http_client_ctx *client, enum http_data_status stat
 		      void *user_data)
 {
 
-	static uint8_t v1_payload_buf[128];
+	static uint8_t v1_payload_buf[256];
 	static size_t cursor;
 
 	if (client->method == HTTP_POST) {
@@ -122,7 +122,7 @@ static int v1_handler(struct http_client_ctx *client, enum http_data_status stat
 			} else {
 				// must be a post
 				v1_payload_buf[cursor] = 0;
-				LOG_DBG("data: %s", v1_payload_buf);
+				// LOG_DBG("data: %s", v1_payload_buf);
 
 				point pts[5] = {};
 				int ret = points_json_decode(v1_payload_buf, cursor, pts,
@@ -132,10 +132,8 @@ static int v1_handler(struct http_client_ctx *client, enum http_data_status stat
 					LOG_DBG("Post error decoding data: %i", ret);
 					strcpy(recv_buffer, "{\"error\":\"error decoding data\"}");
 				} else {
-					// char buf[64];
-					// points_dump(pts, ret, buf, sizeof(buf));
-					// LOG_DBG("points received: %s", buf);
-					// k_mutex_lock(&web_points_lock, K_FOREVER);
+					LOG_DBG_POINTS("Received points", pts, ret);
+					k_mutex_lock(&web_points_lock, K_FOREVER);
 					for (int i = 0; i < ret; i++) {
 						points_merge(web_points, ARRAY_SIZE(web_points),
 							     &pts[i]);
