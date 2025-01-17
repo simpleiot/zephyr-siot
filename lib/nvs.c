@@ -89,28 +89,39 @@ int nvs_init(const struct nvs_point *nvs_pts_in, size_t len)
 		const struct nvs_point *npt = &nvs_pts_in[i];
 		switch (npt->point_def->data_type) {
 		case POINT_DATA_TYPE_FLOAT:
+			float_buf = 0;
 			rc = nvs_read(&fs, npt->nvs_id, &float_buf, sizeof(float_buf));
 			if (rc < 0) {
-				LOG_ERR("Error reading %s: %i", npt->point_def->type, rc);
-				// nvs_write(&fs, NVS_KEY_NETMASK, "", sizeof(""));
+				LOG_ERR("Error reading %s: %i, setting zero value",
+					npt->point_def->type, rc);
+				nvs_write(&fs, npt->nvs_id, 0, sizeof(float_buf));
 			}
 			point_put_float(&p, float_buf);
 			break;
 
 		case POINT_DATA_TYPE_INT:
+			uint32_buf = 0;
 			rc = nvs_read(&fs, npt->nvs_id, &uint32_buf, sizeof(uint32_buf));
 			if (rc < 0) {
-				LOG_ERR("Error reading %s: %i", npt->point_def->type, rc);
-				// nvs_write(&fs, NVS_KEY_NETMASK, "", sizeof(""));
+				LOG_ERR("Error reading %s: %i, setting zero value",
+					npt->point_def->type, rc);
+				nvs_write(&fs, npt->nvs_id, 0, sizeof(uint32_buf));
 			}
 			point_put_int(&p, uint32_buf);
+
+			if (strcmp(POINT_TYPE_BOOT_COUNT, npt->point_def->type) == 0) {
+				LOG_DBG("Boot count: %i", uint32_buf);
+				uint32_buf++;
+				nvs_write(&fs, npt->nvs_id, &uint32_buf, sizeof(uint32_buf));
+			}
 			break;
 
 		case POINT_DATA_TYPE_STRING:
+			string_buf[0] = 0;
 			rc = nvs_read(&fs, npt->nvs_id, &string_buf, sizeof(string_buf));
 			if (rc < 0) {
 				LOG_ERR("Error reading %s: %i", npt->point_def->type, rc);
-				// nvs_write(&fs, NVS_KEY_NETMASK, "", sizeof(""));
+				nvs_write(&fs, npt->nvs_id, "", sizeof(""));
 			}
 			point_put_string(&p, string_buf);
 			break;
@@ -124,8 +135,6 @@ int nvs_init(const struct nvs_point *nvs_pts_in, size_t len)
 		point_set_type_key(&p, npt->point_def->type, npt->key);
 		zbus_chan_pub(&point_chan, &p, K_MSEC(500));
 	}
-
-	// TODO: increment boot count
 
 	// We set this late in the fuction because the main loop does not process
 	// NVS points until this is set. This allows us to broadcast saved points
