@@ -137,6 +137,7 @@ static int v1_handler(struct http_client_ctx *client, enum http_data_status stat
 					for (int i = 0; i < ret; i++) {
 						points_merge(web_points, ARRAY_SIZE(web_points),
 							     &pts[i]);
+						zbus_chan_pub(&point_chan, &pts[i], K_MSEC(500));
 					}
 					k_mutex_unlock(&web_points_lock);
 				}
