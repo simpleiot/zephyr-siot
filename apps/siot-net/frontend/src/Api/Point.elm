@@ -8,7 +8,8 @@ module Api.Point exposing
     , fetch
     , get
     , getBool
-    , getNum
+    , getFloat
+    , getInt
     , getText
     , post
     , typeAddress
@@ -33,8 +34,7 @@ import Url.Builder
 
 
 type alias Point =
-    { time : String
-    , typ : String
+    { typ : String
     , key : String
     , dataType : String
     , data : String
@@ -93,11 +93,10 @@ post options =
 encode : Point -> Encode.Value
 encode p =
     Encode.object
-        [ ( "time", Encode.string <| p.time )
-        , ( "type", Encode.string <| p.typ )
-        , ( "key", Encode.string <| p.key )
-        , ( "dataType", Encode.string <| p.dataType )
-        , ( "data", Encode.string <| p.data )
+        [ ( "t", Encode.string <| p.typ )
+        , ( "k", Encode.string <| p.key )
+        , ( "dt", Encode.string <| p.dataType )
+        , ( "d", Encode.string <| p.data )
         ]
 
 
@@ -109,11 +108,10 @@ encodeList p =
 decoder : Decode.Decoder Point
 decoder =
     Decode.succeed Point
-        |> optional "time" Decode.string ""
-        |> required "type" Decode.string
-        |> required "key" Decode.string
-        |> required "dataType" Decode.string
-        |> required "data" Decode.string
+        |> required "t" Decode.string
+        |> required "k" Decode.string
+        |> required "dt" Decode.string
+        |> required "d" Decode.string
 
 
 listDecoder : Decode.Decoder (List Point)
@@ -144,8 +142,8 @@ get points typ key =
         points
 
 
-getNum : List Point -> String -> String -> Float
-getNum points typ key =
+getFloat : List Point -> String -> String -> Float
+getFloat points typ key =
     case get points typ key of
         Just p ->
             String.toFloat p.data |> Maybe.withDefault 0
@@ -154,9 +152,19 @@ getNum points typ key =
             0
 
 
+getInt : List Point -> String -> String -> Int
+getInt points typ key =
+    case get points typ key of
+        Just p ->
+            String.toInt p.data |> Maybe.withDefault 0
+
+        Nothing ->
+            0
+
+
 getBool : List Point -> String -> String -> Bool
 getBool points typ key =
-    getNum points typ key == 1
+    getInt points typ key == 1
 
 
 getText : List Point -> String -> String -> String

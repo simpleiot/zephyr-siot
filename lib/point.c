@@ -1,4 +1,5 @@
 #include <point.h>
+#include <siot-string.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -101,17 +102,17 @@ int point_dump(point *p, char *buf, size_t len)
 
 	switch (p->data_type) {
 	case POINT_DATA_TYPE_INT:
-		cnt = snprintf(buf + offset, remaining, "%i", point_get_int(p));
+		cnt = snprintf(buf + offset, remaining, "INT: %i", point_get_int(p));
 		offset += cnt;
 		remaining -= cnt;
 		break;
 	case POINT_DATA_TYPE_FLOAT:
-		cnt = snprintf(buf + offset, remaining, "%f", (double)point_get_float(p));
+		cnt = snprintf(buf + offset, remaining, "INT: %f", (double)point_get_float(p));
 		offset += cnt;
 		remaining -= cnt;
 		break;
 	case POINT_DATA_TYPE_STRING:
-		cnt = snprintf(buf + offset, remaining, "%s", p->data);
+		cnt = snprintf(buf + offset, remaining, "STR: %s", p->data);
 		offset += cnt;
 		remaining -= cnt;
 		break;
@@ -160,16 +161,13 @@ int points_dump(point *pts, size_t pts_len, char *buf, size_t buf_len)
 // then using all text fields. The JSON encoder cannot encode fixed
 // length char fields, so we have use pointers for now.
 struct point_js {
-	char *time;
-	char *type;
-	char *key;
-	// we depart from C naming conventions so that the JSON data fields
-	// match Javscript conventions (camelCase).
-	char *dataType;
-	struct json_obj_token data;
+	char *t;                 // type
+	char *k;                 // key
+	char *dt;                // datatype
+	struct json_obj_token d; // data
 };
 
-#define POINT_JS_ARRAY_MAX 25
+#define POINT_JS_ARRAY_MAX 40
 
 struct point_js_array {
 	struct point_js points[POINT_JS_ARRAY_MAX];
@@ -177,11 +175,10 @@ struct point_js_array {
 };
 
 static const struct json_obj_descr point_js_descr[] = {
-	JSON_OBJ_DESCR_PRIM(struct point_js, time, JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct point_js, type, JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct point_js, key, JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct point_js, dataType, JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct point_js, data, JSON_TOK_OPAQUE)};
+	JSON_OBJ_DESCR_PRIM(struct point_js, t, JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct point_js, k, JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct point_js, dt, JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct point_js, d, JSON_TOK_OPAQUE)};
 
 static const struct json_obj_descr point_js_array_descr[] = {
 	JSON_OBJ_DESCR_OBJ_ARRAY(struct point_js_array, points, POINT_JS_ARRAY_MAX, len,
@@ -189,125 +186,65 @@ static const struct json_obj_descr point_js_array_descr[] = {
 };
 
 // point_js has pointers to strings, so the buf is used to store these strings
+// Note: this functions assumes the input point will be valid for the duration of
+// of the p_js lifecycle, as we are populating points to strings in the original
+// p.
 void point_to_point_js(point *p, struct point_js *p_js, char *buf, size_t buf_len)
 {
-	p_js->time = "";
-	p_js->type = p->type;
-	// FIXME: type is probably always a string constant, but not sure about key
-	p_js->key = p->key;
+	p_js->t = p->type;
+	p_js->k = p->key;
 
 	switch (p->data_type) {
 	case POINT_DATA_TYPE_FLOAT:
-		p_js->dataType = POINT_DATA_TYPE_FLOAT_S;
-		snprintf(buf, buf_len, "%f", (double)point_get_float(p));
-		p_js->data.start = buf;
-		p_js->data.length = strlen(buf);
+		p_js->dt = POINT_DATA_TYPE_FLOAT_S;
+		// snprintf has caused problems in the past, so use a leaner custom version
+		ftoa(point_get_float(p), buf, 4);
+		p_js->d.start = buf;
+		p_js->d.length = strlen(buf);
 		break;
 	case POINT_DATA_TYPE_INT:
-		p_js->dataType = POINT_DATA_TYPE_INT_S;
-		snprintf(buf, buf_len, "%i", point_get_int(p));
-		p_js->data.start = buf;
-		p_js->data.length = strlen(buf);
+		p_js->dt = POINT_DATA_TYPE_INT_S;
+		itoa(point_get_int(p), buf, 10);
+		p_js->d.start = buf;
+		p_js->d.length = strlen(buf);
 		break;
 	case POINT_DATA_TYPE_STRING:
-		p_js->dataType = POINT_DATA_TYPE_STRING_S;
-		snprintf(buf, buf_len, "%s", p->data);
-		p_js->data.start = buf;
-		p_js->data.length = strlen(buf);
+		p_js->dt = POINT_DATA_TYPE_STRING_S;
+		strncpy(buf, p->data, buf_len);
+		p_js->d.start = buf;
+		p_js->d.length = strlen(buf);
 		break;
 	default:
-		p_js->data.start = NULL;
-		p_js->data.length = 0;
+		p_js->d.start = NULL;
+		p_js->d.length = 0;
 	}
-}
-
-int string_to_int(const char *str)
-{
-	int result = 0;
-	int sign = 1;
-	int i = 0;
-
-	// Handle negative numbers
-	if (str[0] == '-') {
-		sign = -1;
-		i++;
-	}
-
-	// Convert each digit
-	while (str[i] != '\0') {
-		if (str[i] >= '0' && str[i] <= '9') {
-			result = result * 10 + (str[i] - '0');
-		} else {
-			break; // Stop at non-digit character
-		}
-		i++;
-	}
-
-	return sign * result;
-}
-
-float string_to_float(const char *str)
-{
-	float result = 0.0f;
-	float fraction = 0.1f;
-	int sign = 1;
-	int i = 0;
-	int in_fraction = 0;
-
-	// Handle negative numbers
-	if (str[0] == '-') {
-		sign = -1;
-		i++;
-	}
-
-	// Convert digits
-	while (str[i] != '\0') {
-		if (str[i] >= '0' && str[i] <= '9') {
-			if (!in_fraction) {
-				result = result * 10.0f + (str[i] - '0');
-			} else {
-				result += (str[i] - '0') * fraction;
-				fraction *= 0.1f;
-			}
-		} else if (str[i] == '.') {
-			if (in_fraction) {
-				break; // Multiple decimal points, invalid
-			}
-			in_fraction = 1;
-		} else {
-			break; // Stop at non-digit, non-decimal point character
-		}
-		i++;
-	}
-
-	return sign * result;
 }
 
 void point_js_to_point(struct point_js *p_js, point *p)
 {
 	char buf[30];
 	p->time = 0;
-	strncpy(p->type, p_js->type, sizeof(p->type));
-	strncpy(p->key, p_js->key, sizeof(p->key));
+	strncpy(p->type, p_js->t, sizeof(p->type));
+	strncpy(p->key, p_js->k, sizeof(p->key));
 
-	if (strcmp(p_js->dataType, POINT_DATA_TYPE_FLOAT_S) == 0) {
+	if (strcmp(p_js->dt, POINT_DATA_TYPE_FLOAT_S) == 0) {
 		p->data_type = POINT_DATA_TYPE_FLOAT;
 		// null terminate string so we can scan it
-		int cnt = MIN(p_js->data.length, sizeof(buf) - 1);
-		memcpy(buf, p_js->data.start, cnt);
+		int cnt = MIN(p_js->d.length, sizeof(buf) - 1);
+		memcpy(buf, p_js->d.start, cnt);
 		buf[cnt] = 0;
-		*(float *)p->data = string_to_float(buf);
-	} else if (strcmp(p_js->dataType, POINT_DATA_TYPE_INT_S) == 0) {
+		*(float *)p->data = atof(buf);
+	} else if (strcmp(p_js->dt, POINT_DATA_TYPE_INT_S) == 0) {
 		p->data_type = POINT_DATA_TYPE_INT;
 		// null terminate string so we can scan it
-		int cnt = MIN(p_js->data.length, sizeof(buf) - 1);
-		memcpy(buf, p_js->data.start, cnt);
+		int cnt = MIN(p_js->d.length, sizeof(buf) - 1);
+		memcpy(buf, p_js->d.start, cnt);
 		buf[cnt] = 0;
-		*(int *)p->data = string_to_int(buf);
-	} else if (strcmp(p_js->dataType, POINT_DATA_TYPE_STRING_S) == 0) {
+		*(int *)p->data = atoi(buf);
+	} else if (strcmp(p_js->dt, POINT_DATA_TYPE_STRING_S) == 0) {
 		p->data_type = POINT_DATA_TYPE_STRING;
-		int cnt = MIN(p_js->data.length, sizeof(p->data) - 1);
-		memcpy(p->data, p_js->data.start, cnt);
+		int cnt = MIN(p_js->d.length, sizeof(p->data) - 1);
+		memcpy(p->data, p_js->d.start, cnt);
 		// make sure string is null terminated
 		p->data[cnt] = 0;
 	} else {
