@@ -148,6 +148,12 @@ int points_dump(point *pts, size_t pts_len, char *buf, size_t buf_len)
 
 	for (int i = 0; i < pts_len; i++) {
 		if (pts[i].type[0] != 0) {
+			if (remaining < 6) {
+				return offset;
+			}
+			strncpy(buf + offset, "\r\n\t- ", remaining);
+			offset += 5;
+			remaining -= 5;
 			cnt = point_dump(&pts[i], buf + offset, remaining);
 			offset += cnt;
 			remaining -= cnt;
