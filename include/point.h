@@ -72,4 +72,25 @@ int point_json_decode(char *json, size_t json_len, point *p);
 int points_json_encode(point *pts_in, int count, char *buf, size_t len);
 int points_json_decode(char *json, size_t json_len, point *pts, size_t p_cnt);
 
+#define LOG_DBG_POINT(msg, p) \
+    Z_LOG_EVAL(LOG_LEVEL_DBG, \
+    ({ \
+        char buf[40]; \
+        point_dump(p, buf, sizeof(buf)); \
+        LOG_DBG("%s: %s", msg, buf); \
+    }), \
+    ())
+
+
+#define LOG_DBG_POINTS(msg, pts, len) \
+    Z_LOG_EVAL(LOG_LEVEL_DBG, \
+    ({ \
+        char buf[128]; \
+        points_dump(pts, len, buf, sizeof(buf)); \
+        LOG_DBG("%s: %s", msg, buf); \
+    }), \
+    ())
+
+
+
 #endif // __POINT_H_

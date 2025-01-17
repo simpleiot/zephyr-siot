@@ -31,6 +31,7 @@ static struct nvs_fs fs;
 
 int nvs_init()
 {
+	LOG_DBG("nvs_init");
 	struct flash_pages_info info;
 	int rc = 0;
 
@@ -164,9 +165,7 @@ void nvs_store_handle_point(point *p)
 		LOG_DBG("Warning, received point with data len: %i", len);
 	}
 
-	char buf[30];
-	point_dump(p, buf, sizeof(buf));
-	LOG_DBG("Writing point to NVS: %s", buf);
+	LOG_DBG_POINT("Writing point to NVS", p);
 
 	ssize_t cnt = nvs_write(&fs, nvs_id, p->data, len);
 	// 0 indicates value is already written and nothing to do
