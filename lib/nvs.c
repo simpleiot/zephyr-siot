@@ -20,14 +20,6 @@ ZBUS_CHAN_DECLARE(point_chan);
 
 static struct nvs_fs fs;
 
-// NVS Keys
-#define NVS_KEY_BOOT_CNT    1
-#define NVS_KEY_DESCRIPTION 2
-#define NVS_KEY_STATIC_IP   3
-#define NVS_KEY_IP_ADDR     4
-#define NVS_KEY_GATEWAY     5
-#define NVS_KEY_NETMASK     6
-
 #define NVS_PARTITION        storage_partition
 #define NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(NVS_PARTITION)
 #define NVS_PARTITION_OFFSET FIXED_PARTITION_OFFSET(NVS_PARTITION)
