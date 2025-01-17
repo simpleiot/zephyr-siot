@@ -329,15 +329,6 @@ pointToAtsState pts typ key =
 atsStateToLed : AtsSide -> Bool -> AtsState -> Element Msg
 atsStateToLed side blink state =
     let
-        _ =
-            Debug.log "side" side
-
-        _ =
-            Debug.log "blink" blink
-
-        _ =
-            Debug.log "state" state
-
         onLed =
             case side of
                 A ->
