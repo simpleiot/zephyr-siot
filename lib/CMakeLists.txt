@@ -6,5 +6,6 @@ if(CONFIG_LIB_SIOT)
     metrics.c
     zbus.c
     nvs.c
+    siot-string.c
   )
 endif()

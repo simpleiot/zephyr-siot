@@ -29,7 +29,7 @@ static point web_points[20] = {};
 // ==================================================
 // HTTP Service
 
-static uint8_t recv_buffer[1024];
+static uint8_t recv_buffer[2048];
 
 static uint16_t http_service_port = 80;
 HTTP_SERVICE_DEFINE(siot_http_service, "0.0.0.0", &http_service_port, 1, 10, NULL);

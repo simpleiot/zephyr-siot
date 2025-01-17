@@ -3,7 +3,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/gpio.h>
 
-#define STACKSIZE 1024
+#define STACKSIZE 512
 #define PRIORITY  7
 
 LOG_MODULE_REGISTER(z_wd, LOG_LEVEL_DBG);
