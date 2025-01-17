@@ -8,7 +8,8 @@ module Api.Point exposing
     , fetch
     , get
     , getBool
-    , getNum
+    , getFloat
+    , getInt
     , getText
     , post
     , typeAddress
@@ -141,8 +142,8 @@ get points typ key =
         points
 
 
-getNum : List Point -> String -> String -> Float
-getNum points typ key =
+getFloat : List Point -> String -> String -> Float
+getFloat points typ key =
     case get points typ key of
         Just p ->
             String.toFloat p.data |> Maybe.withDefault 0
@@ -151,9 +152,19 @@ getNum points typ key =
             0
 
 
+getInt : List Point -> String -> String -> Int
+getInt points typ key =
+    case get points typ key of
+        Just p ->
+            String.toInt p.data |> Maybe.withDefault 0
+
+        Nothing ->
+            0
+
+
 getBool : List Point -> String -> String -> Bool
 getBool points typ key =
-    getNum points typ key == 1
+    getInt points typ key == 1
 
 
 getText : List Point -> String -> String -> String

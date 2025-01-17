@@ -29,6 +29,9 @@ colors :
     , darkgreen : Color
     , blue : Color
     , ltblue : Color
+    , ledgreen : Color
+    , ledblue : Color
+    , ledred : Color
     , none : Color
     }
 colors =
@@ -47,6 +50,9 @@ colors =
     , darkgreen = rgb255 4 106 56
     , blue = rgb255 50 100 150
     , ltblue = rgb255 135 206 250
+    , ledgreen = rgb255 50 255 50
+    , ledblue = rgb255 50 50 255
+    , ledred = rgb255 255 50 50
     , none = rgba 0 0 0 0
     }
 
