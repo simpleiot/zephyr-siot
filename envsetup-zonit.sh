@@ -3,7 +3,7 @@
 # Zonit specific build functions
 
 z_mr_build() {
-	z_mr_frontend_build
+	z_mr_frontend_build || return 1
 	siot_build_esp32_poe apps/z-mr
 }
 
@@ -24,6 +24,15 @@ z_mr_frontend_watch() {
 }
 
 z_mr_frontend_build() {
+	# elm-land >/dev/null 2>&1 || { echo "Error: $1 is not installed." >&2; exit 1; }
+	if ! elm >/dev/null 2>&1; then
+		echo "Please install elm: npm install -g elm@latest"
+		return 1
+	fi
+	if ! elm-land >/dev/null 2>&1; then
+		echo "Please install elm-land: npm install -g elm-land@latest"
+		return 1
+	fi
 	(
 		cd apps/z-mr/frontend &&
 			(
