@@ -12,8 +12,8 @@ In repo root directory:
   [README-Zonit.md](https://gitea.zonit.com/Zonit-Dev/zephyr-zonit/src/branch/main/README-Zonit.md)
   for instructions on workspace setup.
 - `. envsetup-zonit.sh`
-- `z_build_zmr`
-- `z_flash_zmr <serial port>`
+- `z_mr_build`
+- `z_mr_flash <serial port>`
 
 ## Application architecture
 
