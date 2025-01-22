@@ -1,4 +1,4 @@
-# Zonit M+R Zephyr Firmware
+# Z-MR Zephyr Firmware
 
 - [Product documentation](https://gitea.zonit.com/Zonit-Dev/product/src/branch/master/z-mr)
 
@@ -100,7 +100,8 @@ where `<bin file>` is the binary image of the flash.
 
 ## Olimex Pin Mapping
 
-See this [Google sheet](https://docs.google.com/spreadsheets/d/1NxzXzAdNQBaqCcLCUICzmVlSp7WfoR5nhxfbvqUGQ6Q/edit?gid=0#gid=0:w)
+See this
+[Google sheet](https://docs.google.com/spreadsheets/d/1NxzXzAdNQBaqCcLCUICzmVlSp7WfoR5nhxfbvqUGQ6Q/edit?gid=0#gid=0:w)
 
 ### I2C Devices
 
