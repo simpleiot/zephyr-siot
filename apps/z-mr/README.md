@@ -96,13 +96,11 @@ where `<bin file>` is the binary image of the flash.
 - open a web page on the device IP address to see status
   http://device-ip-address/ -- example show below:
 
-<img src="assets/image-20241205135158112.png" alt="image-20241205135158112" style="zoom:50%;" />
+![image-20250122124617555](assets/image-20250122124617555.png)
 
 ## Olimex Pin Mapping
 
-![Olimex pins](assets/olimex-pins.png)
-
-![DC Wiring](assets/z-ind-monitor-matrix-map.png)
+See this [Google sheet](https://docs.google.com/spreadsheets/d/1NxzXzAdNQBaqCcLCUICzmVlSp7WfoR5nhxfbvqUGQ6Q/edit?gid=0#gid=0:w)
 
 ### I2C Devices
 
