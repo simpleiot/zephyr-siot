@@ -9,12 +9,17 @@
 
 LOG_MODULE_REGISTER(z_mr, LOG_LEVEL_DBG);
 
+#define POINT_TYPE_SNMP_SERVER "snmpServer"
+
+const point_def point_def_snmp_server = {POINT_TYPE_SNMP_SERVER, POINT_DATA_TYPE_STRING};
+
 // The following points will get persisted in NVS when the show up on
 // zbus point_chan.
 static const struct nvs_point nvs_pts[] = {
-	{1, &point_def_boot_count, "0"}, {2, &point_def_description, "0"},
-	{3, &point_def_staticip, "0"},   {4, &point_def_address, "0"},
-	{5, &point_def_gateway, "0"},    {6, &point_def_netmask, "0"},
+	{1, &point_def_boot_count, "0"},  {2, &point_def_description, "0"},
+	{3, &point_def_staticip, "0"},    {4, &point_def_address, "0"},
+	{5, &point_def_gateway, "0"},     {6, &point_def_netmask, "0"},
+	{7, &point_def_snmp_server, "0"},
 };
 
 // ==================================================

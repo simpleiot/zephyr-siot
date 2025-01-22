@@ -17,4 +17,4 @@ that sets up to build the Zonit Zephyr applications.
 
 ## Projects
 
-- [z-MR](apps/z-mr/README.md)
+- [Z-MR](apps/z-mr/README.md)

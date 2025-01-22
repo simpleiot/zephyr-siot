@@ -218,6 +218,7 @@ settings points edit =
     in
     column [ spacing 15, Form.onEnterEsc (ApiPostPoints points) DiscardEdits ]
         [ inputText points "0" Point.typeDescription "Description" "desc"
+        , inputText points "0" "snmpServer" "SNMP Server" "IP address"
         , inputCheckbox points "0" Point.typeStaticIP "Static IP"
         , viewIf staticIP <|
             column [ spacing 15 ]
