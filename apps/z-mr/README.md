@@ -1,6 +1,7 @@
 # Z-MR Zephyr Firmware
 
 - [Product documentation](https://gitea.zonit.com/Zonit-Dev/product/src/branch/master/z-mr)
+- [Implementation notes](implementation.md)
 
 This application is meant to run on the ESP32-POE board from Olimex.
 
