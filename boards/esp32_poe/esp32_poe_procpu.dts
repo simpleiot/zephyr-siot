@@ -52,12 +52,6 @@
 	pinctrl-names = "default";
 };
 
-&uart2 {
-	current-speed = <115200>;
-	pinctrl-0 = <&uart2_default>;
-	pinctrl-names = "default";
-};
-
 &gpio0 {
 	status = "okay";
 };
@@ -92,14 +86,6 @@
 	#size-cells = <0>;
 	status = "okay";
 	pinctrl-0 = <&spim2_default>;
-	pinctrl-names = "default";
-};
-
-&spi3 {
-	#address-cells = <1>;
-	#size-cells = <0>;
-	status = "okay";
-	pinctrl-0 = <&spim3_default>;
 	pinctrl-names = "default";
 };
 
