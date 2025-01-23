@@ -1,0 +1,5 @@
+board:
+  name: esp32_poe_wrover
+  vendor: olimex
+  socs:
+  - name: esp32
