@@ -1,3 +1,6 @@
+# rationale for envsetup.sh:
+# https://daily.bec-systems.com/0097-envsetup-sh-a-very-useful-automation-technique/
+
 siot_setup() {
 	west update
 	west blobs fetch hal_espressif
