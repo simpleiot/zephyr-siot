@@ -1,6 +1,7 @@
-# Zonit M+R Zephyr Firmware
+# Z-MR Zephyr Firmware
 
 - [Product documentation](https://gitea.zonit.com/Zonit-Dev/product/src/branch/master/z-mr)
+- [Implementation notes](implementation.md)
 
 This application is meant to run on the ESP32-POE board from Olimex.
 
@@ -12,8 +13,8 @@ In repo root directory:
   [README-Zonit.md](https://gitea.zonit.com/Zonit-Dev/zephyr-zonit/src/branch/main/README-Zonit.md)
   for instructions on workspace setup.
 - `. envsetup-zonit.sh`
-- `z_build_zmr`
-- `z_flash_zmr <serial port>`
+- `z_mr_build`
+- `z_mr_flash <serial port>`
 
 ## Application architecture
 
@@ -100,7 +101,8 @@ where `<bin file>` is the binary image of the flash.
 
 ## Olimex Pin Mapping
 
-See this [Google sheet](https://docs.google.com/spreadsheets/d/1NxzXzAdNQBaqCcLCUICzmVlSp7WfoR5nhxfbvqUGQ6Q/edit?gid=0#gid=0:w)
+See this
+[Google sheet](https://docs.google.com/spreadsheets/d/1NxzXzAdNQBaqCcLCUICzmVlSp7WfoR5nhxfbvqUGQ6Q/edit?gid=0#gid=0:w)
 
 ### I2C Devices
 
