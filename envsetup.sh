@@ -139,7 +139,7 @@ siot_flash_esp() {
 		echo "serial port must be provided"
 		return 1
 	fi
-	west flash --esp-device="$PORT"
+	west flash --esp-device="$PORT" --esp-baud-rate=115200
 }
 
 siot_flash_esp_cliff() {
