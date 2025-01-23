@@ -1,7 +1,7 @@
 # rationale for envsetup.sh:
 # https://daily.bec-systems.com/0097-envsetup-sh-a-very-useful-automation-technique/
 
-. envsetup.sh
+. ./envsetup.sh
 
 # Zonit specific build functions
 
@@ -42,7 +42,7 @@ z_mr_frontend_build() {
 				elm-land build &&
 					mv dist/assets/index*.js dist/ &&
 					for file in dist/index-*.js; do mv "$file" "${file/index-*./index.}"; done &&
-					sed -i 's/assets\/index.*\.js/index.js/g' dist/index.html ||
+					sed -i '' -e 's|assets/index[^/]*\.js|index.js|g' dist/index.html ||
 					return 1
 			)
 	)
