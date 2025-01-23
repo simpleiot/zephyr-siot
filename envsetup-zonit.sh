@@ -1,3 +1,6 @@
+# rationale for envsetup.sh:
+# https://daily.bec-systems.com/0097-envsetup-sh-a-very-useful-automation-technique/
+
 . ./envsetup.sh
 
 # Zonit specific build functions
