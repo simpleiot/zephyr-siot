@@ -27,17 +27,17 @@ ats_state astate = INIT_ATS_STATE();
 // Key event handler, and message queue for passing DC events to main loop
 K_MSGQ_DEFINE(dc_msgq, sizeof(struct input_event), 10, 4);
 
-static void keymap_callback(struct input_event *evt, void *user_data)
-{
-	// Handle the input event
-	if (evt->type == INPUT_EV_KEY) {
-		k_msgq_put(&dc_msgq, evt, K_MSEC(50));
-	}
-}
+// static void keymap_callback(struct input_event *evt, void *user_data)
+// {
+// 	// Handle the input event
+// 	if (evt->type == INPUT_EV_KEY) {
+// 		k_msgq_put(&dc_msgq, evt, K_MSEC(50));
+// 	}
+// }
 
-static const struct device *const keymap_dev = DEVICE_DT_GET(DT_NODELABEL(keymap));
+// static const struct device *const keymap_dev = DEVICE_DT_GET(DT_NODELABEL(keymap));
 
-INPUT_CALLBACK_DEFINE(keymap_dev, keymap_callback, NULL);
+// INPUT_CALLBACK_DEFINE(keymap_dev, keymap_callback, NULL);
 
 void send_initial_states(void)
 {
