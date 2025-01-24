@@ -153,7 +153,12 @@ siot_flash_esp() {
 		echo "serial port must be provided"
 		return 1
 	fi
-	west flash --esp-device="$PORT" --esp-baud-rate=115200
+
+	if [[ "$OSTYPE" == "darwin"* ]]; then
+		west flash --esp-device="$PORT" --esp-baud-rate=115200
+	else
+		west flash --esp-device="$PORT" --esp-baud-rate=921600
+	fi
 }
 
 siot_flash_esp_cliff() {
