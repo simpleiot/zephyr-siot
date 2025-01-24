@@ -16,7 +16,6 @@ target_sources(app PRIVATE
 	src/web.c
 	src/dc.c
 	# src/fan.c
-	src/wd.c
 	src/ats.c
 	src/snmp.c
 )
