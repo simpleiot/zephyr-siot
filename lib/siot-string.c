@@ -3,11 +3,21 @@
 void ftoa(float num, char *str, int precision)
 {
 	int i = 0;
+
+	// Handle negative numbers
 	if (num < 0) {
 		num = -num;
 		str[i++] = '-';
 	}
 
+	// Apply rounding
+	float rounding_factor = 0.5f;
+	for (int j = 0; j < precision; j++) {
+		rounding_factor /= 10.0f;
+	}
+	num += rounding_factor;
+
+	// Extract whole part and fractional part
 	int whole = (int)num;
 	float fraction = num - whole;
 
@@ -28,7 +38,7 @@ void ftoa(float num, char *str, int precision)
 		}
 	}
 
-	// Add decimal point
+	// Add decimal point if precision > 0
 	if (precision > 0) {
 		str[i++] = '.';
 
@@ -42,6 +52,7 @@ void ftoa(float num, char *str, int precision)
 		}
 	}
 
+	// Null-terminate the string
 	str[i] = '\0';
 }
 
