@@ -37,6 +37,9 @@ char test_point_all_json[] = "[{\"t\":\"metricSysCPUPercent\",\"k\":\"\",\"dt\":
 			     "\"dt\":\"FLT\",\"d\":\"-572.2000\"},{\"t\":"
 			     "\"description\",\"k\":\"\",\"dt\":\"STR\",\"d\":\"device #4\"}]";
 
+char test_point1_invalid_json[] = "{\"time\":\"\",\"type\":\"temp\",\"key\":\"\","
+				  "\"dataType\":\"INT\",\"data\":\"-32\"}";
+
 ZTEST_SUITE(point_tests, NULL, init_test_points, NULL, NULL, NULL);
 
 ZTEST(point_tests, test)
@@ -343,4 +346,16 @@ ZTEST(point_tests, merge_with_no_datatype)
 	char buf[64];
 	points_dump(pts, ARRAY_SIZE(pts), buf, sizeof(buf));
 	LOG_DBG("pts: %s", buf);
+}
+
+ZTEST(point_tests, decode_point_invalid_json)
+{
+	point p;
+
+	// JSON decoding seems to destroy the JSON data, so make a copy of it first
+	char buf[128];
+	strncpy(buf, test_point1_invalid_json, sizeof(buf));
+
+	int ret = point_json_decode(buf, sizeof(test_point1_invalid_json), &p);
+	zassert(ret != 0, "decode should have returned an error");
 }

@@ -242,6 +242,11 @@ void point_js_to_point(struct point_js *p_js, point *p)
 {
 	char buf[30];
 	p->time = 0;
+
+	if (p_js->t == NULL || p_js->k == NULL) {
+		LOG_ERR("Refusing to decode point with null type or key");
+	}
+
 	strncpy(p->type, p_js->t, sizeof(p->type));
 	strncpy(p->key, p_js->k, sizeof(p->key));
 
@@ -295,6 +300,11 @@ int point_json_decode(char *json, size_t json_len, point *p)
 	int ret = json_obj_parse(json, json_len, point_js_descr, ARRAY_SIZE(point_js_descr), &p_js);
 	if (ret < 0) {
 		return ret;
+	}
+
+	if (p_js.t == NULL || p_js.k == NULL) {
+		LOG_ERR("Invalid JSON, does not have type or key");
+		return -200;
 	}
 
 	point_js_to_point(&p_js, p);
