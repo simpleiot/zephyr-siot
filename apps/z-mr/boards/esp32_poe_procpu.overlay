@@ -31,6 +31,22 @@
         #gpio-cells = < 2 >;
     };
 
+	mcp23018_21: mcp23018@21 {
+        compatible = "microchip,mcp23018";
+        reg = < 0x21 >;
+        gpio-controller;
+        ngpios = < 16 >;
+        #gpio-cells = < 2 >;
+    };
+	
+	mcp23018_22: mcp23018@22 {
+        compatible = "microchip,mcp23018";
+        reg = < 0x22 >;
+        gpio-controller;
+        ngpios = < 16 >;
+        #gpio-cells = < 2 >;
+    };
+
 	ds2484: ds2484@18 {
         compatible = "maxim,ds2484";
         reg = <0x18>;
