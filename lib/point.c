@@ -7,8 +7,12 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/zbus/zbus.h>
 
 LOG_MODULE_REGISTER(z_point, LOG_LEVEL_DBG);
+
+ZBUS_CHAN_DECLARE(point_chan);
 
 const point_def point_def_description = {POINT_TYPE_DESCRIPTION, POINT_DATA_TYPE_STRING};
 const point_def point_def_staticip = {POINT_TYPE_STATICIP, POINT_DATA_TYPE_INT};
@@ -238,13 +242,14 @@ void point_to_point_js(point *p, struct point_js *p_js, char *buf, size_t buf_le
 	}
 }
 
-void point_js_to_point(struct point_js *p_js, point *p)
+int point_js_to_point(struct point_js *p_js, point *p)
 {
 	char buf[30];
 	p->time = 0;
 
 	if (p_js->t == NULL || p_js->k == NULL) {
 		LOG_ERR("Refusing to decode point with null type or key");
+		return -1;
 	}
 
 	strncpy(p->type, p_js->t, sizeof(p->type));
@@ -273,7 +278,10 @@ void point_js_to_point(struct point_js *p_js, point *p)
 	} else {
 		p->data_type = POINT_DATA_TYPE_UNKNOWN;
 		p->data[0] = 0;
+		return -1;
 	}
+
+	return 0;
 }
 
 // all of the point_js fields MUST be filled in or the encoder will crash
@@ -395,3 +403,34 @@ int points_merge(point *pts, size_t pts_len, point *p)
 
 	return -ENOMEM;
 }
+
+static int handle_sendpoint(const struct shell *shell, size_t argc, char **argv)
+{
+	/* Handle shell command: "sendtrap <ip address>" */
+	if (argc < 5) {
+		shell_print(shell, "Usage: p <type> <key> <INT|FLT|STR> <data>");
+		return -1;
+	}
+
+	struct point_js p_js;
+
+	p_js.t = argv[1];
+	p_js.k = argv[2];
+	p_js.dt = argv[3];
+	p_js.d.start = argv[4];
+	p_js.d.length = strlen(argv[4]);
+
+	point p;
+	int ret = point_js_to_point(&p_js, &p);
+
+	if (ret != 0) {
+		shell_print(shell, "Invalid point");
+		return -1;
+	}
+
+	zbus_chan_pub(&point_chan, &p, K_MSEC(500));
+
+	return 0;
+}
+
+SHELL_CMD_REGISTER(p, NULL, "Sends a point", handle_sendpoint);
