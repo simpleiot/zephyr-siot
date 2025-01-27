@@ -2,9 +2,14 @@
 
 void ftoa(float num, char *str, int precision)
 {
+	int i = 0;
+	if (num < 0) {
+		num = -num;
+		str[i++] = '-';
+	}
+
 	int whole = (int)num;
 	float fraction = num - whole;
-	int i = 0;
 
 	// Convert whole part
 	if (whole == 0) {
