@@ -17,32 +17,25 @@ point test_points[] = {
 void *init_test_points(void)
 {
 	point_put_int(&test_points[0], -232);
-	point_put_float(&test_points[1], -572.2923);
+	point_put_float(&test_points[1], -572.2);
 	point_put_string(&test_points[2], "device #4");
 
 	return NULL;
 }
 
-char test_point1_json[] = "{\"time\":\"\",\"type\":\"temp\",\"key\":\"\","
-			  "\"dataType\":\"INT\",\"data\":"
-			  "\"-32\"}";
+char test_point1_json[] = "{\"t\":\"temp\",\"k\":\"\","
+			  "\"dt\":\"INT\",\"d\":\"-32\"}";
 
-char test_point2_json[] = "{\"time\":\"\",\"type\":\"temp\",\"key\":\"\","
-			  "\"dataType\":\"FLT\",\"data\":"
-			  "\"-32.230000\"}";
+char test_point2_json[] = "{\"t\":\"temp\",\"k\":\"\","
+			  "\"dt\":\"FLT\",\"d\":\"-32.2000\"}";
 
-char test_point3_json[] =
-	"{\"time\":\"\",\"type\":\"description\",\"key\":\"\",\"dataType\":\"STR\","
-	"\"data\":\"device #3\"}";
+char test_point3_json[] = "{\"t\":\"description\",\"k\":\"\",\"dt\":\"STR\","
+			  "\"d\":\"device #3\"}";
 
-char test_point_all_json[] =
-	"[{\"time\":\"\",\"type\":\"metricSysCPUPercent\",\"key\":\"\","
-	"\"dataType\":"
-	"\"INT\",\"data\":\"-232\"},{\"time\":\"\",\"type\":\"temp\",\"key\":\"\","
-	"\"data"
-	"Type\":\"FLT\",\"data\":\"-572.292297\"},{\"time\":\"\",\"type\":"
-	"\"description\","
-	"\"key\":\"\",\"dataType\":\"STR\",\"data\":\"device #4\"}]";
+char test_point_all_json[] = "[{\"t\":\"metricSysCPUPercent\",\"k\":\"\",\"dt\":"
+			     "\"INT\",\"d\":\"-232\"},{\"t\":\"temp\",\"k\":\"\","
+			     "\"dt\":\"FLT\",\"d\":\"-572.2000\"},{\"t\":"
+			     "\"description\",\"k\":\"\",\"dt\":\"STR\",\"d\":\"device #4\"}]";
 
 ZTEST_SUITE(point_tests, NULL, init_test_points, NULL, NULL, NULL);
 
@@ -166,16 +159,16 @@ ZTEST(point_tests, encode_point_int)
 ZTEST(point_tests, encode_point_float)
 {
 	point tp = {.type = POINT_TYPE_TEMPERATURE};
-	point_put_float(&tp, -32.23);
+	point_put_float(&tp, -32.2);
 
 	char buf[128];
 
 	int ret = point_json_encode(&tp, buf, sizeof(buf));
 	zassert_ok(ret);
 
-	zassert_str_equal(buf, test_point2_json, "did not get expected JSON data");
-
 	LOG_DBG("Encoded data: %s", buf);
+
+	zassert_str_equal(buf, test_point2_json, "did not get expected JSON data");
 }
 
 ZTEST(point_tests, encode_point_string)
@@ -201,8 +194,6 @@ ZTEST(point_tests, encode_point_array)
 	zassert_ok(ret);
 
 	zassert_str_equal(buf, test_point_all_json, "encoded string not correct");
-
-	LOG_DBG("Encoded data: %s", buf);
 }
 
 ZTEST(point_tests, merge)
@@ -225,7 +216,7 @@ ZTEST(point_tests, merge)
 	ret = points_merge(pts, ARRAY_SIZE(pts), &test_points[1]);
 	zassert_ok(ret);
 
-	zassert_equal((float)-572.2923, point_get_float(&pts[1]));
+	zassert_equal((float)-572.2, point_get_float(&pts[1]));
 }
 
 ZTEST(point_tests, decode_point_int)
@@ -240,7 +231,6 @@ ZTEST(point_tests, decode_point_int)
 	zassert(ret >= 0, "decode returned error");
 
 	point_dump(&p, buf, sizeof(buf));
-	LOG_DBG("Point: %s", buf);
 
 	zassert(point_get_int(&p) == -32, "point value is not -32");
 	zassert_str_equal(p.type, POINT_TYPE_TEMPERATURE, "point type is not correct");
@@ -260,7 +250,7 @@ ZTEST(point_tests, decode_point_float)
 	point_dump(&p, buf, sizeof(buf));
 	LOG_DBG("Point: %s", buf);
 
-	zassert(point_get_float(&p) == (float)-32.23, "point value is not -32.23");
+	zassert(point_get_float(&p) == (float)-32.2, "point value is not -32.2");
 	zassert_str_equal(p.type, POINT_TYPE_TEMPERATURE, "point type is not correct");
 }
 
@@ -294,14 +284,14 @@ ZTEST(point_tests, decode_point_array)
 
 	// spot check a few points
 	zassert(point_get_int(&pts[0]) == -232, "point 0 not correct value");
-	zassert(point_get_float(&pts[1]) == (float)-572.292297, "point 1 not correct value");
+	zassert(point_get_float(&pts[1]) == (float)-572.2, "point 1 not correct value");
 	zassert_str_equal(pts[2].data, "device #4");
 }
 
 ZTEST(point_tests, decode_point_array_size_one)
 {
-	char buf[] = "[{\"time\":\"\",\"type\":\"staticIP\",\"key\":\"0\",\"dataType\":\"INT\","
-		     "\"data\":\"1\"}]";
+	char buf[] = "[{\"time\":\"\",\"t\":\"staticIP\",\"k\":\"0\",\"dt\":\"INT\","
+		     "\"d\":\"1\"}]";
 	point pts[5];
 
 	int ret = points_json_decode(buf, sizeof(test_point_all_json), pts, ARRAY_SIZE(pts));
@@ -311,8 +301,7 @@ ZTEST(point_tests, decode_point_array_size_one)
 }
 
 char test_point1_no_datatype_json[] =
-	"{\"time\":\"\",\"type\":\"temp\",\"key\":\"\",\"dataType\":\"\",\"data\":"
-	"\"-32\"}";
+	"{\"tm\":\"\",\"t\":\"temp\",\"k\":\"\",\"dt\":\"\",\"d\":\"-32\"}";
 
 ZTEST(point_tests, decode_point_with_no_datatype)
 {
