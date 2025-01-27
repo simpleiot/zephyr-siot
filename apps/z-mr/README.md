@@ -111,8 +111,13 @@ See this
 - IC1: MCP23018T-E/SO: `0x20` (up to 8 IO-expanders can be added from `0x20` to
   `0x27`)
 - EMC2302-1-AIZL: `0x2E`
-- 8K EEProm: `0x50` to `0x57`
-- RV-3028-C7 RTC: `0x82`
+- 8K EEProm:
+  - main board: `0x50` to `0x53`
+  - expansion board: `0x54` to `0x57`
+- 4K EEProm:
+  - main board: `0x50` to `0x51`
+  - expansion board: `0x54` to `0x55`
+- RV-3028-C7 RTC: `0x52` (this conflicts with 8K EEPROM)
 
 ## SNMP
 
