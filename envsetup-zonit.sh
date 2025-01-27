@@ -42,7 +42,13 @@ z_mr_frontend_build() {
 				elm-land build &&
 					mv dist/assets/index*.js dist/ &&
 					for file in dist/index-*.js; do mv "$file" "${file/index-*./index.}"; done &&
-					sed -i '' -e 's|assets/index[^/]*\.js|index.js|g' dist/index.html ||
+					if [[ "$OSTYPE" == "darwin"* ]]; then
+						# macOS version (BSD sed)
+						sed -i '' -e 's|assets/index[^/]*\.js|index.js|g' dist/index.html
+					else
+						# Linux version (GNU sed)
+						sed -i 's|assets/index[^/]*\.js|index.js|g' dist/index.html
+					fi ||
 					return 1
 			)
 	)
