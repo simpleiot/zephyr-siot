@@ -18,7 +18,7 @@ siot_rom_reportm_report() {
 	west build -t rom_report
 }
 
-siot_peek_generated_confg() {
+siot_peek_generated_config() {
 	$EDITOR build/zephyr/include/generated/zephyr/autoconf.h
 }
 
