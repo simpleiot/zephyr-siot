@@ -10,6 +10,11 @@ z_mr_build() {
 	siot_build_esp32_poe apps/z-mr
 }
 
+z_mr_build_wrover() {
+	z_mr_frontend_build || return 1
+	siot_build_esp32_poe_wrover apps/z-mr
+}
+
 z_mr_flash() {
 	siot_flash_esp "$1"
 }
