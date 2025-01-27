@@ -1,3 +1,6 @@
+# rationale for envsetup.sh:
+# https://daily.bec-systems.com/0097-envsetup-sh-a-very-useful-automation-technique/
+
 siot_setup() {
 	west update
 	west blobs fetch hal_espressif
@@ -78,6 +81,12 @@ siot_build_esp32_poe() {
 	west build -b esp32_poe/esp32/procpu "${APP}" -- -DBOARD_ROOT="$(pwd)"
 }
 
+# https://www.olimex.com/Products/IoT/ESP32/ESP32-POE/open-source-hardware
+siot_build_esp32_poe_wrover() {
+	APP=$1
+	west build -b esp32_poe_wrover/esp32/procpu "${APP}" -- -DBOARD_ROOT="$(pwd)"
+}
+
 siot_build_fysetc_ucan() {
 	APP=$1
 	west build -b fysetc_ucan "${APP}" -- -DBOARD_ROOT="$(pwd)"
@@ -125,6 +134,11 @@ siot_build_nucleo_l432kc() {
 siot_build_esp32_wroom() {
 	APP=$1
 	west build -b esp32_devkitc_wroom/esp32/procpu "${APP}"
+}
+
+siot_build_esp32_wrover() {
+	APP=$1
+	west build -b esp32_devkitc_wrover/esp32/procpu "${APP}"
 }
 
 # following can be used for STM32 targets + Jlink
