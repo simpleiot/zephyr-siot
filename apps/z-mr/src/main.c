@@ -1,3 +1,5 @@
+#include "zpoint.h"
+
 #include <nvs.h>
 #include <point.h>
 
@@ -8,8 +10,6 @@
 #include <app_version.h>
 
 LOG_MODULE_REGISTER(z_mr, LOG_LEVEL_DBG);
-
-#define POINT_TYPE_SNMP_SERVER "snmpServer"
 
 const point_def point_def_snmp_server = {POINT_TYPE_SNMP_SERVER, POINT_DATA_TYPE_STRING};
 
