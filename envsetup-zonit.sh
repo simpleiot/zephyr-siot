@@ -1,3 +1,6 @@
+# rationale for envsetup.sh:
+# https://daily.bec-systems.com/0097-envsetup-sh-a-very-useful-automation-technique/
+
 . ./envsetup.sh
 
 # Zonit specific build functions
@@ -39,14 +42,7 @@ z_mr_frontend_build() {
 				elm-land build &&
 					mv dist/assets/index*.js dist/ &&
 					for file in dist/index-*.js; do mv "$file" "${file/index-*./index.}"; done &&
-					
-					if [[ "$OSTYPE" == "darwin"* ]]; then
-						# macOS version (BSD sed)
-						sed -i '' -e 's|assets/index[^/]*\.js|index.js|g' dist/index.html
-					else
-						# Linux version (GNU sed)
-						sed -i 's|assets/index[^/]*\.js|index.js|g' dist/index.html
-					fi ||
+					sed -i '' -e 's|assets/index[^/]*\.js|index.js|g' dist/index.html ||
 					return 1
 			)
 	)
