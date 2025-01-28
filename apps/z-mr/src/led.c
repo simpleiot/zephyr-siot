@@ -14,6 +14,7 @@
 #define PRIORITY  7
 
 #define LED_STATUS (6 + 8)
+#define LED_BLE    (6)
 
 LOG_MODULE_REGISTER(z_led, LOG_LEVEL_INF);
 
@@ -57,7 +58,14 @@ void z_led_setup(const struct device *mcp_device)
 		LOG_ERR("Failed to configure GPIO pin %i: %d", LED_STATUS, ret);
 	}
 
+	ret = gpio_pin_configure(mcp_device, LED_BLE,
+				 GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW);
+	if (ret < 0) {
+		LOG_ERR("Failed to configure GPIO pin %i: %d", LED_BLE, ret);
+	}
+
 	gpio_pin_set(mcp_device, LED_STATUS, 0);
+	gpio_pin_set(mcp_device, LED_BLE, 0);
 }
 
 // LED num starts at 0
@@ -81,27 +89,28 @@ void z_led_set(const struct device *mcp_device, bool is_b, int num, bool on)
 
 void z_leds_test_pattern(const struct device *mcp_device)
 {
-	int cur = 0;
+	static int cur = 0;
+	static int toggle = 0;
 
 	// display pattern on LEDs
-	while (1) {
-		k_msleep(200);
-		gpio_pin_toggle(mcp_device, LED_STATUS);
+	gpio_pin_set(mcp_device, LED_STATUS, toggle);
+	toggle = !toggle;
+	gpio_pin_set(mcp_device, LED_BLE, toggle);
 
-		// turn current led off
-		z_led_set(mcp_device, false, cur, false);
-		z_led_set(mcp_device, true, cur, false);
+	// turn current led off
+	z_led_set(mcp_device, false, cur, false);
+	z_led_set(mcp_device, true, cur, false);
 
-		gpio_pin_set(mcp_device, cur, 0);
-		gpio_pin_set(mcp_device, cur + 8, 0);
-		cur += 1;
-		if (cur > 5) {
-			cur = 0;
-		}
-		// turn next LED on
-		z_led_set(mcp_device, false, cur, true);
-		z_led_set(mcp_device, true, cur, true);
+	// gpio_pin_set(mcp_device, cur, 0);
+	// gpio_pin_set(mcp_device, cur + 8, 0);
+
+	cur += 1;
+	if (cur > 5) {
+		cur = 0;
 	}
+	// turn next LED on
+	z_led_set(mcp_device, false, cur, true);
+	z_led_set(mcp_device, true, cur, true);
 }
 
 static ats_chan_state ats_chan_state_a[6];
@@ -134,12 +143,7 @@ void z_leds_thread(void *arg1, void *arg2, void *arg3)
 
 	z_led_setup(mcp_device);
 
-	// z_leds_test_pattern(mcp_device);
-
-	// while (1) {
-	// 	k_msleep(1000);
-	// }
-
+	bool testing = false;
 	bool blink_on = false;
 
 	point p;
@@ -161,8 +165,16 @@ void z_leds_thread(void *arg1, void *arg2, void *arg3)
 					continue;
 				}
 				ats_chan_state_b[ats] = point_get_int(&p);
+			} else if (strcmp(p.type, POINT_TYPE_TEST_LEDS) == 0) {
+				testing = point_get_int(&p);
 			}
 		} else if (chan == &ticker_chan) {
+			if (testing) {
+				z_leds_test_pattern(mcp_device);
+				continue;
+			}
+
+			// display ATS state
 			for (int i = 0; i < ARRAY_SIZE(ats_chan_state_a); i++) {
 				ats_chan_state s = ats_chan_state_a[i];
 				switch (s) {

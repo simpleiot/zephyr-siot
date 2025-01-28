@@ -47,7 +47,6 @@ z_mr_frontend_build() {
 				elm-land build &&
 					mv dist/assets/index*.js dist/ &&
 					for file in dist/index-*.js; do mv "$file" "${file/index-*./index.}"; done &&
-					
 					if [[ "$OSTYPE" == "darwin"* ]]; then
 						# macOS version (BSD sed)
 						sed -i '' -e 's|assets/index[^/]*\.js|index.js|g' dist/index.html
