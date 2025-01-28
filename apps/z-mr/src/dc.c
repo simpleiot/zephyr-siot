@@ -92,16 +92,6 @@ void z_dc_thread(void *arg1, void *arg2, void *arg3)
 	z_dc_gpio_setup(mcp_device1);
 	z_dc_gpio_setup(mcp_device2);
 
-	// struct input_event evt;
-
-	// static const char MSG_AON[] = "AON";
-	// static const char MSG_ONA[] = "ONA";
-	// static const char MSG_BON[] = "BON";
-	// static const char MSG_ONB[] = "ONB";
-	point p;
-
-	char index[10];
-
 	while (1) {
 		k_timer_status_sync(&dc_timer);
 
