@@ -16,6 +16,8 @@ Below is a rough order/outline for implementing the Z-MR functionality
   - update UI with SNMP server IP address field
   - persist this setting in flash
   - use this point to set the IP address when sending traps
+- research existing OIDs to see if ATS OIDs/MIBs existing
+- implement custom OID/MIB if necessary
 - implement SNMP GetRequest
   - zephyr-snmp lib should listen for requests on SNMP port
   - zephyr-snmp implements a function that allows you to register a callback to
