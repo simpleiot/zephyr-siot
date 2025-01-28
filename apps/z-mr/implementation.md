@@ -4,38 +4,38 @@ Below is a rough order/outline for implementing the Z-MR functionality
 
 ## SNMP
 
-- understand SNMP
-  - [SNMP Protocol Architecture – MIBs and OIDs explained](https://www.itprc.com/snmp-protocol-architecture-mibs-oids/)
-- get net-snmp tools running on PC
-- implement sending a test test trap from Z-MR
-  - Z-MR should call a function in zephyr-snmp to send a trap. The trap
+1. understand SNMP
+   - [SNMP Protocol Architecture – MIBs and OIDs explained](https://www.itprc.com/snmp-protocol-architecture-mibs-oids/)
+1. get net-snmp tools running on PC
+1. implement sending a test test trap from Z-MR
+   - Z-MR should call a function in zephyr-snmp to send a trap. The trap
     definition and IP address should be passed to this function.
-- receive test trap on PC using net-snmp and write envsetup-zonit.sh script to
+1. receive test trap on PC using net-snmp and write envsetup-zonit.sh script to
   document
-- UI to configure SNMP server IP address to receive traps
-  - update UI with SNMP server IP address field
-  - persist this setting in flash
-  - use this point to set the IP address when sending traps
-- research existing OIDs to see if ATS OIDs/MIBs existing
-- implement custom OID/MIB if necessary
-- implement SNMP GetRequest
-  - zephyr-snmp lib should listen for requests on SNMP port
-  - zephyr-snmp implements a function that allows you to register a callback to
+1. UI to configure SNMP server IP address to receive traps
+   - update UI with SNMP server IP address field
+   - persist this setting in flash
+   - use this point to set the IP address when sending traps
+1. research existing OIDs to see if ATS OIDs/MIBs existing
+1. implement custom OID/MIB if necessary
+1. implement SNMP GetRequest
+   - zephyr-snmp lib should listen for requests on SNMP port
+   - zephyr-snmp implements a function that allows you to register a callback to
     receive requests
-    - this can be modeled after the Zephyr http lib API (see web.c for how we
+     - this can be modeled after the Zephyr http lib API (see web.c for how we
       handle http reqeusts).
-  - Z-MR snmp.c thread should register a callback with zephyr-snmp lib and
-    handle requests
-- handle basic SNMP requests such as uptime or whatever else is normal for a
-  system to report
-- figure out how to report ATS state
-  - are there existing MIBS that cover this?
-  - do we need to design a custom one?
-- automatic testing
-  - we should have
+   - Z-MR snmp.c thread should register a callback with zephyr-snmp lib and
+     handle requests
+1. handle basic SNMP requests such as uptime or whatever else is normal for a
+   system to report
+1. figure out how to report ATS state
+   - are there existing MIBS that cover this?
+   - do we need to design a custom one?
+1. automatic testing
+   - we should have
     [Zephyr tests](https://docs.zephyrproject.org/latest/develop/test/ztest.html)
     for zephyr-snmp and Z-MR snmp functionality if possible
-  - see the `tests` directory for an example of tests already implemented
+   - see the `tests` directory for an example of tests already implemented
 
 ## Bluetooth Configuration
 
