@@ -10,6 +10,7 @@
 #include "zephyr/device.h"
 #include <zephyr/input/input.h>
 #include <zephyr/zbus/zbus.h>
+#include <zephyr/drivers/gpio.h>
 
 #define STACKSIZE 1024
 #define PRIORITY  7
@@ -23,43 +24,33 @@ ZBUS_CHAN_DECLARE(point_chan);
 
 ats_state astate = INIT_ATS_STATE();
 
-// ==================================================
-// Key event handler, and message queue for passing DC events to main loop
-K_MSGQ_DEFINE(dc_msgq, sizeof(struct input_event), 10, 4);
+K_TIMER_DEFINE(dc_timer, NULL, NULL);
 
-// static void keymap_callback(struct input_event *evt, void *user_data)
-// {
-// 	// Handle the input event
-// 	if (evt->type == INPUT_EV_KEY) {
-// 		k_msgq_put(&dc_msgq, evt, K_MSEC(50));
-// 	}
-// }
+const struct device *mcp_device1 = DEVICE_DT_GET(DT_NODELABEL(mcp23018_21));
+const struct device *mcp_device2 = DEVICE_DT_GET(DT_NODELABEL(mcp23018_22));
 
-// static const struct device *const keymap_dev = DEVICE_DT_GET(DT_NODELABEL(keymap));
+struct ats_dc {
+	const struct device *dev;
+	int aon;
+	int ona;
+	int bon;
+	int onb;
+};
 
-// INPUT_CALLBACK_DEFINE(keymap_dev, keymap_callback, NULL);
+const char *ats_states[] = {
+	POINT_TYPE_ATS_A,
+	POINT_TYPE_ATS_B,
+};
 
-void send_initial_states(void)
+// configure all pins with pullups
+void z_dc_gpio_setup(const struct device *mcp_device)
 {
-	char *ats_states[] = {
-		POINT_TYPE_ATS_A,
-		POINT_TYPE_ATS_B,
-	};
-
-	for (int i = 0; i < 6; i++) {
-		for (int j = 0; j < ARRAY_SIZE(ats_states); j++) {
-			point p;
-			char index[10];
-			snprintf(index, sizeof(index), "%i", i);
-			point_set_type_key(&p, ats_states[j], index);
-			point_put_int(&p, 0);
-			char buf[30];
-			point_dump(&p, buf, sizeof(buf));
-			LOG_DBG("CLIFF: dc point: %s", buf);
-			// int ret = zbus_chan_pub(&point_chan, &p, K_MSEC(500));
-			// if (ret != 0) {
-			// 	LOG_ERR("Error sending initial ats state: %i", ret);
-			// }
+	for (int i = 0; i < 16; i++) {
+		int ret = gpio_pin_configure(mcp_device, i,
+					     GPIO_INPUT | GPIO_ACTIVE_LOW | GPIO_PULL_UP);
+		if (ret < 0) {
+			LOG_ERR("Failed to configure GPIO pin %i: %d", i, ret);
+			return; // FIXME remove this
 		}
 	}
 }
@@ -68,13 +59,10 @@ void z_dc_thread(void *arg1, void *arg2, void *arg3)
 {
 	LOG_INF("z DC thread");
 
-	// FIXME: for some reason, the below function crashes, but sending the
-	// same code inline below works fine.
-	// send_initial_states();
-
-	char *ats_states[] = {
-		POINT_TYPE_ATS_A,
-		POINT_TYPE_ATS_B,
+	const struct ats_dc ats_dcs[] = {
+		{mcp_device1, 8 + 1, 8 + 0, 1, 0}, {mcp_device1, 8 + 3, 8 + 2, 3, 2},
+		{mcp_device1, 8 + 5, 8 + 4, 5, 4}, {mcp_device2, 8 + 1, 8 + 0, 1, 0},
+		{mcp_device2, 8 + 3, 8 + 2, 3, 2}, {mcp_device2, 8 + 5, 8 + 4, 5, 4},
 	};
 
 	for (int i = 0; i < 6; i++) {
@@ -91,63 +79,81 @@ void z_dc_thread(void *arg1, void *arg2, void *arg3)
 		}
 	}
 
-	struct input_event evt;
+	k_timer_start(&dc_timer, K_MSEC(200), K_MSEC(200));
 
-	static const char MSG_AON[] = "AON";
-	static const char MSG_ONA[] = "ONA";
-	static const char MSG_BON[] = "BON";
-	static const char MSG_ONB[] = "ONB";
+	if (!device_is_ready(mcp_device1)) {
+		LOG_ERR("MCP23018 device1 not ready");
+	}
+
+	if (!device_is_ready(mcp_device2)) {
+		LOG_ERR("MCP23018 device2 not ready");
+	}
+
+	z_dc_gpio_setup(mcp_device1);
+	z_dc_gpio_setup(mcp_device2);
+
+	// struct input_event evt;
+
+	// static const char MSG_AON[] = "AON";
+	// static const char MSG_ONA[] = "ONA";
+	// static const char MSG_BON[] = "BON";
+	// static const char MSG_ONB[] = "ONB";
+	point p;
+
+	char index[10];
 
 	while (1) {
-		if (k_msgq_get(&dc_msgq, &evt, K_FOREVER) == 0) {
-			// Process the input event
-			int code_z = evt.code - 1;
-			int ats = code_z / 4;
-			int ats_event = code_z % 4;
+		k_timer_status_sync(&dc_timer);
 
-			const char *msg = "unknown";
-			bool on_b = false;
+		for (int i = 0; i < ARRAY_SIZE(ats_dcs); i++) {
+			bool a_changed = false;
+			bool b_changed = false;
+			const struct ats_dc *a = &ats_dcs[i];
+			bool aon = gpio_pin_get(a->dev, a->aon);
+			bool ona = gpio_pin_get(a->dev, a->ona);
+			bool bon = gpio_pin_get(a->dev, a->bon);
+			bool onb = gpio_pin_get(a->dev, a->onb);
 
-			switch (ats_event) {
-			case AON:
-				msg = MSG_AON;
-				astate.state[ats].aon = evt.value;
-				break;
+			if (aon != astate.state[i].aon) {
+				LOG_DBG("ATS #%i: AON: %i", i + 1, aon);
+				astate.state[i].aon = aon;
+				a_changed = true;
+			}
 
-			case ONA:
-				msg = MSG_ONA;
-				astate.state[ats].ona = evt.value;
-				break;
+			if (ona != astate.state[i].ona) {
+				LOG_DBG("ATS #%i: ONA: %i", i + 1, ona);
+				astate.state[i].ona = ona;
+				a_changed = true;
+			}
 
-			case BON:
-				msg = MSG_BON;
-				astate.state[ats].bon = evt.value;
-				on_b = true;
-				break;
+			if (bon != astate.state[i].bon) {
+				LOG_DBG("ATS #%i: BON: %i", i + 1, bon);
+				astate.state[i].bon = bon;
+				b_changed = true;
+			}
 
-			case ONB:
-				msg = MSG_ONB;
-				astate.state[ats].onb = evt.value;
-				on_b = true;
-				break;
+			if (onb != astate.state[i].onb) {
+				LOG_DBG("ATS #%i: ONB: %i", i + 1, onb);
+				astate.state[i].onb = onb;
+				b_changed = true;
 			}
 
 			point p;
-
 			char index[10];
-			sprintf(index, "%i", ats);
 
-			if (!on_b) {
+			if (a_changed) {
+				sprintf(index, "%i", i);
 				point_set_type_key(&p, POINT_TYPE_ATS_A, index);
-				point_put_int(&p, z_ats_get_state_a(&astate.state[ats]));
-			} else {
-				point_set_type_key(&p, POINT_TYPE_ATS_B, index);
-				point_put_int(&p, z_ats_get_state_b(&astate.state[ats]));
+				point_put_int(&p, z_ats_get_state_a(&astate.state[i]));
+				zbus_chan_pub(&point_chan, &p, K_MSEC(500));
 			}
 
-			zbus_chan_pub(&point_chan, &p, K_MSEC(500));
-
-			LOG_DBG("ATS #%i: %s: %i", ats + 1, msg, evt.value);
+			if (b_changed) {
+				sprintf(index, "%i", i);
+				point_set_type_key(&p, POINT_TYPE_ATS_B, index);
+				point_put_int(&p, z_ats_get_state_b(&astate.state[i]));
+				zbus_chan_pub(&point_chan, &p, K_MSEC(500));
+			}
 		}
 	}
 }
