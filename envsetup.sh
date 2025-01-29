@@ -70,7 +70,11 @@ siot_build_native_sim() {
 
 # run all library tests on host platform
 siot_test_native() {
-	siot_build_native_sim tests && ./build/zephyr/zephyr.exe
+	siot_clean && siot_build_native_sim tests && ./build/zephyr/zephyr.exe
+}
+
+siot_test_native_mac() {
+	siot_clean && west build -b qemu_x86 tests && west build -t run
 }
 
 # See https://community.tmpdir.org/t/zephyr-on-the-esp32/1310 for a comparison of ESP hardware

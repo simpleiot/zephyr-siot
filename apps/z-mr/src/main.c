@@ -1,21 +1,22 @@
 #include <nvs.h>
 #include <point.h>
-
+#include <ble.h>
 #include <stdint.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/net/net_mgmt.h>
 #include <zephyr/zbus/zbus.h>
 #include <app_version.h>
+#include <esp_attr.h>
 
 LOG_MODULE_REGISTER(z_mr, LOG_LEVEL_DBG);
 
 #define POINT_TYPE_SNMP_SERVER "snmpServer"
 
-const point_def point_def_snmp_server = {POINT_TYPE_SNMP_SERVER, POINT_DATA_TYPE_STRING};
+const RTC_RODATA_ATTR point_def point_def_snmp_server = {POINT_TYPE_SNMP_SERVER, POINT_DATA_TYPE_STRING};
 
 // The following points will get persisted in NVS when the show up on
 // zbus point_chan.
-static const struct nvs_point nvs_pts[] = {
+static const RTC_RODATA_ATTR struct nvs_point nvs_pts[] = {
 	{1, &point_def_boot_count, "0"},  {2, &point_def_description, "0"},
 	{3, &point_def_staticip, "0"},    {4, &point_def_address, "0"},
 	{5, &point_def_gateway, "0"},     {6, &point_def_netmask, "0"},
@@ -37,11 +38,22 @@ static void net_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_
 
 int main(void)
 {
+	int err;
+
 	LOG_INF("Zonit M+R: %s %s", CONFIG_BOARD_TARGET, APP_VERSION_EXTENDED_STRING);
 
 	nvs_init(nvs_pts, ARRAY_SIZE(nvs_pts));
 
-	// In your initialization code:
+	// Initialize BLE
+	err = ble_init();
+	if (err) {
+		LOG_ERR("BLE initialization failed (err %d)", err);
+		return err;
+	}
+
+	// // In your initialization code:
 	net_mgmt_init_event_callback(&mgmt_cb, net_event_handler, NET_EVENT_L4_CONNECTED);
 	net_mgmt_add_event_callback(&mgmt_cb);
+
+	return 0;
 }

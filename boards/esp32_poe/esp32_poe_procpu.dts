@@ -48,6 +48,7 @@
 };
 
 &uart1 {
+	status = "okay";
 	current-speed = <115200>;
 	pinctrl-0 = <&uart1_default>;
 	pinctrl-names = "default";
@@ -167,4 +168,8 @@
 	phy-handle = <&phy>;
 	phy-connection-type = "rmii";
 	ref-clk-output-gpios = <&gpio0 17 0>;
+};
+
+&esp32_bt_hci {
+	status = "okay";
 };
