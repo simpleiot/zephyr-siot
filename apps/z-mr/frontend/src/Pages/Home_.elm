@@ -245,15 +245,45 @@ deviceContent : Model -> Element Msg
 deviceContent model =
     case model.points of
         Api.Loading ->
-            el 
-                [ width fill
-                , height fill
-                , Background.color Style.colors.white
-                , Border.rounded 12
-                , padding 32
-                , Font.center
-                ] 
-                <| el [ centerX, centerY ] <| text "Loading ..."
+            let
+                mockPoints = 
+                    [ Point Point.typeBoard "0" Point.dataTypeString "ZMR-1"
+                    , Point Point.typeBootCount "0" Point.dataTypeString "42"
+                    , Point Point.typeMetricSysCPUPercent "0" Point.dataTypeFloat "25.5"
+                    , Point Point.typeUptime "0" Point.dataTypeString "3600"
+                    , Point Point.typeTemperature "0" Point.dataTypeFloat "35.2"
+                    , Point Point.typeDescription "0" Point.dataTypeString "Mock Device 1"
+                    , Point "snmpServer" "0" Point.dataTypeString "10.0.0.1"
+                    , Point Point.typeStaticIP "0" Point.dataTypeInt "1"
+                    , Point Point.typeAddress "0" Point.dataTypeString "192.168.1.100"
+                    , Point Point.typeNetmask "0" Point.dataTypeString "255.255.255.0"
+                    , Point Point.typeGateway "0" Point.dataTypeString "192.168.1.1"
+                    , Point "atsA0" "0" Point.dataTypeInt "1"
+                    , Point "atsA1" "0" Point.dataTypeInt "2"
+                    , Point "atsA2" "0" Point.dataTypeInt "1"
+                    , Point "atsA3" "0" Point.dataTypeInt "0"
+                    , Point "atsA4" "0" Point.dataTypeInt "1"
+                    , Point "atsA5" "0" Point.dataTypeInt "2"
+                    , Point "atsB0" "0" Point.dataTypeInt "1"
+                    , Point "atsB1" "0" Point.dataTypeInt "0"
+                    , Point "atsB2" "0" Point.dataTypeInt "2"
+                    , Point "atsB3" "0" Point.dataTypeInt "1"
+                    , Point "atsB4" "0" Point.dataTypeInt "0"
+                    , Point "atsB5" "0" Point.dataTypeInt "1"
+                    ]
+            in
+            column [ spacing 24, width fill ]
+                [ tabs model.currentTab
+                , case model.currentTab of
+                    DashboardTab ->
+                        row [ spacing 24, width fill, height (px 300) ]
+                            [ el [ width (fillPortion 3), height fill ] <| statusCard mockPoints
+                            , el [ width (fillPortion 2), height fill ] <| atsStateCard mockPoints model.blink
+                            ]
+                    
+                    SettingsTab ->
+                        settingsCard mockPoints (List.length model.pointMods > 0)
+                ]
 
         Api.Success points ->
             let
