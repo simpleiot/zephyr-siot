@@ -59,6 +59,22 @@
 			status = "okay";
 		};
     };
+
+	m24c04: m24c04@50 {
+        compatible = "atmel,at24";
+        reg = <0x50>;
+        size = <512>;
+        pagesize = <16>;
+        address-width = <8>;
+        timeout = <125>;
+    };
+
+	 rv3028: rv3028@52 {
+        compatible = "microcrystal,rv3028";
+        reg = <0x52>;
+		backup-switch-mode = "direct";
+		trickle-resistor-ohms = <3000>;
+    };
 };
 
 
