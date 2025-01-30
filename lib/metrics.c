@@ -5,7 +5,9 @@
 #include <zephyr/zbus/zbus.h>
 #include <zephyr/logging/log.h>
 
-#define STACKSIZE 512
+/* _HT_ the stack is overflowing when using 512 bytes only.
+ * Please check. */
+#define STACKSIZE 768 // 512
 #define PRIORITY  7
 
 LOG_MODULE_REGISTER(siot_metrics, LOG_LEVEL_INF);
