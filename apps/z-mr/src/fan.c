@@ -5,6 +5,9 @@
  */
 
 #include "fan.h"
+#include "zpoint.h"
+
+#include <point.h>
 
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
@@ -12,8 +15,12 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/devicetree.h>
+#include <zephyr/zbus/zbus.h>
 
 LOG_MODULE_REGISTER(z_fan, LOG_LEVEL_DBG);
+
+ZBUS_CHAN_DECLARE(point_chan);
+ZBUS_CHAN_DECLARE(ticker_chan);
 
 /* size of stack area used by each thread */
 #define STACKSIZE 1024
@@ -98,34 +105,6 @@ void fan_get_status(void)
 	}
 }
 
-float fan_get_temp(temp_sensor_t sensor)
-{
-	uint8_t buf[0x10];
-	/*
-	I2C address of input air temp sensor is 0x48
-	I2C address of output air temp sensor is 0x49
-	*/
-	switch (sensor) {
-	case TEMP_INPUT:
-		i2c_burst_read(i2c_dev, TEMP_INPUT_SENSOR_ADDRESS, 0x00, buf, 2);
-		break;
-	case TEMP_OUTPUT:
-		i2c_burst_read(i2c_dev, TEMP_OUTPUT_SENSOR_ADDRESS, 0x00, buf, 2);
-		break;
-	default:
-		LOG_ERR("Invalid temperature sensor\n");
-		return 0;
-	}
-	uint16_t val = ((int16_t)buf[0] << 1) | (buf[1] >> 7);
-	// Convert to 2's complement, since temperature can be negative
-	if (val > 0x7FF) {
-		val |= 0xF000;
-	}
-	// Convert to float temperature value (Celsius)
-	float temp_c = val * 0.5;
-	return temp_c;
-}
-
 bool fan_init(void)
 {
 	uint8_t buf[0x10];
@@ -171,8 +150,33 @@ bool fan_init(void)
 	return true;
 }
 
+ZBUS_MSG_SUBSCRIBER_DEFINE(z_fan_sub);
+ZBUS_CHAN_ADD_OBS(point_chan, z_fan_sub, 3);
+ZBUS_CHAN_ADD_OBS(ticker_chan, z_fan_sub, 4);
+
 void fan_thread(void *arg1, void *arg2, void *arg3)
 {
+
+	point p;
+	const struct zbus_channel *chan;
+
+	int status_tick = 0;
+
+	fan_init();
+
+	while (!zbus_sub_wait_msg(&z_fan_sub, &chan, &p, K_FOREVER)) {
+		if (chan == &point_chan) {
+			if (strcmp(p.type, POINT_TYPE_FAN_MODE) == 0) {
+				LOG_DBG("Fan mode: %s", p.data);
+			}
+		} else if (chan == &ticker_chan) {
+			status_tick++;
+			if (status_tick > 4) {
+				fan_get_status();
+				status_tick = 0;
+			}
+		}
+	}
 	// uint16_t tach1 = 0;
 	// uint16_t tach2 = 0;
 	// uint16_t tach_target = 0xffff;
@@ -181,8 +185,6 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 	// bool fan2_on = false;
 	// uint16_t fan_change_counter = 0;
 
-	LOG_DBG("Fan thread starting\n");
-	fan_init();
 	while (1) {
 		// if (!alarm && polled_mode) {
 		// 	if (gpio_pin_get(gpio_dev, 13) == 0) {

@@ -111,12 +111,17 @@ See this
 - IC1: MCP23018T-E/SO: `0x20` (up to 8 IO-expanders can be added from `0x20` to
   `0x27`)
 - EMC2302-1-AIZL: `0x2E`
-- 8K EEProm:
+- 8K EEProm (can't use as this conflicts with RTC)
   - main board: `0x50` to `0x53`
   - expansion board: `0x54` to `0x57`
 - 4K EEProm:
   - main board: `0x50` to `0x51`
   - expansion board: `0x54` to `0x55`
+- 512K EEProm:
+  - main board: `0x50` and `0x58` (identification page)
+  - expansion board: `0x54` and `0x5C` (identification page)
+  - planning to use this as cost is not much more than 4K and uses less i2c
+    addresses
 - RV-3028-C7 RTC: `0x52` (this conflicts with 8K EEPROM)
 
 ## SNMP
