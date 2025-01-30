@@ -107,22 +107,26 @@ See this
 
 ### I2C Devices
 
-- DS2484R+T: `0x18`
-- IC1: MCP23018T-E/SO: `0x20` (up to 8 IO-expanders can be added from `0x20` to
-  `0x27`)
-- EMC2302-1-AIZL: `0x2E`
-- 8K EEProm (can't use as this conflicts with RTC)
-  - main board: `0x50` to `0x53`
-  - expansion board: `0x54` to `0x57`
-- 4K EEProm:
-  - main board: `0x50` to `0x51`
-  - expansion board: `0x54` to `0x55`
-- 512K EEProm:
+- 1-Wire bus (DS2484R+T): `0x18`
+- GPIO expander (MCP23018T-E/SO): `0x20` (up to 8 IO-expanders can be added from
+  `0x20` to `0x27`)
+- Fan controller (EMC2302-1-AIZL): `0x2E`
+- Temp sensor (LM75) on 12-chan interface board: `0x48`
+- 512K EEProm (M24512):
   - main board: `0x50` and `0x58` (identification page)
   - expansion board: `0x54` and `0x5C` (identification page)
   - planning to use this as cost is not much more than 4K and uses less i2c
     addresses
-- RV-3028-C7 RTC: `0x52` (this conflicts with 8K EEPROM)
+- RTC (RV-3028-C7): `0x52` (this conflicts with 8K EEPROM)
+
+Parts we are not using:
+
+- 8K EEProm (M24C08) (can't use as this conflicts with RTC)
+  - main board: `0x50` to `0x53`
+  - expansion board: `0x54` to `0x57`
+- 4K EEProm (M24C04):
+  - main board: `0x50` to `0x51`
+  - expansion board: `0x54` to `0x55`
 
 ## SNMP
 
