@@ -3,6 +3,8 @@
 This application is an example of how to use the SIOT architecture for a network
 connected MCU.
 
+![ui](assets/image-20250130111410493.png)
+
 ## Application architecture
 
 The application is constructed of a number of threads that mostly read or write
