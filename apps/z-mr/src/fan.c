@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "fan.h"
 #include "zpoint.h"
 
 #include <point.h>
@@ -27,6 +26,24 @@ ZBUS_CHAN_DECLARE(ticker_chan);
 
 /* scheduling priority used by each thread */
 #define PRIORITY 10
+
+// Temp sensor delta threshold to turn on fans
+#define FAN_TEMP_THRESHOLD 10
+#define FAN_TEMP_MAX       20
+// Change which fan is running periodically
+#define FAN_CHANGE_SECONDS 60
+
+typedef enum fan_id {
+	FAN_NONE = 0,
+	FAN_1,
+	FAN_2,
+} fan_id_t;
+
+typedef enum temp_sensor {
+	TEMP_NONE = 0,
+	TEMP_INPUT,
+	TEMP_OUTPUT,
+} temp_sensor_t;
 
 // #define ZEPHYR_USER_NODE DT_PATH(zephyr_user)
 
