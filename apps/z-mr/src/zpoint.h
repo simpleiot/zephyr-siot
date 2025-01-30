@@ -6,10 +6,11 @@
 #define POINT_TYPE_SNMP_SERVER "snmpServer"
 #define POINT_TYPE_TEST_LEDS   "testLEDs"
 
-// Fan mode can be off, auto, manual
-// auto uses temperature to control the fan
+// Fan mode can be off, temp, tach, pwm
+//   - temp: uses temperature to control the fan
+//   - tach: uses fanSetSpeed as a tach set point which the controller tries to maintain
+//   - pwm: users fanSetSpeed as a direct pwm set point 
 #define POINT_TYPE_FAN_MODE "fanMode"    
-// Fan speed setting is specified in % (0-100)
 #define POINT_TYPE_FAN_SET_SPEED "fanSetSpeed"
 #define POINT_TYPE_FAN_SPEED "fanSpeed"
 
