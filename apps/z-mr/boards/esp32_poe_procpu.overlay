@@ -78,17 +78,15 @@
     };
 };
 
-/*
 / {
-    buttons:buttons {
+    zbuttons:zbuttons {
         compatible = "gpio-keys";
         user_button: button {
             gpios = <&gpio1 2 (GPIO_ACTIVE_LOW)>;
+			label = "User Button";
             zephyr,code = <INPUT_KEY_0>;
         };
     };
 };
-*/
-
 
 

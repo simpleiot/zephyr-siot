@@ -41,7 +41,7 @@ static void net_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_
 static void input_callback(struct input_event *evt, void *user_data)
 {
 	if (evt->type == INPUT_EV_KEY) {
-		printk("Key event: code %u, value %d\n", evt->code, evt->value);
+		LOG_DBG("Key event: code %u, value %d\n", evt->code, evt->value);
 	}
 }
 
