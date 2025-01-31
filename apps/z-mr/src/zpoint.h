@@ -4,6 +4,7 @@
 #define POINT_TYPE_ATS_A "atsA"
 #define POINT_TYPE_ATS_B "atsB"
 #define POINT_TYPE_SNMP_SERVER "snmpServer"
+#define POINT_TYPE_SWITCH "switch"
 #define POINT_TYPE_TEST_LEDS   "testLEDs"
 
 // Fan mode can be off, temp, tach, pwm
