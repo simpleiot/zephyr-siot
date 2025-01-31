@@ -60,12 +60,12 @@
 		};
     };
 
-	m24c04: m24c04@50 {
+	m24512: m24512@50 {
         compatible = "atmel,at24";
         reg = <0x50>;
-        size = <512>;
-        pagesize = <16>;
-        address-width = <8>;
+        size = <DT_SIZE_K(512)>;
+        pagesize = <64>;
+        address-width = <16>;
         timeout = <125>;
     };
 

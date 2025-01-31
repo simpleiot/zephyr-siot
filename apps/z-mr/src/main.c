@@ -47,7 +47,7 @@ int main(void)
 	net_mgmt_init_event_callback(&mgmt_cb, net_event_handler, NET_EVENT_L4_CONNECTED);
 	net_mgmt_add_event_callback(&mgmt_cb);
 
-	const struct device *eeprom = DEVICE_DT_GET(DT_NODELABEL(m24c04));
+	const struct device *eeprom = DEVICE_DT_GET(DT_NODELABEL(m24512));
 	uint8_t data[4] = {0x01, 0x02, 0x03, 0x04};
 	int rc;
 
