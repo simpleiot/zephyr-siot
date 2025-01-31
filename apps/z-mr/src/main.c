@@ -49,7 +49,7 @@ INPUT_CALLBACK_DEFINE(NULL, input_callback, NULL);
 
 int main(void)
 {
-	LOG_INF("Zonit M+R: %s %s", CONFIG_BOARD_TARGET, APP_VERSION_EXTENDED_STRING);
+	LOG_INF("Zonit Z-MR: %s %s", CONFIG_BOARD_TARGET, APP_VERSION_EXTENDED_STRING);
 
 	nvs_init(nvs_pts, ARRAY_SIZE(nvs_pts));
 
