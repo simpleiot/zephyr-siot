@@ -333,8 +333,9 @@ statusCard points =
             , { name = "CPU Usage", value = Round.round 2 (Point.getFloat points Point.typeMetricSysCPUPercent "0") ++ "%" }
             , { name = "Uptime", value = Point.getText points Point.typeUptime "0" ++ "s" }
             , { name = "Temperature", value = Round.round 2 (Point.getFloat points Point.typeTemperature "0") ++ " °C" }
-            , { name = "Fan 1 Speed", value = formatNumber (Point.getInt points "fanSpeed" "0") ++ " RPM" }
-            , { name = "Fan 2 Speed", value = formatNumber (Point.getInt points "fanSpeed" "1") ++ " RPM" }
+            , { name = "Fan 1 speed", value = formatNumber (Point.getInt points "fanSpeed" "0") ++ " RPM" }
+            , { name = "Fan 2 speed", value = formatNumber (Point.getInt points "fanSpeed" "1") ++ " RPM" }
+            , { name = "User switch", value = formatOnOff (Point.getInt points "switch" "0") }
             ]
     in
     card
@@ -690,6 +691,16 @@ transition { property, duration } =
         (Attr.style "transition"
             (property ++ " " ++ String.fromInt duration ++ "ms ease-in-out")
         )
+
+
+formatOnOff : Int -> String
+formatOnOff number =
+    case number of
+        1 ->
+            "On"
+
+        _ ->
+            "Off"
 
 
 formatNumber : Int -> String
