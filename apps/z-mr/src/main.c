@@ -14,6 +14,8 @@
 
 LOG_MODULE_REGISTER(z_mr, LOG_LEVEL_DBG);
 
+ZBUS_CHAN_DECLARE(point_chan);
+
 const point_def point_def_snmp_server = {POINT_TYPE_SNMP_SERVER, POINT_DATA_TYPE_STRING};
 
 // The following points will get persisted in NVS when the show up on
@@ -41,7 +43,12 @@ static void net_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_
 static void input_callback(struct input_event *evt, void *user_data)
 {
 	if (evt->type == INPUT_EV_KEY) {
-		LOG_DBG("Key event: code %u, value %d\n", evt->code, evt->value);
+		if (evt->code == INPUT_KEY_0) {
+			point p;
+			point_set_type_key(&p, POINT_TYPE_SWITCH, "0");
+			point_put_int(&p, evt->value);
+			zbus_chan_pub(&point_chan, &p, K_MSEC(500));
+		}
 	}
 }
 
