@@ -152,7 +152,7 @@ view model =
     { title = "Z-MR"
     , attributes = []
     , element =
-        column 
+        column
             [ spacing 32
             , padding 40
             , width (fill |> maximum 1280)
@@ -165,9 +165,10 @@ view model =
             ]
     }
 
+
 header : Element Msg
 header =
-    row 
+    row
         [ spacing 32
         , padding 24
         , width fill
@@ -175,25 +176,28 @@ header =
         , Border.rounded 12
         , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
         ]
-        [ image 
+        [ image
             [ width (px 180)
             , alignLeft
-            ] 
+            ]
             { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
             , description = "Z-MR"
             }
         , el [ Font.size 32, Font.bold, Font.color Style.colors.jet ] <| text "Z-MR Dashboard"
         ]
 
+
 h1 : String -> Element Msg
 h1 txt =
-    el 
+    el
         [ Font.size 24
         , Font.semiBold
         , Font.color Style.colors.jet
         , paddingEach { top = 16, right = 0, bottom = 8, left = 0 }
-        ] 
-        <| text txt
+        ]
+    <|
+        text txt
+
 
 card : List (Element Msg) -> Element Msg
 card content =
@@ -208,6 +212,7 @@ card content =
         ]
         content
 
+
 tabButton : Tab -> Tab -> String -> Element Msg
 tabButton currentTab tab label =
     Input.button
@@ -215,10 +220,12 @@ tabButton currentTab tab label =
         , Border.roundEach { topLeft = 8, topRight = 8, bottomLeft = 0, bottomRight = 0 }
         , if currentTab == tab then
             Background.color Style.colors.white
+
           else
             Background.color Style.colors.pale
         , if currentTab == tab then
             Border.widthEach { bottom = 2, top = 0, left = 0, right = 0 }
+
           else
             Border.width 0
         , Border.color Style.colors.blue
@@ -229,9 +236,10 @@ tabButton currentTab tab label =
         , label = text label
         }
 
+
 tabs : Tab -> Element Msg
 tabs currentTab =
-    row 
+    row
         [ spacing 4
         , width fill
         , Border.widthEach { bottom = 2, top = 0, left = 0, right = 0 }
@@ -241,19 +249,22 @@ tabs currentTab =
         , tabButton currentTab SettingsTab "Settings"
         ]
 
+
 deviceContent : Model -> Element Msg
 deviceContent model =
     case model.points of
         Api.Loading ->
-            el 
+            el
                 [ width fill
                 , height fill
                 , Background.color Style.colors.white
                 , Border.rounded 12
                 , padding 32
                 , Font.center
-                ] 
-                <| el [ centerX, centerY ] <| text "Loading ..."
+                ]
+            <|
+                el [ centerX, centerY ] <|
+                    text "Loading ..."
 
         Api.Success points ->
             let
@@ -268,29 +279,33 @@ deviceContent model =
                             [ el [ width (fillPortion 3), height fill ] <| statusCard pointsMerge
                             , el [ width (fillPortion 2), height fill ] <| atsStateCard points model.blink
                             ]
-                    
+
                     SettingsTab ->
                         settingsCard pointsMerge (List.length model.pointMods > 0)
                 ]
 
         Api.Failure httpError ->
-            card 
-                [ el 
+            card
+                [ el
                     [ Font.color Style.colors.red
                     , Font.size 16
                     , padding 16
                     , width fill
                     , Border.rounded 8
                     , Background.color (rgba 1 0 0 0.1)
-                    ] 
-                    <| text <| "Lost connection: " ++ Api.toUserFriendlyMessage httpError
+                    ]
+                  <|
+                    text <|
+                        "Lost connection: "
+                            ++ Api.toUserFriendlyMessage httpError
                 ]
+
 
 statusCard : List Point -> Element Msg
 statusCard points =
     let
         metricRow name value =
-            row 
+            row
                 [ spacing 16
                 , padding 16
                 , width fill
@@ -298,16 +313,18 @@ statusCard points =
                 , mouseOver [ Background.color Style.colors.pale ]
                 , transition { property = "background-color", duration = 150 }
                 ]
-                [ el 
+                [ el
                     [ Font.color Style.colors.gray
                     , width (px 120)
-                    ] 
-                    <| text name
-                , el 
+                    ]
+                  <|
+                    text name
+                , el
                     [ Font.semiBold
                     , Font.color Style.colors.jet
-                    ] 
-                    <| text value
+                    ]
+                  <|
+                    text value
                 ]
 
         data =
@@ -316,6 +333,8 @@ statusCard points =
             , { name = "CPU Usage", value = Round.round 2 (Point.getFloat points Point.typeMetricSysCPUPercent "0") ++ "%" }
             , { name = "Uptime", value = Point.getText points Point.typeUptime "0" ++ "s" }
             , { name = "Temperature", value = Round.round 2 (Point.getFloat points Point.typeTemperature "0") ++ " °C" }
+            , { name = "Fan 1 Speed", value = formatNumber (Point.getInt points "fanSpeed" "0") ++ " RPM" }
+            , { name = "Fan 2 Speed", value = formatNumber (Point.getInt points "fanSpeed" "1") ++ " RPM" }
             ]
     in
     card
@@ -323,6 +342,7 @@ statusCard points =
         , column [ spacing 4, width fill ] <|
             List.map (\d -> metricRow d.name d.value) data
         ]
+
 
 settingsCard : List Point -> Bool -> Element Msg
 settingsCard points edit =
@@ -359,7 +379,7 @@ settingsCard points edit =
                         , Border.rounded 8
                         , Background.color Style.colors.blue
                         , Font.color Style.colors.white
-                        , mouseOver [ Background.color (Style.colors.ltblue) ]
+                        , mouseOver [ Background.color Style.colors.ltblue ]
                         , transition { property = "background-color", duration = 150 }
                         ]
                         { onPress = Just (ApiPostPoints points)
@@ -379,6 +399,7 @@ settingsCard points edit =
                     ]
             ]
         ]
+
 
 atsStateCard : List Point -> Bool -> Element Msg
 atsStateCard pts blink =
@@ -403,36 +424,36 @@ atsStateCard pts blink =
             ]
 
         cell content =
-            el 
+            el
                 [ paddingXY 8 12
                 , centerX
                 , centerY
                 , Font.center
-                ] 
+                ]
                 content
 
         headerCell content =
-            el 
+            el
                 [ paddingXY 8 12
                 , centerX
                 , centerY
                 , Font.center
                 , Font.semiBold
                 , Font.color Style.colors.gray
-                ] 
+                ]
                 content
     in
     card
         [ h1 "ATS Status"
         , column [ height fill, width fill, spacing 0 ] <|
-            [ table 
+            [ table
                 [ spacing 12
                 , padding 16
                 , width fill
                 , height fill
                 , Background.color Style.colors.pale
                 , Border.rounded 8
-                ] 
+                ]
                 { data = tableData
                 , columns =
                     { header = headerCell <| text "Side"
@@ -451,6 +472,7 @@ atsStateCard pts blink =
             ]
         ]
 
+
 inputText : List Point -> String -> String -> String -> String -> List (Attribute Msg) -> Element Msg
 inputText pts key typ lbl placeholder styles =
     let
@@ -467,13 +489,19 @@ inputText pts key typ lbl placeholder styles =
         , label =
             if lbl == "" then
                 Input.labelHidden ""
+
             else
-                Input.labelLeft 
+                Input.labelLeft
                     [ width (px labelWidth)
-                    , Font.color Style.colors.gray 
-                    ] 
-                    <| el [ alignRight ] <| text <| lbl ++ ":"
+                    , Font.color Style.colors.gray
+                    ]
+                <|
+                    el [ alignRight ] <|
+                        text <|
+                            lbl
+                                ++ ":"
         }
+
 
 inputCheckbox : List Point -> String -> String -> String -> List (Attribute Msg) -> Element Msg
 inputCheckbox pts key typ lbl styles =
@@ -508,6 +536,7 @@ inputCheckbox pts key typ lbl styles =
             else
                 Input.labelHidden ""
         }
+
 
 type AtsState
     = Off
@@ -654,9 +683,33 @@ viewIf condition element =
     else
         Element.none
 
+
 transition : { property : String, duration : Int } -> Attribute msg
 transition { property, duration } =
     Element.htmlAttribute
         (Attr.style "transition"
             (property ++ " " ++ String.fromInt duration ++ "ms ease-in-out")
         )
+
+
+formatNumber : Int -> String
+formatNumber number =
+    let
+        numberString =
+            String.fromInt (abs number)
+
+        reversedDigits =
+            String.toList numberString |> List.reverse
+
+        groupedDigits =
+            List.Extra.greedyGroupsOf 3 reversedDigits
+                |> List.map String.fromList
+                |> List.map String.reverse
+                |> List.reverse
+                |> String.join ","
+    in
+    if number < 0 then
+        "-" ++ groupedDigits
+
+    else
+        groupedDigits
