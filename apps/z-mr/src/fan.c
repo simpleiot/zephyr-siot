@@ -5,9 +5,9 @@
  */
 
 #include "zpoint.h"
-#include <stdint.h>
 
 #include <point.h>
+#include <siot-string.h>
 
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
@@ -16,6 +16,7 @@
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/zbus/zbus.h>
+#include <stdint.h>
 
 LOG_MODULE_REGISTER(z_fan, LOG_LEVEL_DBG);
 
@@ -293,9 +294,15 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 					if (value <= EMC230X_TACH_RANGE_MIN) {
 						value = 0;
 					}
-					LOG_DBG("CLIFF: Fan %i RPM: %i", i, value);
 					// fan_get_status();
 					status_tick = 0;
+
+					point p;
+					char index[10];
+					itoa(i, index, 10);
+					point_set_type_key(&p, POINT_TYPE_FAN_SPEED, index);
+					point_put_int(&p, value);
+					zbus_chan_pub(&point_chan, &p, K_MSEC(500));
 				}
 			}
 		}
