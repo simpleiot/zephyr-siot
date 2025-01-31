@@ -9,6 +9,7 @@
 #include <zephyr/zbus/zbus.h>
 #include <zephyr/drivers/eeprom.h>
 #include <zephyr/device.h>
+#include <zephyr/input/input.h>
 #include <app_version.h>
 
 LOG_MODULE_REGISTER(z_mr, LOG_LEVEL_DBG);
@@ -36,6 +37,15 @@ static void net_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_
 		LOG_INF("Network connected\n");
 	}
 }
+
+static void input_callback(struct input_event *evt, void *user_data)
+{
+	if (evt->type == INPUT_EV_KEY) {
+		printk("Key event: code %u, value %d\n", evt->code, evt->value);
+	}
+}
+
+INPUT_CALLBACK_DEFINE(NULL, input_callback, NULL);
 
 int main(void)
 {
