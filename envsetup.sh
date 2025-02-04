@@ -14,7 +14,7 @@ siot_ram_report() {
 	west build -t ram_report
 }
 
-siot_rom_reportm_report() {
+siot_rom_report() {
 	west build -t rom_report
 }
 
