@@ -5,7 +5,7 @@
 #include <zephyr/zbus/zbus.h>
 #include <zephyr/logging/log.h>
 
-#define STACKSIZE 512
+#define STACKSIZE 1024
 #define PRIORITY  7
 
 LOG_MODULE_REGISTER(siot_metrics, LOG_LEVEL_INF);
