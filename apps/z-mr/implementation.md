@@ -6,11 +6,11 @@ Below is a rough order/outline for implementing the Z-MR functionality
 
 1. understand SNMP
    - [SNMP Protocol Architecture – MIBs and OIDs explained](https://www.itprc.com/snmp-protocol-architecture-mibs-oids/)
-1. get net-snmp tools running on PC
-1. implement sending a test test trap from Z-MR
+1. (DONE) get net-snmp tools running on PC
+1. (DONE) implement sending a test test trap from Z-MR
    - Z-MR should call a function in zephyr-snmp to send a trap. The trap
     definition and IP address should be passed to this function.
-1. receive test trap on PC using net-snmp and write envsetup-zonit.sh script to
+1. (DONE) receive test trap on PC using net-snmp and write envsetup-zonit.sh script to
   document
 1. UI to configure SNMP server IP address to receive traps
    - update UI with SNMP server IP address field
