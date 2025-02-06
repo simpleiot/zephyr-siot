@@ -14,7 +14,7 @@ siot_ram_report() {
 	west build -t ram_report
 }
 
-siot_rom_reportm_report() {
+siot_rom_report() {
 	west build -t rom_report
 }
 
@@ -61,6 +61,11 @@ siot_net_frontend_build() {
 					return 1
 			)
 	)
+}
+
+siot_net_frontend_test() {
+	(cd apps/siot-net/frontend && npx elm-test || return 1) || return 1
+	(cd apps/siot-net/frontend && npx elm-review || return 1) || return 1
 }
 
 siot_build_native_sim() {
