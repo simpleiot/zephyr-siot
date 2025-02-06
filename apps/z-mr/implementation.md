@@ -17,7 +17,11 @@ Below is a rough order/outline for implementing the Z-MR functionality
    - persist this setting in flash
    - use this point to set the IP address when sending traps
 1. research existing OIDs to see if ATS OIDs/MIBs existing
+1. figure out how to report ATS state
+   - are there existing MIBS/OIDs that cover this?
+   - do we need to design a custom one?
 1. implement custom OID/MIB if necessary
+1. send ATS state to SNMP server using a TRAP
 1. implement SNMP GetRequest
    - zephyr-snmp lib should listen for requests on SNMP port
    - zephyr-snmp implements a function that allows you to register a callback to
@@ -28,9 +32,6 @@ Below is a rough order/outline for implementing the Z-MR functionality
      handle requests
 1. handle basic SNMP requests such as uptime or whatever else is normal for a
    system to report
-1. figure out how to report ATS state
-   - are there existing MIBS that cover this?
-   - do we need to design a custom one?
 1. automatic testing
    - we should have
     [Zephyr tests](https://docs.zephyrproject.org/latest/develop/test/ztest.html)
