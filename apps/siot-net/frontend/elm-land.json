@@ -39,7 +39,7 @@
       "useHashRouting": false
     },
     "proxy": {
-      "/v1": "http://10.0.0.112"
+      "/v1": "http://10.0.0.134"
     }
   }
 }
