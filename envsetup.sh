@@ -63,6 +63,11 @@ siot_net_frontend_build() {
 	)
 }
 
+siot_net_frontend_test() {
+	(cd apps/siot-net/frontend && npx elm-test || return 1) || return 1
+	(cd apps/siot-net/frontend && npx elm-review || return 1) || return 1
+}
+
 siot_build_native_sim() {
 	APP=$1
 	west build -b native_sim "${APP}"
