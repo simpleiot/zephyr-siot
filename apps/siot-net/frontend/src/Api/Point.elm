@@ -3,10 +3,8 @@ module Api.Point exposing
     , Resp
     , dataTypeFloat
     , dataTypeInt
-    , dataTypeJSON
     , dataTypeString
     , fetch
-    , get
     , getBool
     , getFloat
     , getInt
@@ -20,7 +18,6 @@ module Api.Point exposing
     , typeMetricSysCPUPercent
     , typeNetmask
     , typeStaticIP
-    , typeTemperature
     , typeUptime
     , updatePoints
     )
@@ -54,11 +51,6 @@ dataTypeFloat =
 dataTypeString : String
 dataTypeString =
     "STR"
-
-
-dataTypeJSON : String
-dataTypeJSON =
-    "JSN"
 
 
 type alias Resp =
@@ -229,11 +221,6 @@ typeGateway =
 typeMetricSysCPUPercent : String
 typeMetricSysCPUPercent =
     "metricSysCPUPercent"
-
-
-typeTemperature : String
-typeTemperature =
-    "temp"
 
 
 typeBoard : String

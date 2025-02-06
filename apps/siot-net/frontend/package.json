@@ -1,0 +1,19 @@
+{
+  "name": "siot-net-frontend",
+  "version": "1.0.0",
+  "description": "> Built with [Elm Land](https://elm.land) 🌈",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "elm-review": "^2.12.0",
+    "elm-test": "^0.19.1-revision12"
+  }
+}
