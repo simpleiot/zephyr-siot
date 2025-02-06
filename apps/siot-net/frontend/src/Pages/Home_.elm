@@ -15,6 +15,7 @@ import Shared
 import Task
 import Time
 import UI.Form as Form
+import UI.Sanitize as Sanitize
 import UI.Style as Style
 import View exposing (View)
 
@@ -50,8 +51,7 @@ init () =
 
 
 type Msg
-    = NoOp
-    | Tick Time.Posix
+    = Tick Time.Posix
     | ApiRespPointList (Result Http.Error (List Point))
     | ApiRespPointPost (Result Http.Error Point.Resp)
     | EditPoint (List Point)
@@ -62,11 +62,6 @@ type Msg
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model
-            , Effect.none
-            )
-
         Tick _ ->
             ( model
             , Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
@@ -228,10 +223,6 @@ settings points edit =
 
 inputText : List Point -> String -> String -> String -> String -> Element Msg
 inputText pts key typ lbl placeholder =
-    let
-        labelWidth =
-            120
-    in
     Input.text
         []
         { onChange =
@@ -244,16 +235,16 @@ inputText pts key typ lbl placeholder =
                 Input.labelHidden ""
 
             else
+                let
+                    labelWidth =
+                        120
+                in
                 Input.labelLeft [ width (px labelWidth) ] <| el [ alignRight ] <| text <| lbl ++ ":"
         }
 
 
 inputCheckbox : List Point -> String -> String -> String -> Element Msg
 inputCheckbox pts key typ lbl =
-    let
-        labelWidth =
-            120
-    in
     Input.checkbox
         []
         { onChange =
@@ -272,6 +263,10 @@ inputCheckbox pts key typ lbl =
         , icon = Input.defaultCheckbox
         , label =
             if lbl /= "" then
+                let
+                    labelWidth =
+                        120
+                in
                 Input.labelLeft [ width (px labelWidth) ] <|
                     el [ alignRight ] <|
                         text <|
@@ -280,6 +275,62 @@ inputCheckbox pts key typ lbl =
 
             else
                 Input.labelHidden ""
+        }
+
+
+blankMajicValue : String
+blankMajicValue =
+    "123BLANK123"
+
+
+inputFloat : List Point -> String -> String -> String -> Element Msg
+inputFloat pts key typ lbl =
+    let
+        currentText =
+            Point.getText pts typ key
+
+        currentValue =
+            case currentText of
+                "" ->
+                    ""
+
+                "123BLANK123" ->
+                    ""
+
+                "-" ->
+                    "-"
+
+                _ ->
+                    Sanitize.float currentText
+    in
+    Input.text
+        []
+        { onChange =
+            \d ->
+                let
+                    v =
+                        if d == "" then
+                            blankMajicValue
+
+                        else if d == "-" then
+                            "-"
+
+                        else
+                            Sanitize.float d
+                in
+                EditPoint [ Point typ key Point.dataTypeFloat v ]
+        , text = currentValue
+        , placeholder = Nothing
+        , label =
+            if lbl == "" then
+                Input.labelHidden ""
+
+            else
+                let
+                    labelWidth =
+                        120
+                in
+                Input.labelLeft [ width (px labelWidth) ] <| el [ alignRight ] <| text <| lbl ++ ":"
         }
 
 
