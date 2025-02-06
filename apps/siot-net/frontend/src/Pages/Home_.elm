@@ -198,7 +198,6 @@ settings points edit =
     in
     column [ spacing 15, Form.onEnterEsc (ApiPostPoints points) DiscardEdits ]
         [ inputText points "0" Point.typeDescription "Description" "desc"
-        , inputFloat points "0" "pidGain" "PID Gain"
         , inputCheckbox points "0" Point.typeStaticIP "Static IP"
         , viewIf staticIP <|
             column [ spacing 15 ]
