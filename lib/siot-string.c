@@ -43,13 +43,25 @@ void ftoa(float num, char *str, int precision)
 		str[i++] = '.';
 
 		// Convert fractional part
+		int last_non_zero = i;
 		while (precision > 0) {
 			fraction *= 10;
 			int digit = (int)fraction;
 			str[i++] = digit + '0';
+			if (digit != 0) {
+				last_non_zero = i;
+			}
 			fraction -= digit;
 			precision--;
 		}
+
+		// Truncate trailing zeros
+		i = last_non_zero;
+	}
+
+	// Remove decimal point if it's the last character
+	if (str[i - 1] == '.') {
+		i--;
 	}
 
 	// Null-terminate the string

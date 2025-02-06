@@ -27,14 +27,14 @@ char test_point1_json[] = "{\"t\":\"temp\",\"k\":\"\","
 			  "\"dt\":\"INT\",\"d\":\"-32\"}";
 
 char test_point2_json[] = "{\"t\":\"temp\",\"k\":\"\","
-			  "\"dt\":\"FLT\",\"d\":\"-32.2000\"}";
+			  "\"dt\":\"FLT\",\"d\":\"-32.2\"}";
 
 char test_point3_json[] = "{\"t\":\"description\",\"k\":\"\",\"dt\":\"STR\","
 			  "\"d\":\"device #3\"}";
 
 char test_point_all_json[] = "[{\"t\":\"metricSysCPUPercent\",\"k\":\"\",\"dt\":"
 			     "\"INT\",\"d\":\"-232\"},{\"t\":\"temp\",\"k\":\"\","
-			     "\"dt\":\"FLT\",\"d\":\"-572.2000\"},{\"t\":"
+			     "\"dt\":\"FLT\",\"d\":\"-572.2\"},{\"t\":"
 			     "\"description\",\"k\":\"\",\"dt\":\"STR\",\"d\":\"device #4\"}]";
 
 char test_point1_invalid_json[] = "{\"time\":\"\",\"type\":\"temp\",\"key\":\"\","
