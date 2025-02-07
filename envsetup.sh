@@ -87,7 +87,7 @@ siot_test_native_mac() {
 # https://www.olimex.com/Products/IoT/ESP32/ESP32-POE/open-source-hardware
 siot_build_esp32_poe() {
 	APP=$1
-	west build -b esp32_poe/esp32/procpu "${APP}" -- -DBOARD_ROOT="$(pwd)"
+	west build -b esp32_poe/esp32/procpu $APP -- "-DBOARD_ROOT=$(pwd)/zonit" "-DCMAKE_BUILD_PARALLEL_LEVEL=1"
 }
 
 # https://www.olimex.com/Products/IoT/ESP32/ESP32-POE/open-source-hardware

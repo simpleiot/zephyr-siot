@@ -44,9 +44,7 @@ int main(void)
 
 	nvs_init(nvs_pts, ARRAY_SIZE(nvs_pts));
 
-	// ble_init();
-
-	// In your initialization code:
+	// // In your initialization code:
 	net_mgmt_init_event_callback(&mgmt_cb, net_event_handler, NET_EVENT_L4_CONNECTED);
 	net_mgmt_add_event_callback(&mgmt_cb);
 
