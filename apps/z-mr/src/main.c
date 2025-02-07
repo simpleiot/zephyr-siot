@@ -2,7 +2,7 @@
 
 #include <nvs.h>
 #include <point.h>
-
+// #include <ble.h>
 #include <stdint.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/net/net_mgmt.h>
