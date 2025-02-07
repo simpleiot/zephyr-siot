@@ -1,6 +1,8 @@
 #include "zpoint.h"
+
 #include <nvs.h>
 #include <point.h>
+// #include <ble.h>
 #include <stdint.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/net/net_mgmt.h>
@@ -38,6 +40,8 @@ int main(void)
 	LOG_INF("Zonit M+R: %s %s", CONFIG_BOARD_TARGET, APP_VERSION_EXTENDED_STRING);
 
 	nvs_init(nvs_pts, ARRAY_SIZE(nvs_pts));
+
+	// ble_init();
 
 	// In your initialization code:
 	net_mgmt_init_event_callback(&mgmt_cb, net_event_handler, NET_EVENT_L4_CONNECTED);
