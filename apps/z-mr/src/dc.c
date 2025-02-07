@@ -1,4 +1,3 @@
-
 #include "ats.h"
 #include "point.h"
 #include "zephyr/sys/util.h"
@@ -35,7 +34,7 @@ static void keymap_callback(struct input_event *evt, void *user_data)
 	}
 }
 
-static const struct device *const keymap_dev = DEVICE_DT_GET(DT_NODELABEL(keymap));
+static const struct device *const keymap_dev Z_GENERIC_SECTION(.rodata.keymap_dev) = DEVICE_DT_GET(DT_NODELABEL(keymap));
 
 INPUT_CALLBACK_DEFINE(keymap_dev, keymap_callback, NULL);
 
@@ -93,10 +92,10 @@ void z_dc_thread(void *arg1, void *arg2, void *arg3)
 
 	struct input_event evt;
 
-	static const char MSG_AON[] = "AON";
-	static const char MSG_ONA[] = "ONA";
-	static const char MSG_BON[] = "BON";
-	static const char MSG_ONB[] = "ONB";
+	static const char MSG_AON[] Z_GENERIC_SECTION(.rodata) = "AON";
+	static const char MSG_ONA[] Z_GENERIC_SECTION(.rodata) = "ONA";
+	static const char MSG_BON[] Z_GENERIC_SECTION(.rodata) = "BON";
+	static const char MSG_ONB[] Z_GENERIC_SECTION(.rodata) = "ONB";
 
 	while (1) {
 		if (k_msgq_get(&dc_msgq, &evt, K_FOREVER) == 0) {

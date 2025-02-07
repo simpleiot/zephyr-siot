@@ -45,6 +45,18 @@
     };
 };
 
+&uart1 {
+    status = "okay";
+    current-speed = <115200>;
+    pinctrl-0 = <&uart1_default>;
+    pinctrl-names = "default";
+    hw-flow-control;
+};
+
+&esp32_bt_hci {
+    status = "okay";
+};
+
 / {
 	kbd_matrix: kbd-matrix {
 	    compatible = "gpio-kbd-matrix";
@@ -109,6 +121,10 @@
 	        col-size = <6>;
 	    };
 	};
+
+	chosen {
+        zephyr,bt-c2h-uart = &uart1;
+    };
 };
 
 

@@ -22,9 +22,9 @@ ZBUS_CHAN_DECLARE(point_chan);
 ZBUS_CHAN_DECLARE(ticker_chan);
 
 #define I2C0_NODE DT_NODELABEL(mcp23018_20)
-static const struct i2c_dt_spec gpioExpander = I2C_DT_SPEC_GET(I2C0_NODE);
+static const struct i2c_dt_spec gpioExpander Z_GENERIC_SECTION(.rodata) = I2C_DT_SPEC_GET(I2C0_NODE);
 
-const static struct device *i2c_dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
+const static struct device *i2c_dev Z_GENERIC_SECTION(.rodata) = DEVICE_DT_GET(DT_NODELABEL(i2c0));
 
 void z_led_setup(const struct device *mcp_device)
 {
@@ -113,8 +113,8 @@ void z_leds_test_pattern(const struct device *mcp_device)
 	z_led_set(mcp_device, true, cur, true);
 }
 
-static ats_chan_state ats_chan_state_a[6];
-static ats_chan_state ats_chan_state_b[6];
+static ats_chan_state ats_chan_state_a[6] Z_GENERIC_SECTION(.rodata);
+static ats_chan_state ats_chan_state_b[6] Z_GENERIC_SECTION(.rodata);
 
 ZBUS_MSG_SUBSCRIBER_DEFINE(z_led_sub);
 ZBUS_CHAN_ADD_OBS(point_chan, z_led_sub, 3);

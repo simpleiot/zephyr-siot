@@ -2,7 +2,7 @@
 
 #include <nvs.h>
 #include <point.h>
-
+// #include <ble.h>
 #include <stdint.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/net/net_mgmt.h>
@@ -11,11 +11,11 @@
 
 LOG_MODULE_REGISTER(z_mr, LOG_LEVEL_DBG);
 
-const point_def point_def_snmp_server = {POINT_TYPE_SNMP_SERVER, POINT_DATA_TYPE_STRING};
+const point_def point_def_snmp_server Z_GENERIC_SECTION(.rodata) = {POINT_TYPE_SNMP_SERVER, POINT_DATA_TYPE_STRING};
 
 // The following points will get persisted in NVS when the show up on
 // zbus point_chan.
-static const struct nvs_point nvs_pts[] = {
+static const struct nvs_point nvs_pts[] Z_GENERIC_SECTION(.rodata) = {
 	{1, &point_def_boot_count, "0"},  {2, &point_def_description, "0"},
 	{3, &point_def_staticip, "0"},    {4, &point_def_address, "0"},
 	{5, &point_def_gateway, "0"},     {6, &point_def_netmask, "0"},
@@ -40,6 +40,8 @@ int main(void)
 	LOG_INF("Zonit M+R: %s %s", CONFIG_BOARD_TARGET, APP_VERSION_EXTENDED_STRING);
 
 	nvs_init(nvs_pts, ARRAY_SIZE(nvs_pts));
+
+	// ble_init();
 
 	// In your initialization code:
 	net_mgmt_init_event_callback(&mgmt_cb, net_event_handler, NET_EVENT_L4_CONNECTED);

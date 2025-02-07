@@ -63,13 +63,13 @@ struct example_json_payload {
 	struct sensor2_value sensor2_value;
 };
 
-static const struct json_obj_descr sensor2_value_descr[] = {
+static const struct json_obj_descr sensor2_value_descr[] Z_GENERIC_SECTION(.rodata) = {
 	JSON_OBJ_DESCR_PRIM(struct sensor2_value, x_value, JSON_TOK_NUMBER),
 	JSON_OBJ_DESCR_PRIM(struct sensor2_value, y_value, JSON_TOK_NUMBER),
 	JSON_OBJ_DESCR_PRIM(struct sensor2_value, z_value, JSON_TOK_NUMBER),
 };
 
-static const struct json_obj_descr example_json_payload_descr[] = {
+static const struct json_obj_descr example_json_payload_descr[] Z_GENERIC_SECTION(.rodata) = {
 	JSON_OBJ_DESCR_PRIM(struct example_json_payload, timestamp, JSON_TOK_NUMBER),
 	JSON_OBJ_DESCR_PRIM(struct example_json_payload, sensor1_value, JSON_TOK_NUMBER),
 	JSON_OBJ_DESCR_OBJECT(struct example_json_payload, sensor2_value, sensor2_value_descr),
@@ -115,7 +115,7 @@ struct float_value {
 	int value_int;
 };
 
-static const struct json_obj_descr float_value_descr[] = {
+static const struct json_obj_descr float_value_descr[] Z_GENERIC_SECTION(.rodata) = {
 	JSON_OBJ_DESCR_PRIM(struct float_value, value, JSON_TOK_FLOAT),
 	JSON_OBJ_DESCR_PRIM(struct float_value, value_int, JSON_TOK_NUMBER),
 };
