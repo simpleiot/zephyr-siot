@@ -1,0 +1,51 @@
+ATSMIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, Integer32
+        FROM SNMPv2-SMI
+    OBJECT-GROUP, NOTIFICATION-GROUP
+        FROM SNMPv2-CONF;
+
+atsModule MODULE-IDENTITY
+    LAST-UPDATED "202502070000Z"
+    ORGANIZATION "Your Organization Name"
+    CONTACT-INFO "Your Contact Information"
+    DESCRIPTION
+        "MIB module for ATS state monitoring and traps"
+    ::= { enterprises yourEnterpriseNumber }
+
+atsState OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    sideA(1),
+                    sideB(2)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current state of the ATS. 
+         1 indicates Side A is active, 
+         2 indicates Side B is active."
+    ::= { atsModule 1 }
+
+atsStateChange NOTIFICATION-TYPE
+    OBJECTS     { atsState }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent when the ATS state changes."
+    ::= { atsModule 2 }
+
+atsStateGroup OBJECT-GROUP
+    OBJECTS     { atsState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects providing ATS state information."
+    ::= { atsModule 3 }
+
+atsNotificationGroup NOTIFICATION-GROUP
+    NOTIFICATIONS { atsStateChange }
+    STATUS      current
+    DESCRIPTION
+        "The notifications for the ATS MIB."
+    ::= { atsModule 4 }
+
+END

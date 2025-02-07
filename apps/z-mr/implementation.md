@@ -9,9 +9,9 @@ Below is a rough order/outline for implementing the Z-MR functionality
 1. (DONE) get net-snmp tools running on PC
 1. (DONE) implement sending a test test trap from Z-MR
    - Z-MR should call a function in zephyr-snmp to send a trap. The trap
-    definition and IP address should be passed to this function.
-1. (DONE) receive test trap on PC using net-snmp and write envsetup-zonit.sh script to
-  document
+     definition and IP address should be passed to this function.
+1. (DONE) receive test trap on PC using net-snmp and write envsetup-zonit.sh
+   script to document
 1. UI to configure SNMP server IP address to receive traps
    - update UI with SNMP server IP address field
    - persist this setting in flash
@@ -21,21 +21,23 @@ Below is a rough order/outline for implementing the Z-MR functionality
    - are there existing MIBS/OIDs that cover this?
    - do we need to design a custom one?
 1. implement custom OID/MIB if necessary
+   - see: [z-mr.mib](snmp/z-mr.mib)
 1. send ATS state to SNMP server using a TRAP
+   - Z-MR needs to be compatible with above MIB
 1. implement SNMP GetRequest
    - zephyr-snmp lib should listen for requests on SNMP port
    - zephyr-snmp implements a function that allows you to register a callback to
-    receive requests
+     receive requests
      - this can be modeled after the Zephyr http lib API (see web.c for how we
-      handle http reqeusts).
+       handle http reqeusts).
    - Z-MR snmp.c thread should register a callback with zephyr-snmp lib and
      handle requests
 1. handle basic SNMP requests such as uptime or whatever else is normal for a
    system to report
 1. automatic testing
    - we should have
-    [Zephyr tests](https://docs.zephyrproject.org/latest/develop/test/ztest.html)
-    for zephyr-snmp and Z-MR snmp functionality if possible
+     [Zephyr tests](https://docs.zephyrproject.org/latest/develop/test/ztest.html)
+     for zephyr-snmp and Z-MR snmp functionality if possible
    - see the `tests` directory for an example of tests already implemented
 
 ## Bluetooth Configuration
