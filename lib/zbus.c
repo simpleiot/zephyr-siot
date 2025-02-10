@@ -1,6 +1,7 @@
 #include "zephyr/kernel.h"
 #include <point.h>
 #include <zephyr/zbus/zbus.h>
+#include <zephyr/init.h>
 
 ZBUS_CHAN_DEFINE(point_chan, point, NULL, NULL, ZBUS_OBSERVERS_EMPTY, ZBUS_MSG_INIT(0));
 ZBUS_CHAN_DEFINE(ticker_chan, uint8_t, NULL, NULL, ZBUS_OBSERVERS_EMPTY, ZBUS_MSG_INIT(0));

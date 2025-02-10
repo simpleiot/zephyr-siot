@@ -1,12 +1,30 @@
-#ifndef BLE_H
-#define BLE_H
+/**
+ * @file ble.h
+ * @brief Bluetooth Low Energy interface
+ *
+ * This header provides the public interface for the BLE functionality
+ */
 
-#include <stdbool.h>
+#ifndef BLE_H_
+#define BLE_H_
 
-// Function declarations
-void ble_init(void);
-void ble_start_advertising(void);
-bool ble_is_connected(void);
-void ble_send_pin_status(void);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#endif /* BLE_H */ 
+/**
+ * @brief Initialize the BLE subsystem
+ *
+ * This function initializes Bluetooth, starts advertising, and sets up all required
+ * services including vendor-specific service, Heart Rate Service (HRS), 
+ * Battery Service (BAS), and Current Time Service (CTS).
+ *
+ * @return 0 on success, negative errno on failure
+ */
+int ble_init(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* BLE_H_ */

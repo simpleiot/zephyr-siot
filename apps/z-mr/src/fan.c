@@ -26,8 +26,8 @@ LOG_MODULE_REGISTER(z_fan, LOG_LEVEL_DBG);
 // static const struct device *gpio_dev;
 // static struct gpio_callback gpio_cb;
 // static bool polled_mode = false;
-static bool alarm = false;
-const static struct device *const i2c_dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
+static bool alarm Z_GENERIC_SECTION(.rodata) = false;
+const static struct device *const i2c_dev Z_GENERIC_SECTION(.rodata) = DEVICE_DT_GET(DT_NODELABEL(i2c0));
 
 void fan_alarm_asserted(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {

@@ -45,6 +45,18 @@
     };
 };
 
+&uart0 {
+    status = "okay";
+};
+
+&uart1 {
+    status = "okay";
+};
+
+&esp32_bt_hci {
+    status = "okay";
+};
+
 / {
 	kbd_matrix: kbd-matrix {
 	    compatible = "gpio-kbd-matrix";
@@ -109,6 +121,10 @@
 	        col-size = <6>;
 	    };
 	};
+
+	chosen {
+        zephyr,bt-c2h-uart = &uart1;
+    };
 };
 
 
