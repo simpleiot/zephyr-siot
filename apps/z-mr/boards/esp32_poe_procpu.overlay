@@ -45,21 +45,12 @@
     };
 };
 
-<<<<<<< HEAD
-&uart1 {
-    status = "okay";
-    current-speed = <115200>;
-    pinctrl-0 = <&uart1_default>;
-    pinctrl-names = "default";
-    hw-flow-control;
-=======
 &uart0 {
     status = "okay";
 };
 
 &uart1 {
     status = "okay";
->>>>>>> e86e512 (WIP: Running into Memory Issues)
 };
 
 &esp32_bt_hci {

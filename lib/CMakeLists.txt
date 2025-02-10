@@ -7,6 +7,5 @@ if(CONFIG_LIB_SIOT)
     zbus.c
     nvs.c
     siot-string.c
-    ble.c
   )
 endif()
