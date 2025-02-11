@@ -98,6 +98,7 @@
 			label = "User Button";
             zephyr,code = <INPUT_KEY_0>;
         };
+	};
 
 	chosen {
         zephyr,bt-c2h-uart = &uart1;
