@@ -175,3 +175,7 @@ siot_defconfig_diff() {
 siot_defconfig_save() {
 	cp $GENERATED_DEFCONFIG $SAVED_DEFCONFIG
 }
+
+siot_format() {
+	find . -name '*.h' -o -name '*.cpp' | xargs clang-format -i
+}
