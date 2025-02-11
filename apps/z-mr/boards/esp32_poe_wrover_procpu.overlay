@@ -1,0 +1,49 @@
+/*
+ * Copyright (c) 2022 Grant Ramsay <grant.ramsay@hotmail.com>
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+#include <zephyr/dt-bindings/input/keymap.h>
+
+&eth {
+	status = "okay";
+};
+
+&phy {
+	status = "okay";
+};
+
+&mdio {
+	status = "okay";
+};
+
+&i2c0 {
+    status = "okay";
+    clock-frequency = <I2C_BITRATE_STANDARD>;
+
+	mcp23018_20: mcp23018@20 {
+        compatible = "microchip,mcp23018";
+        reg = < 0x20 >;
+        gpio-controller;
+        ngpios = < 16 >;
+        #gpio-cells = < 2 >;
+    };
+
+	ds2484: ds2484@18 {
+        compatible = "maxim,ds2484";
+        reg = <0x18>;
+        status = "okay";
+
+		ds18b20 {
+			compatible = "maxim,ds18b20";
+			family-code = <0x28>;
+			resolution = <12>;
+			status = "okay";
+		};
+    };
+};
+
+
+

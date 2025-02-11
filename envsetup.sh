@@ -63,6 +63,10 @@ siot_net_frontend_build() {
 	)
 }
 
+siot_net_frontend_format() {
+	(cd apps/siot-net/frontend && npx elm-format src/ tests/ --yes || return 1)
+}
+
 siot_net_frontend_test() {
 	(cd apps/siot-net/frontend && npx elm-test || return 1) || return 1
 	(cd apps/siot-net/frontend && npx elm-review || return 1) || return 1
@@ -183,4 +187,8 @@ siot_defconfig_diff() {
 
 siot_defconfig_save() {
 	cp $GENERATED_DEFCONFIG $SAVED_DEFCONFIG
+}
+
+siot_format() {
+	find . -name '*.h' -o -name '*.cpp' | xargs clang-format -i
 }

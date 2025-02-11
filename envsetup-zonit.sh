@@ -10,6 +10,11 @@ z_mr_build() {
 	siot_build_esp32_poe apps/z-mr
 }
 
+z_mr_build_wrover() {
+	z_mr_frontend_build || return 1
+	siot_build_esp32_poe_wrover apps/z-mr
+}
+
 z_mr_flash() {
 	siot_flash_esp "$1"
 }
@@ -54,6 +59,11 @@ z_mr_frontend_build() {
 	)
 }
 
+z_mr_frontend_test() {
+	(cd apps/z-mr/frontend && npx elm-test || return 1) || return 1
+	(cd apps/z-mr/frontend && npx elm-review || return 1) || return 1
+}
+
 z_mr_snmptrapd() {
 	echo About to run snmptrapd with sudo. It will show all SNMP traps received.
 	echo You can test it by calling the z_mr_snmptrapd\(\) function.
@@ -65,3 +75,7 @@ z_mr_traptest() {
 	sudo snmptrap -v 2c -c public localhost '' SNMPv2-MIB::coldStart
 }
 
+z_test() {
+	siot_test_native
+	z_mr_frontend_test
+}
