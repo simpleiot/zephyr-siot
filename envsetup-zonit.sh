@@ -59,6 +59,11 @@ z_mr_frontend_build() {
 	)
 }
 
+z_mr_frontend_test() {
+	(cd apps/z-mr/frontend && npx elm-test || return 1) || return 1
+	(cd apps/z-mr/frontend && npx elm-review || return 1) || return 1
+}
+
 z_mr_snmptrapd() {
 	echo About to run snmptrapd with sudo. It will show all SNMP traps received.
 	echo You can test it by calling the z_mr_snmptrapd\(\) function.
@@ -70,3 +75,7 @@ z_mr_traptest() {
 	sudo snmptrap -v 2c -c public localhost '' SNMPv2-MIB::coldStart
 }
 
+z_test() {
+	siot_test_native
+	z_mr_frontend_test
+}
