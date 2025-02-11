@@ -13,7 +13,7 @@ LOG_MODULE_REGISTER(siot, LOG_LEVEL_DBG);
 
 // The following points will get persisted in NVS when the show up on
 // zbus point_chan.
-static const struct nvs_point nvs_pts[] Z_GENERIC_SECTION(.rodata) = {
+static const struct nvs_point nvs_pts[] = {
 	{1, &point_def_boot_count, "0"}, {2, &point_def_description, "0"},
 	{3, &point_def_staticip, "0"},   {4, &point_def_address, "0"},
 	{5, &point_def_gateway, "0"},    {6, &point_def_netmask, "0"},
@@ -22,7 +22,7 @@ static const struct nvs_point nvs_pts[] Z_GENERIC_SECTION(.rodata) = {
 // ==================================================
 // Network manager
 
-static struct net_mgmt_event_callback mgmt_cb Z_GENERIC_SECTION(.rodata);
+static struct net_mgmt_event_callback mgmt_cb;
 
 static void net_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event,
 			      struct net_if *iface)

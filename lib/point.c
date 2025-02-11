@@ -14,17 +14,17 @@ LOG_MODULE_REGISTER(z_point, LOG_LEVEL_DBG);
 
 ZBUS_CHAN_DECLARE(point_chan);
 
-const point_def point_def_description Z_GENERIC_SECTION(.rodata) = {POINT_TYPE_DESCRIPTION, POINT_DATA_TYPE_STRING};
-const point_def point_def_staticip Z_GENERIC_SECTION(.rodata) = {POINT_TYPE_STATICIP, POINT_DATA_TYPE_INT};
-const point_def point_def_address Z_GENERIC_SECTION(.rodata) = {POINT_TYPE_ADDRESS, POINT_DATA_TYPE_STRING};
-const point_def point_def_netmask Z_GENERIC_SECTION(.rodata) = {POINT_TYPE_NETMASK, POINT_DATA_TYPE_STRING};
-const point_def point_def_gateway Z_GENERIC_SECTION(.rodata) = {POINT_TYPE_GATEWAY, POINT_DATA_TYPE_STRING};
-const point_def point_def_metric_sys_cpu_percent Z_GENERIC_SECTION(.rodata) = {POINT_TYPE_METRIC_SYS_CPU_PERCENT,
+const point_def point_def_description = {POINT_TYPE_DESCRIPTION, POINT_DATA_TYPE_STRING};
+const point_def point_def_staticip = {POINT_TYPE_STATICIP, POINT_DATA_TYPE_INT};
+const point_def point_def_address = {POINT_TYPE_ADDRESS, POINT_DATA_TYPE_STRING};
+const point_def point_def_netmask = {POINT_TYPE_NETMASK, POINT_DATA_TYPE_STRING};
+const point_def point_def_gateway = {POINT_TYPE_GATEWAY, POINT_DATA_TYPE_STRING};
+const point_def point_def_metric_sys_cpu_percent = {POINT_TYPE_METRIC_SYS_CPU_PERCENT,
 						    POINT_DATA_TYPE_FLOAT};
-const point_def point_def_uptime Z_GENERIC_SECTION(.rodata) = {POINT_TYPE_UPTIME, POINT_DATA_TYPE_INT};
-const point_def point_def_temperature Z_GENERIC_SECTION(.rodata) = {POINT_TYPE_TEMPERATURE, POINT_DATA_TYPE_FLOAT};
-const point_def point_def_board Z_GENERIC_SECTION(.rodata) = {POINT_TYPE_BOARD, POINT_DATA_TYPE_STRING};
-const point_def point_def_boot_count Z_GENERIC_SECTION(.rodata) = {POINT_TYPE_BOOT_COUNT, POINT_DATA_TYPE_INT};
+const point_def point_def_uptime = {POINT_TYPE_UPTIME, POINT_DATA_TYPE_INT};
+const point_def point_def_temperature = {POINT_TYPE_TEMPERATURE, POINT_DATA_TYPE_FLOAT};
+const point_def point_def_board = {POINT_TYPE_BOARD, POINT_DATA_TYPE_STRING};
+const point_def point_def_boot_count = {POINT_TYPE_BOOT_COUNT, POINT_DATA_TYPE_INT};
 
 void point_set_type(point *p, const char *t)
 {
@@ -196,13 +196,13 @@ struct point_js_array {
 	size_t len;
 };
 
-static const struct json_obj_descr point_js_descr[] Z_GENERIC_SECTION(.rodata) = {
+static const struct json_obj_descr point_js_descr[] = {
 	JSON_OBJ_DESCR_PRIM(struct point_js, t, JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct point_js, k, JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct point_js, dt, JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct point_js, d, JSON_TOK_OPAQUE)};
 
-static const struct json_obj_descr point_js_array_descr[] Z_GENERIC_SECTION(.rodata) = {
+static const struct json_obj_descr point_js_array_descr[] = {
 	JSON_OBJ_DESCR_OBJ_ARRAY(struct point_js_array, points, POINT_JS_ARRAY_MAX, len,
 				 point_js_descr, ARRAY_SIZE(point_js_descr)),
 };
