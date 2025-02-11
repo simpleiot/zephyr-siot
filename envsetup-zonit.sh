@@ -58,3 +58,15 @@ z_mr_frontend_build() {
 			)
 	)
 }
+
+z_mr_snmptrapd() {
+	echo About to run snmptrapd with sudo. It will show all SNMP traps received.
+	echo You can test it by calling the z_mr_snmptrapd\(\) function.
+	sudo snmptrapd -f -Loe
+}
+
+z_mr_traptest() {
+	echo This command will send a test trap message from and to this host
+	sudo snmptrap -v 2c -c public localhost '' SNMPv2-MIB::coldStart
+}
+

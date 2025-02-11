@@ -18,6 +18,7 @@ target_sources(app PRIVATE
 	src/fan.c
 	src/ats.c
 	src/snmp.c
+	# src/ble.c
 )
 
 set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)

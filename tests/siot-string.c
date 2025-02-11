@@ -41,4 +41,7 @@ ZTEST(siot_string_tests, ftoa_round)
 
 	ftoa(-1.58, buf, 1);
 	zassert_str_equal(buf, "-1.6");
+
+	ftoa(-1.58, buf, 5);
+	zassert_str_equal(buf, "-1.58");
 }

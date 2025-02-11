@@ -1,4 +1,3 @@
-
 #include "ats.h"
 #include "point.h"
 #include "zephyr/sys/util.h"

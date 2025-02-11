@@ -78,6 +78,18 @@
     };
 };
 
+&uart0 {
+    status = "okay";
+};
+
+&uart1 {
+    status = "okay";
+};
+
+&esp32_bt_hci {
+    status = "okay";
+};
+
 / {
     zbuttons:zbuttons {
         compatible = "gpio-keys";
@@ -86,6 +98,9 @@
 			label = "User Button";
             zephyr,code = <INPUT_KEY_0>;
         };
+
+	chosen {
+        zephyr,bt-c2h-uart = &uart1;
     };
 };
 

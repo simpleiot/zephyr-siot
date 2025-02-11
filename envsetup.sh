@@ -14,7 +14,7 @@ siot_ram_report() {
 	west build -t ram_report
 }
 
-siot_rom_reportm_report() {
+siot_rom_report() {
 	west build -t rom_report
 }
 
@@ -63,6 +63,11 @@ siot_net_frontend_build() {
 	)
 }
 
+siot_net_frontend_test() {
+	(cd apps/siot-net/frontend && npx elm-test || return 1) || return 1
+	(cd apps/siot-net/frontend && npx elm-review || return 1) || return 1
+}
+
 siot_build_native_sim() {
 	APP=$1
 	west build -b native_sim "${APP}"
@@ -70,7 +75,11 @@ siot_build_native_sim() {
 
 # run all library tests on host platform
 siot_test_native() {
-	siot_build_native_sim tests && ./build/zephyr/zephyr.exe
+	siot_clean && siot_build_native_sim tests && ./build/zephyr/zephyr.exe
+}
+
+siot_test_native_mac() {
+	siot_clean && west build -b qemu_x86 tests && west build -t run
 }
 
 # See https://community.tmpdir.org/t/zephyr-on-the-esp32/1310 for a comparison of ESP hardware
