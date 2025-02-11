@@ -24,21 +24,21 @@ ZBUS_CHAN_DECLARE(point_chan);
 // callbacks
 
 K_MUTEX_DEFINE(web_points_lock);
-static point web_points[40] Z_GENERIC_SECTION(.rodata) = {};
+static point web_points[40] = {};
 
 // ==================================================
 // HTTP Service
 
-static uint8_t recv_buffer[2048] Z_GENERIC_SECTION(.rodata);
+static uint8_t recv_buffer[2048];
 
-static uint16_t http_service_port Z_GENERIC_SECTION(.rodata) = 80;
+static uint16_t http_service_port = 80;
 HTTP_SERVICE_DEFINE(siot_http_service, "0.0.0.0", &http_service_port, 1, 10, NULL);
 
-static uint8_t index_html_gz[] Z_GENERIC_SECTION(.rodata) = {
+static uint8_t index_html_gz[] = {
 #include "index.html.gz.inc"
 };
 
-static uint8_t index_js_gz[] Z_GENERIC_SECTION(.rodata) = {
+static uint8_t index_js_gz[] = {
 #include "index.js.gz.inc"
 };
 

@@ -18,14 +18,14 @@ LOG_MODULE_REGISTER(nvs_store, LOG_LEVEL_DBG);
 
 ZBUS_CHAN_DECLARE(point_chan);
 
-static struct nvs_fs fs Z_GENERIC_SECTION(.rodata);
+static struct nvs_fs fs;
 
 #define NVS_PARTITION        storage_partition
 #define NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(NVS_PARTITION)
 #define NVS_PARTITION_OFFSET FIXED_PARTITION_OFFSET(NVS_PARTITION)
 
-static const struct nvs_point *nvs_pts Z_GENERIC_SECTION(.rodata);
-static size_t nvs_pts_count Z_GENERIC_SECTION(.rodata)= 0;
+static const struct nvs_point *nvs_pts;
+static size_t nvs_pts_count = 0;
 
 // returns -1 if not found
 int point_type_key_to_nvs_id(const struct nvs_point *pts, size_t len, char *type, char *key)
