@@ -7,7 +7,6 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import Element.Input as Input
 import Html.Attributes as Attr
 import Http
 import List.Extra
@@ -53,8 +52,7 @@ init () =
 
 
 type Msg
-    = NoOp
-    | Tick Time.Posix
+    = Tick Time.Posix
     | BlinkTick Time.Posix
     | ApiRespPointList (Result Http.Error (List Point))
 
@@ -62,11 +60,6 @@ type Msg
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model
-            , Effect.none
-            )
-
         Tick _ ->
             ( model
             , Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }

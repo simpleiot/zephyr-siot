@@ -1,4 +1,4 @@
-module Pages.Events exposing (Model, Msg, page)
+module Pages.Events exposing (Event, EventSeverity, Model, Msg, page)
 
 import Api
 import Api.Point as Point exposing (Point)
@@ -7,7 +7,6 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import Element.Input as Input
 import Html.Attributes as Attr
 import Http
 import Page exposing (Page)
@@ -72,19 +71,13 @@ mockEvents =
 
 
 type Msg
-    = NoOp
-    | ApiRespPointList (Result Http.Error (List Point))
+    = ApiRespPointList (Result Http.Error (List Point))
     | Tick Time.Posix
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model
-            , Effect.none
-            )
-
         ApiRespPointList (Ok points) ->
             ( { model | points = Api.Success points }
             , Effect.none
