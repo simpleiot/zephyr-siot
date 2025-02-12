@@ -47,14 +47,14 @@ siot_net_frontend_watch() {
 	# fi
 
 	# export TARGET_IP=$TARGET_IP
-	(cd apps/siot-net/frontend && elm-land server)
+	(cd apps/siot-net/frontend && npx elm-land server)
 }
 
 siot_net_frontend_build() {
 	(
 		cd apps/siot-net/frontend &&
 			(
-				elm-land build &&
+				npx elm-land build &&
 					mv dist/assets/index*.js dist/ &&
 					for file in dist/index-*.js; do mv "$file" "${file/index-*./index.}"; done &&
 					sed -i 's/assets\/index.*\.js/index.js/g' dist/index.html ||
@@ -181,5 +181,6 @@ siot_defconfig_save() {
 }
 
 siot_format() {
-	find . -name '*.h' -o -name '*.cpp' | xargs clang-format -i
+	find . -type d -name 'build' -prune -o \( -name '*.h' -o -name '*.c' \) -print0 | xargs -0 clang-format -verbose -i || return 1
+	prettier --write "**/*.md" || return 1
 }
