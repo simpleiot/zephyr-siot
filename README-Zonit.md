@@ -13,6 +13,8 @@ that sets up to build the Zonit Zephyr applications.
 - `west init -m git@gitea.zonit.com:Zonit-Dev/zephyr-zonit.git`
 - `west update`
 - `cd zonit`
+- `. envsetup-zonit.sh`
+- `z_setup`
 - _see Projects for further instructions_
 
 ## Projects
