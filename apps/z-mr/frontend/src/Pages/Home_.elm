@@ -9,6 +9,7 @@ import Html.Attributes as Attr
 import Page exposing (Page)
 import Route exposing (Route)
 import Shared
+import Task
 import UI.Nav as Nav
 import UI.Style as Style
 import View exposing (View)
@@ -32,15 +33,15 @@ type alias Model =
     {}
 
 
+type Msg
+    = NoOp
+
+
 init : () -> ( Model, Effect Msg )
 init () =
     ( {}
-    , Effect.none
+    , Task.succeed () |> Task.perform (\_ -> NoOp) |> Effect.sendCmd
     )
-
-
-type Msg
-    = NoOp
 
 
 update : Msg -> Model -> ( Model, Effect Msg )

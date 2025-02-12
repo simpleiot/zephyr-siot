@@ -76,6 +76,10 @@ z_mr_frontend_format() {
 	(cd apps/z-mr/frontend && npx elm-format src/ tests/ --yes || return 1)
 }
 
+z_mr_frontend_format_check() {
+	(cd apps/z-mr/frontend && npx elm-format src/ tests/ --validate || return 1)
+}
+
 z_mr_snmptrapd() {
 	echo About to run snmptrapd with sudo. It will show all SNMP traps received.
 	echo You can test it by calling the z_mr_snmptrapd\(\) function.
@@ -88,6 +92,7 @@ z_mr_traptest() {
 }
 
 z_test() {
+	z_format_check || return 1
 	siot_test_native || return 1
 	z_mr_frontend_test || return 1
 }
@@ -95,4 +100,9 @@ z_test() {
 z_format() {
 	siot_format || return 1
 	z_mr_frontend_format || return 1
+}
+
+z_format_check() {
+	siot_format_check || return 1
+	z_mr_frontend_format_check || return 1
 }

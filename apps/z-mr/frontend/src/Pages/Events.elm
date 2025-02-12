@@ -1,4 +1,4 @@
-module Pages.Events exposing (Model, Msg, page)
+module Pages.Events exposing (Event, EventSeverity, Model, Msg, page)
 
 import Api
 import Api.Point as Point exposing (Point)
@@ -7,7 +7,6 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import Element.Input as Input
 import Html.Attributes as Attr
 import Http
 import Page exposing (Page)
@@ -56,7 +55,7 @@ type alias Model =
 init : () -> ( Model, Effect Msg )
 init () =
     ( Model Api.Loading mockEvents
-    , Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
+    , pointFetch
     )
 
 
@@ -72,19 +71,13 @@ mockEvents =
 
 
 type Msg
-    = NoOp
-    | ApiRespPointList (Result Http.Error (List Point))
-    | Tick Time.Posix
+    = ApiRespPointList (Result Http.Error (List Point))
+    | PollPointList
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model
-            , Effect.none
-            )
-
         ApiRespPointList (Ok points) ->
             ( { model | points = Api.Success points }
             , Effect.none
@@ -95,9 +88,9 @@ update msg model =
             , Effect.none
             )
 
-        Tick _ ->
+        PollPointList ->
             ( model
-            , Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
+            , pointFetch
             )
 
 
@@ -107,7 +100,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Time.every 3000 Tick
+    Time.every 3000 (\_ -> PollPointList)
 
 
 
@@ -264,6 +257,11 @@ transition { property, duration } =
         (Attr.style "transition"
             (property ++ " " ++ String.fromInt duration ++ "ms ease-in-out")
         )
+
+
+pointFetch : Effect Msg
+pointFetch =
+    Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
 
 
 

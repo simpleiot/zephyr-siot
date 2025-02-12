@@ -47,8 +47,7 @@ init () =
 
 
 type Msg
-    = NoOp
-    | ApiRespPointList (Result Http.Error (List Point))
+    = ApiRespPointList (Result Http.Error (List Point))
     | ApiRespPointPost (Result Http.Error Point.Resp)
     | EditPoint (List Point)
     | ApiPostPoints (List Point)
@@ -58,11 +57,6 @@ type Msg
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model
-            , Effect.none
-            )
-
         ApiRespPointList (Ok points) ->
             ( { model | points = Api.Success points }
             , Effect.none
@@ -278,10 +272,6 @@ settingsCard points edit =
 
 inputText : List Point -> String -> String -> String -> String -> List (Attribute Msg) -> Element Msg
 inputText pts key typ lbl placeholder styles =
-    let
-        labelWidth =
-            120
-    in
     Input.text
         styles
         { onChange =
@@ -294,6 +284,10 @@ inputText pts key typ lbl placeholder styles =
                 Input.labelHidden ""
 
             else
+                let
+                    labelWidth =
+                        120
+                in
                 Input.labelLeft
                     [ width (px labelWidth)
                     , Font.color Style.colors.gray
@@ -308,10 +302,6 @@ inputText pts key typ lbl placeholder styles =
 
 inputCheckbox : List Point -> String -> String -> String -> List (Attribute Msg) -> Element Msg
 inputCheckbox pts key typ lbl styles =
-    let
-        labelWidth =
-            120
-    in
     Input.checkbox
         styles
         { onChange =
@@ -330,6 +320,10 @@ inputCheckbox pts key typ lbl styles =
         , icon = Input.defaultCheckbox
         , label =
             if lbl /= "" then
+                let
+                    labelWidth =
+                        120
+                in
                 Input.labelLeft [ width (px labelWidth) ] <|
                     el [ alignRight ] <|
                         text <|
