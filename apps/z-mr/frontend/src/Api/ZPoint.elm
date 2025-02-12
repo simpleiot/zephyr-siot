@@ -7,6 +7,10 @@ module Api.ZPoint exposing
     , typeSNMPServer
     , typeSwitch
     , typeTestLEDs
+    , valueOff
+    , valuePwm
+    , valueTach
+    , valueTemp
     )
 
 -- These defines should match zpoint.h
@@ -50,3 +54,23 @@ typeFanSetSpeed =
 typeFanSpeed : String
 typeFanSpeed =
     "fanSpeed"
+
+
+valueOff : String
+valueOff =
+    "off"
+
+
+valueTemp : String
+valueTemp =
+    "temp"
+
+
+valueTach : String
+valueTach =
+    "tach"
+
+
+valuePwm : String
+valuePwm =
+    "pwm"

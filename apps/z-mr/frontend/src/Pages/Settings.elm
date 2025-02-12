@@ -236,9 +236,18 @@ settingsCard points edit =
         , column [ spacing 24, Form.onEnterEsc (ApiPostPoints points) DiscardEdits ]
             [ inputText points "0" Point.typeDescription "Description" "desc" inputStyle
             , inputText points "0" "snmpServer" "SNMP Server" "IP address" inputStyle
-            , inputCheckbox points "0" Point.typeStaticIP "Static IP" []
+            , inputOption points
+                "0"
+                ZPoint.typeFanMode
+                "Fan mode"
+                [ ( ZPoint.valueOff, "Off" )
+                , ( ZPoint.valuePwm, "PWM" )
+                , ( ZPoint.valueTach, "Tachometer" )
+                , ( ZPoint.valueTemp, "Temperature" )
+                ]
             , inputFloat points "0" ZPoint.typeFanSetSpeed "Fan 1 Speed"
             , inputFloat points "1" ZPoint.typeFanSetSpeed "Fan 2 Speed"
+            , inputCheckbox points "0" Point.typeStaticIP "Static IP" []
             , viewIf staticIP <|
                 column [ spacing 16 ]
                     [ inputText points "0" Point.typeAddress "IP Addr" "ex: 10.0.0.23" inputStyle
@@ -392,6 +401,33 @@ inputFloat pts key typ lbl =
                         200
                 in
                 Input.labelLeft [ width (px labelWidth) ] <| el [ alignRight ] <| text <| lbl ++ ":"
+        }
+
+
+inputOption : List Point -> String -> String -> String -> List ( String, String ) -> Element Msg
+inputOption pts key typ lbl options =
+    let
+        labelWidth =
+            200
+    in
+    Input.radio
+        [ spacing 6 ]
+        { onChange =
+            \sel ->
+                EditPoint [ Point typ key Point.dataTypeString sel ]
+        , label =
+            Input.labelLeft [ padding 12, width (px labelWidth) ] <|
+                el [ alignRight ] <|
+                    text <|
+                        lbl
+                            ++ ":"
+        , selected = Just <| Point.getText pts typ key
+        , options =
+            List.map
+                (\opt ->
+                    Input.option (Tuple.first opt) (text (Tuple.second opt))
+                )
+                options
         }
 
 
