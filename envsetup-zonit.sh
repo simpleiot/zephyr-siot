@@ -5,6 +5,10 @@
 
 # Zonit specific build functions
 
+z_setup() {
+	siot_setup
+}
+
 z_mr_build() {
 	z_mr_frontend_build || return 1
 	siot_build_esp32_poe apps/z-mr
