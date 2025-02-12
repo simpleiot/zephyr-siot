@@ -2,3 +2,4 @@ build
 .cache
 twister*
 flash.bin
+node_modules
