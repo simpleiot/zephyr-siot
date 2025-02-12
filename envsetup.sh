@@ -68,6 +68,10 @@ siot_net_frontend_format() {
 	(cd apps/siot-net/frontend && npx elm-format src/ tests/ --yes || return 1)
 }
 
+siot_net_frontend_format_check() {
+	(cd apps/siot-net/frontend && npx elm-format src/ tests/ --validate || return 1)
+}
+
 siot_net_frontend_test() {
 	(cd apps/siot-net/frontend && npx elm-test || return 1) || return 1
 	(cd apps/siot-net/frontend && npx elm-review || return 1) || return 1
@@ -184,4 +188,9 @@ siot_defconfig_save() {
 siot_format() {
 	find . -type d -name 'build' -prune -o \( -name '*.h' -o -name '*.c' \) -print0 | xargs -0 clang-format -verbose -i || return 1
 	prettier --write "**/*.md" || return 1
+}
+
+siot_format_check() {
+	find . -type d -name 'build' -prune -o \( -name '*.h' -o -name '*.c' \) -print0 | xargs -0 clang-format -verbose --dry-run -Werror || return 1
+	prettier --check "**/*.md" || return 1
 }
