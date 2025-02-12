@@ -5,6 +5,10 @@
 
 # Zonit specific build functions
 
+z_setup() {
+	siot_setup
+}
+
 z_mr_build() {
 	z_mr_frontend_build || return 1
 	siot_build_esp32_poe apps/z-mr
@@ -64,6 +68,14 @@ z_mr_frontend_test() {
 	(cd apps/z-mr/frontend && npx elm-review || return 1) || return 1
 }
 
+z_mr_frontend_review_fix() {
+	(cd apps/z-mr/frontend && npx elm-review --fix || return 1) || return 1
+}
+
+z_mr_frontend_format() {
+	(cd apps/z-mr/frontend && npx elm-format src/ tests/ --yes || return 1)
+}
+
 z_mr_snmptrapd() {
 	echo About to run snmptrapd with sudo. It will show all SNMP traps received.
 	echo You can test it by calling the z_mr_snmptrapd\(\) function.
@@ -76,6 +88,11 @@ z_mr_traptest() {
 }
 
 z_test() {
-	siot_test_native
-	z_mr_frontend_test
+	siot_test_native || return 1
+	z_mr_frontend_test || return 1
+}
+
+z_format() {
+	siot_format || return 1
+	z_mr_frontend_format || return 1
 }

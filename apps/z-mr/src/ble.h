@@ -16,7 +16,7 @@ extern "C" {
  * @brief Initialize the BLE subsystem
  *
  * This function initializes Bluetooth, starts advertising, and sets up all required
- * services including vendor-specific service, Heart Rate Service (HRS), 
+ * services including vendor-specific service, Heart Rate Service (HRS),
  * Battery Service (BAS), and Current Time Service (CTS).
  *
  * @return 0 on success, negative errno on failure

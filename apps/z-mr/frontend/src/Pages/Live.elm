@@ -17,9 +17,9 @@ import Route exposing (Route)
 import Shared
 import Task
 import Time
+import UI.Nav as Nav
 import UI.Style as Style
 import View exposing (View)
-import UI.Nav as Nav
 
 
 page : Shared.Model -> Route () -> Page Model Msg
@@ -32,7 +32,9 @@ page _ _ =
         }
 
 
+
 -- INIT
+
 
 type alias Model =
     { points : Api.Data (List Point)
@@ -86,6 +88,7 @@ update msg model =
             )
 
 
+
 -- SUBSCRIPTIONS
 
 
@@ -97,6 +100,7 @@ subscriptions _ =
         ]
 
 
+
 -- VIEW
 
 
@@ -105,7 +109,7 @@ view model =
     { title = "Z-MR Live View"
     , attributes = []
     , element =
-        column 
+        column
             [ spacing 32
             , padding 40
             , width (fill |> maximum 1280)
@@ -119,9 +123,10 @@ view model =
             ]
     }
 
+
 header : Element Msg
 header =
-    row 
+    row
         [ spacing 32
         , padding 24
         , width fill
@@ -129,25 +134,28 @@ header =
         , Border.rounded 12
         , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
         ]
-        [ image 
+        [ image
             [ width (px 180)
             , alignLeft
-            ] 
+            ]
             { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
             , description = "Z-MR"
             }
         , el [ Font.size 32, Font.bold, Font.color Style.colors.jet ] <| text "Live View"
         ]
 
+
 h1 : String -> Element Msg
 h1 txt =
-    el 
+    el
         [ Font.size 24
         , Font.semiBold
         , Font.color Style.colors.jet
         , paddingEach { top = 16, right = 0, bottom = 8, left = 0 }
-        ] 
-        <| text txt
+        ]
+    <|
+        text txt
+
 
 card : List (Element Msg) -> Element Msg
 card content =
@@ -162,12 +170,13 @@ card content =
         ]
         content
 
+
 deviceContent : Model -> Element Msg
 deviceContent model =
     case model.points of
         Api.Loading ->
             let
-                mockPoints = 
+                mockPoints =
                     [ Point Point.typeBoard "0" Point.dataTypeString "ZMR-1"
                     , Point Point.typeBootCount "0" Point.dataTypeString "42"
                     , Point Point.typeMetricSysCPUPercent "0" Point.dataTypeFloat "25.5"
@@ -187,23 +196,27 @@ deviceContent model =
                 ]
 
         Api.Failure httpError ->
-            card 
-                [ el 
+            card
+                [ el
                     [ Font.color Style.colors.red
                     , Font.size 16
                     , padding 16
                     , width fill
                     , Border.rounded 8
                     , Background.color (rgba 1 0 0 0.1)
-                    ] 
-                    <| text <| "Lost connection: " ++ Api.toUserFriendlyMessage httpError
+                    ]
+                  <|
+                    text <|
+                        "Lost connection: "
+                            ++ Api.toUserFriendlyMessage httpError
                 ]
+
 
 statusCard : List Point -> Element Msg
 statusCard points =
     let
         metricRow name value =
-            row 
+            row
                 [ spacing 16
                 , padding 16
                 , width fill
@@ -211,16 +224,18 @@ statusCard points =
                 , mouseOver [ Background.color Style.colors.pale ]
                 , transition { property = "background-color", duration = 150 }
                 ]
-                [ el 
+                [ el
                     [ Font.color Style.colors.gray
                     , width (px 120)
-                    ] 
-                    <| text name
-                , el 
+                    ]
+                  <|
+                    text name
+                , el
                     [ Font.semiBold
                     , Font.color Style.colors.jet
-                    ] 
-                    <| text value
+                    ]
+                  <|
+                    text value
                 ]
 
         data =
@@ -236,6 +251,7 @@ statusCard points =
         , column [ spacing 4, width fill ] <|
             List.map (\d -> metricRow d.name d.value) data
         ]
+
 
 type AtsState
     = Off
@@ -316,36 +332,36 @@ atsStateCard pts blink =
             ]
 
         cell content =
-            el 
+            el
                 [ paddingXY 8 12
                 , centerX
                 , centerY
                 , Font.center
-                ] 
+                ]
                 content
 
         headerCell content =
-            el 
+            el
                 [ paddingXY 8 12
                 , centerX
                 , centerY
                 , Font.center
                 , Font.semiBold
                 , Font.color Style.colors.gray
-                ] 
+                ]
                 content
     in
     card
         [ h1 "ATS Status"
         , column [ height fill, width fill, spacing 0 ] <|
-            [ table 
+            [ table
                 [ spacing 12
                 , padding 16
                 , width fill
                 , height fill
                 , Background.color Style.colors.pale
                 , Border.rounded 8
-                ] 
+                ]
                 { data = tableData
                 , columns =
                     { header = headerCell <| text "Side"
@@ -363,6 +379,7 @@ atsStateCard pts blink =
                 }
             ]
         ]
+
 
 circleRed : Element Msg
 circleRed =
@@ -407,4 +424,4 @@ transition { property, duration } =
     Element.htmlAttribute
         (Attr.style "transition"
             (property ++ " " ++ String.fromInt duration ++ "ms ease-in-out")
-        ) 
+        )

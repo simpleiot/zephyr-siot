@@ -1,32 +1,17 @@
 {
-	"name": "zephyr-zonit",
-	"version": "1.0.0",
-	"description": "Zephyr Zonit Project",
-	"scripts": {
-		"review": "npx elm-review",
-		"test": "npx elm-test",
-		"watch": "npx elm-watch",
-		"format": "npx prettier --write .",
-		"elm": "npx elm",
-		"elm-land": "npx elm-land"
-	},
-	"keywords": [],
-	"author": "Zonit Structured Solutions",
-	"license": "Apache2",
-	"dependencies": {
-		"elm": ">=0.19.1",
-		"elm-land": ">=0.19.1"
-	},
-	"devDependencies": {
-		"elm": "^0.19.1",
-		"elm-land": "^0.19.1",
-		"elm-review": "2.11.1",
-		"elm-spa": "^6.0.4",
-		"elm-test": "^0.19.1-revision10",
-		"elm-tooling": "1.15.1",
-		"elm-watch": "^1.1.2",
-		"eslint": "^8.27.0",
-		"eslint-config-prettier": "^8.5.0",
-		"prettier": "^2.7.1"
-	}
+  "name": "Zephyr SIOT NPM tools",
+  "version": "1.0.0",
+  "description": "Various tools used in the Zephyr SIOT workflow",
+  "license": "",
+  "author": "",
+  "type": "",
+  "main": "",
+  "directories": {},
+  "scripts": {},
+  "devDependencies": {
+    "elm-format": "^0.8.7",
+    "elm-review": "^2.12.0",
+    "elm-test": "^0.19.1-revision12",
+    "prettier": "^3.5.0"
+  }
 }

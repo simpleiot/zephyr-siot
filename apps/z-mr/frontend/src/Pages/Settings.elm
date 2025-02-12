@@ -14,9 +14,9 @@ import Page exposing (Page)
 import Route exposing (Route)
 import Shared
 import UI.Form as Form
+import UI.Nav as Nav
 import UI.Style as Style
 import View exposing (View)
-import UI.Nav as Nav
 
 
 page : Shared.Model -> Route () -> Page Model Msg
@@ -27,6 +27,7 @@ page _ _ =
         , subscriptions = subscriptions
         , view = view
         }
+
 
 
 -- INIT
@@ -98,12 +99,14 @@ update msg model =
             )
 
 
+
 -- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
+
 
 
 -- VIEW
@@ -114,7 +117,7 @@ view model =
     { title = "Z-MR Settings"
     , attributes = []
     , element =
-        column 
+        column
             [ spacing 32
             , padding 40
             , width (fill |> maximum 1280)
@@ -128,9 +131,10 @@ view model =
             ]
     }
 
+
 header : Element Msg
 header =
-    row 
+    row
         [ spacing 32
         , padding 24
         , width fill
@@ -138,25 +142,28 @@ header =
         , Border.rounded 12
         , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
         ]
-        [ image 
+        [ image
             [ width (px 180)
             , alignLeft
-            ] 
+            ]
             { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
             , description = "Z-MR"
             }
         , el [ Font.size 32, Font.bold, Font.color Style.colors.jet ] <| text "Settings"
         ]
 
+
 h1 : String -> Element Msg
 h1 txt =
-    el 
+    el
         [ Font.size 24
         , Font.semiBold
         , Font.color Style.colors.jet
         , paddingEach { top = 16, right = 0, bottom = 8, left = 0 }
-        ] 
-        <| text txt
+        ]
+    <|
+        text txt
+
 
 card : List (Element Msg) -> Element Msg
 card content =
@@ -171,12 +178,13 @@ card content =
         ]
         content
 
+
 deviceContent : Model -> Element Msg
 deviceContent model =
     case model.points of
         Api.Loading ->
             let
-                mockPoints = 
+                mockPoints =
                     [ Point Point.typeDescription "0" Point.dataTypeString "Mock Device 1"
                     , Point "snmpServer" "0" Point.dataTypeString "10.0.0.1"
                     , Point Point.typeStaticIP "0" Point.dataTypeInt "1"
@@ -195,17 +203,21 @@ deviceContent model =
             settingsCard pointsMerge (List.length model.pointMods > 0)
 
         Api.Failure httpError ->
-            card 
-                [ el 
+            card
+                [ el
                     [ Font.color Style.colors.red
                     , Font.size 16
                     , padding 16
                     , width fill
                     , Border.rounded 8
                     , Background.color (rgba 1 0 0 0.1)
-                    ] 
-                    <| text <| "Lost connection: " ++ Api.toUserFriendlyMessage httpError
+                    ]
+                  <|
+                    text <|
+                        "Lost connection: "
+                            ++ Api.toUserFriendlyMessage httpError
                 ]
+
 
 settingsCard : List Point -> Bool -> Element Msg
 settingsCard points edit =
@@ -242,7 +254,7 @@ settingsCard points edit =
                         , Border.rounded 8
                         , Background.color Style.colors.blue
                         , Font.color Style.colors.white
-                        , mouseOver [ Background.color (Style.colors.ltblue) ]
+                        , mouseOver [ Background.color Style.colors.ltblue ]
                         , transition { property = "background-color", duration = 150 }
                         ]
                         { onPress = Just (ApiPostPoints points)
@@ -263,6 +275,7 @@ settingsCard points edit =
             ]
         ]
 
+
 inputText : List Point -> String -> String -> String -> String -> List (Attribute Msg) -> Element Msg
 inputText pts key typ lbl placeholder styles =
     let
@@ -279,13 +292,19 @@ inputText pts key typ lbl placeholder styles =
         , label =
             if lbl == "" then
                 Input.labelHidden ""
+
             else
-                Input.labelLeft 
+                Input.labelLeft
                     [ width (px labelWidth)
-                    , Font.color Style.colors.gray 
-                    ] 
-                    <| el [ alignRight ] <| text <| lbl ++ ":"
+                    , Font.color Style.colors.gray
+                    ]
+                <|
+                    el [ alignRight ] <|
+                        text <|
+                            lbl
+                                ++ ":"
         }
+
 
 inputCheckbox : List Point -> String -> String -> String -> List (Attribute Msg) -> Element Msg
 inputCheckbox pts key typ lbl styles =
@@ -321,6 +340,7 @@ inputCheckbox pts key typ lbl styles =
                 Input.labelHidden ""
         }
 
+
 viewIf : Bool -> Element msg -> Element msg
 viewIf condition element =
     if condition then
@@ -329,9 +349,10 @@ viewIf condition element =
     else
         Element.none
 
+
 transition : { property : String, duration : Int } -> Attribute msg
 transition { property, duration } =
     Element.htmlAttribute
         (Attr.style "transition"
             (property ++ " " ++ String.fromInt duration ++ "ms ease-in-out")
-        ) 
+        )
