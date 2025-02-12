@@ -2,6 +2,7 @@ module Pages.Live exposing (Model, Msg, page)
 
 import Api
 import Api.Point as Point exposing (Point)
+import Api.ZPoint as ZPoint
 import Effect exposing (Effect)
 import Element exposing (..)
 import Element.Background as Background
@@ -236,9 +237,9 @@ statusCard points =
             , { name = "CPU Usage", value = Round.round 2 (Point.getFloat points Point.typeMetricSysCPUPercent "0") ++ "%" }
             , { name = "Uptime", value = Point.getText points Point.typeUptime "0" ++ "s" }
             , { name = "Temperature", value = Round.round 2 (Point.getFloat points Point.typeTemperature "0") ++ " °C" }
-            , { name = "Fan 1 speed", value = formatNumber (Point.getInt points "fanSpeed" "0") ++ " RPM" }
-            , { name = "Fan 2 speed", value = formatNumber (Point.getInt points "fanSpeed" "1") ++ " RPM" }
-            , { name = "User switch", value = formatOnOff (Point.getInt points "switch" "0") }
+            , { name = "Fan 1 speed", value = formatNumber (Point.getInt points ZPoint.typeFanSpeed "0") ++ " RPM" }
+            , { name = "Fan 2 speed", value = formatNumber (Point.getInt points ZPoint.typeFanSpeed "1") ++ " RPM" }
+            , { name = "User switch", value = formatOnOff (Point.getInt points ZPoint.typeSwitch "0") }
             ]
     in
     card

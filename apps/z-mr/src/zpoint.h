@@ -1,6 +1,8 @@
 #ifndef __ZPOINT_H_
 #define __ZPOINT_H_
 
+// These defines should match ZPoint.elm
+
 #define POINT_TYPE_ATS_A       "atsA"
 #define POINT_TYPE_ATS_B       "atsB"
 #define POINT_TYPE_SNMP_SERVER "snmpServer"
@@ -8,6 +10,7 @@
 #define POINT_TYPE_TEST_LEDS   "testLEDs"
 
 // Fan mode can be off, temp, tach, pwm
+//   - off: sets fan off
 //   - temp: uses temperature to control the fan
 //   - tach: uses fanSetSpeed as a tach set point which the controller tries to maintain
 //   - pwm: users fanSetSpeed as a direct pwm set point

@@ -15,6 +15,7 @@ import Route exposing (Route)
 import Shared
 import UI.Form as Form
 import UI.Nav as Nav
+import UI.Sanitize as Sanitize
 import UI.Style as Style
 import View exposing (View)
 
@@ -235,6 +236,8 @@ settingsCard points edit =
             [ inputText points "0" Point.typeDescription "Description" "desc" inputStyle
             , inputText points "0" "snmpServer" "SNMP Server" "IP address" inputStyle
             , inputCheckbox points "0" Point.typeStaticIP "Static IP" []
+
+            -- , inputFloat points "0"
             , viewIf staticIP <|
                 column [ spacing 16 ]
                     [ inputText points "0" Point.typeAddress "IP Addr" "ex: 10.0.0.23" inputStyle
@@ -332,6 +335,62 @@ inputCheckbox pts key typ lbl styles =
 
             else
                 Input.labelHidden ""
+        }
+
+
+blankMajicValue : String
+blankMajicValue =
+    "123BLANK123"
+
+
+inputFloat : List Point -> String -> String -> String -> Element Msg
+inputFloat pts key typ lbl =
+    let
+        currentText =
+            Point.getText pts typ key
+
+        currentValue =
+            case currentText of
+                "" ->
+                    ""
+
+                "123BLANK123" ->
+                    ""
+
+                "-" ->
+                    "-"
+
+                _ ->
+                    Sanitize.float currentText
+    in
+    Input.text
+        []
+        { onChange =
+            \d ->
+                let
+                    v =
+                        if d == "" then
+                            blankMajicValue
+
+                        else if d == "-" then
+                            "-"
+
+                        else
+                            Sanitize.float d
+                in
+                EditPoint [ Point typ key Point.dataTypeFloat v ]
+        , text = currentValue
+        , placeholder = Nothing
+        , label =
+            if lbl == "" then
+                Input.labelHidden ""
+
+            else
+                let
+                    labelWidth =
+                        120
+                in
+                Input.labelLeft [ width (px labelWidth) ] <| el [ alignRight ] <| text <| lbl ++ ":"
         }
 
 
