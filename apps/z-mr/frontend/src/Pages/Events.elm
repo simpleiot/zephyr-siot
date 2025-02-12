@@ -266,10 +266,12 @@ transition { property, duration } =
         )
 
 
-colorComponents : Color -> ( Float, Float, Float )
-colorComponents color =
-    let
-        { red, green, blue } =
-            toRgb color
-    in
-    ( red, green, blue )
+
+-- FIXME: elm-review is flagging this, please uncomment if needed or delete
+-- colorComponents : Color -> ( Float, Float, Float )
+-- colorComponents color =
+--     let
+--         { red, green, blue } =
+--             toRgb color
+--     in
+--     ( red, green, blue )
