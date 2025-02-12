@@ -8,7 +8,7 @@
 #include <zephyr/drivers/gpio.h>
 #include <stdio.h>
 
-#define ESP32_POE_PHY_PWR_EN_PIN	12
+#define ESP32_POE_PHY_PWR_EN_PIN 12
 
 static int board_esp32_ethernet_kit_init(void)
 {
@@ -21,9 +21,8 @@ static int board_esp32_ethernet_kit_init(void)
 	printf("CLIFF: enable phy power\n");
 
 	/* Enable the Ethernet phy */
-	int res = gpio_pin_configure(
-		gpio, ESP32_POE_PHY_PWR_EN_PIN,
-		GPIO_OUTPUT | GPIO_OUTPUT_INIT_HIGH);
+	int res = gpio_pin_configure(gpio, ESP32_POE_PHY_PWR_EN_PIN,
+				     GPIO_OUTPUT | GPIO_OUTPUT_INIT_HIGH);
 
 	return res;
 }
