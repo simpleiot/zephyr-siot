@@ -2,6 +2,7 @@ module Pages.Settings exposing (Model, Msg, page)
 
 import Api
 import Api.Point as Point exposing (Point)
+import Api.ZPoint as ZPoint
 import Effect exposing (Effect)
 import Element exposing (..)
 import Element.Background as Background
@@ -236,8 +237,8 @@ settingsCard points edit =
             [ inputText points "0" Point.typeDescription "Description" "desc" inputStyle
             , inputText points "0" "snmpServer" "SNMP Server" "IP address" inputStyle
             , inputCheckbox points "0" Point.typeStaticIP "Static IP" []
-
-            -- , inputFloat points "0"
+            , inputFloat points "0" ZPoint.typeFanSetSpeed "Fan 1 Speed"
+            , inputFloat points "1" ZPoint.typeFanSetSpeed "Fan 2 Speed"
             , viewIf staticIP <|
                 column [ spacing 16 ]
                     [ inputText points "0" Point.typeAddress "IP Addr" "ex: 10.0.0.23" inputStyle
@@ -289,7 +290,7 @@ inputText pts key typ lbl placeholder styles =
             else
                 let
                     labelWidth =
-                        120
+                        200
                 in
                 Input.labelLeft
                     [ width (px labelWidth)
@@ -325,7 +326,7 @@ inputCheckbox pts key typ lbl styles =
             if lbl /= "" then
                 let
                     labelWidth =
-                        120
+                        200
                 in
                 Input.labelLeft [ width (px labelWidth) ] <|
                     el [ alignRight ] <|
@@ -388,7 +389,7 @@ inputFloat pts key typ lbl =
             else
                 let
                     labelWidth =
-                        120
+                        200
                 in
                 Input.labelLeft [ width (px labelWidth) ] <| el [ alignRight ] <| text <| lbl ++ ":"
         }
