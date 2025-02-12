@@ -36,10 +36,12 @@ navLink currentRoute route label url =
         , Border.rounded 8
         , if currentRoute == route then
             Background.color Style.colors.pale
+
           else
             Background.color Style.colors.white
         , if currentRoute == route then
             Font.color Style.colors.blue
+
           else
             Font.color Style.colors.jet
         , mouseOver
@@ -49,4 +51,4 @@ navLink currentRoute route label url =
         ]
         { url = url
         , label = text label
-        } 
+        }

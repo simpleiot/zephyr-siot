@@ -14,9 +14,9 @@ import Page exposing (Page)
 import Route exposing (Route)
 import Shared
 import Time
+import UI.Nav as Nav
 import UI.Style as Style
 import View exposing (View)
-import UI.Nav as Nav
 
 
 page : Shared.Model -> Route () -> Page Model Msg
@@ -27,6 +27,7 @@ page _ _ =
         , subscriptions = subscriptions
         , view = view
         }
+
 
 
 -- INIT
@@ -100,12 +101,14 @@ update msg model =
             )
 
 
+
 -- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Time.every 3000 Tick
+
 
 
 -- VIEW
@@ -116,7 +119,7 @@ view model =
     { title = "Z-MR Events"
     , attributes = []
     , element =
-        column 
+        column
             [ spacing 32
             , padding 40
             , width (fill |> maximum 1280)
@@ -130,9 +133,10 @@ view model =
             ]
     }
 
+
 header : Element Msg
 header =
-    row 
+    row
         [ spacing 32
         , padding 24
         , width fill
@@ -140,25 +144,28 @@ header =
         , Border.rounded 12
         , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
         ]
-        [ image 
+        [ image
             [ width (px 180)
             , alignLeft
-            ] 
+            ]
             { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
             , description = "Z-MR"
             }
         , el [ Font.size 32, Font.bold, Font.color Style.colors.jet ] <| text "Events"
         ]
 
+
 h1 : String -> Element Msg
 h1 txt =
-    el 
+    el
         [ Font.size 24
         , Font.semiBold
         , Font.color Style.colors.jet
         , paddingEach { top = 16, right = 0, bottom = 8, left = 0 }
-        ] 
-        <| text txt
+        ]
+    <|
+        text txt
+
 
 card : List (Element Msg) -> Element Msg
 card content =
@@ -173,6 +180,7 @@ card content =
         ]
         content
 
+
 eventsContent : Model -> Element Msg
 eventsContent model =
     card
@@ -181,13 +189,14 @@ eventsContent model =
             List.map eventRow model.events
         ]
 
+
 eventRow : Event -> Element Msg
 eventRow event =
     let
         { red, green, blue } =
             toRgb (severityColor event.severity)
     in
-    row 
+    row
         [ spacing 100
         , padding 16
         , width fill
@@ -196,28 +205,32 @@ eventRow event =
         , mouseOver [ Background.color (rgba red green blue 0.15) ]
         , transition { property = "background-color", duration = 150 }
         ]
-        [ el 
+        [ el
             [ width (px 180)
             , Font.color Style.colors.gray
-            ] 
-            <| text event.timestamp
-        , el 
+            ]
+          <|
+            text event.timestamp
+        , el
             [ width (px 120)
             , Font.color (severityColor event.severity)
             , Font.bold
-            ] 
-            <| text (severityToString event.severity)
-        , el 
+            ]
+          <|
+            text (severityToString event.severity)
+        , el
             [ width (px 120)
             , Font.color Style.colors.gray
-            ] 
-            <| text event.type_
-        , paragraph 
+            ]
+          <|
+            text event.type_
+        , paragraph
             [ Font.color Style.colors.jet
             , width fill
-            ] 
+            ]
             [ text event.message ]
         ]
+
 
 severityColor : EventSeverity -> Color
 severityColor severity =
@@ -231,6 +244,7 @@ severityColor severity =
         Error ->
             Style.colors.red
 
+
 severityToString : EventSeverity -> String
 severityToString severity =
     case severity of
@@ -243,12 +257,14 @@ severityToString severity =
         Error ->
             "Error"
 
+
 transition : { property : String, duration : Int } -> Attribute msg
 transition { property, duration } =
     Element.htmlAttribute
         (Attr.style "transition"
             (property ++ " " ++ String.fromInt duration ++ "ms ease-in-out")
         )
+
 
 colorComponents : Color -> ( Float, Float, Float )
 colorComponents color =

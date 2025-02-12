@@ -9,9 +9,9 @@ import Html.Attributes as Attr
 import Page exposing (Page)
 import Route exposing (Route)
 import Shared
+import UI.Nav as Nav
 import UI.Style as Style
 import View exposing (View)
-import UI.Nav as Nav
 
 
 page : Shared.Model -> Route () -> Page Model Msg
@@ -22,6 +22,7 @@ page _ _ =
         , subscriptions = subscriptions
         , view = view
         }
+
 
 
 -- INIT
@@ -51,12 +52,14 @@ update msg model =
             )
 
 
+
 -- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
+
 
 
 -- VIEW
@@ -67,7 +70,7 @@ view _ =
     { title = "Z-MR"
     , attributes = []
     , element =
-        column 
+        column
             [ spacing 32
             , padding 40
             , width (fill |> maximum 1280)
@@ -83,7 +86,7 @@ view _ =
 
 header : Element Msg
 header =
-    row 
+    row
         [ spacing 32
         , padding 24
         , width fill
@@ -91,10 +94,10 @@ header =
         , Border.rounded 12
         , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
         ]
-        [ image 
+        [ image
             [ width (px 180)
             , alignLeft
-            ] 
+            ]
             { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
             , description = "Z-MR"
             }
@@ -112,13 +115,14 @@ welcomeCard =
         , Border.rounded 12
         , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
         ]
-        [ el 
+        [ el
             [ Font.size 24
             , Font.semiBold
             , Font.color Style.colors.jet
             , centerX
-            ] 
-            <| text "Z-MR Management Interface"
+            ]
+          <|
+            text "Z-MR Management Interface"
         , paragraph
             [ Font.center
             , Font.color Style.colors.gray
@@ -156,12 +160,13 @@ navButton route label description =
                 , mouseOver [ Background.color Style.colors.ltgray ]
                 , transition { property = "background-color", duration = 150 }
                 ]
-                [ el 
+                [ el
                     [ Font.size 20
                     , Font.semiBold
                     , Font.color Style.colors.jet
-                    ] 
-                    <| text label
+                    ]
+                  <|
+                    text label
                 , paragraph
                     [ Font.color Style.colors.gray
                     , Font.size 14
