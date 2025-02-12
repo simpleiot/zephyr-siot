@@ -12,3 +12,6 @@ and this project adheres to
 - added frontend testing
 - added elm-review for frontend
 - updated package.json at project root
+- code formatting scripts and check formatting as part of `z_test`
+- add display of Fan 1/2 speed
+- add display of user switch state
