@@ -1,0 +1,17 @@
+{
+  "name": "Zephyr SIOT NPM tools",
+  "version": "1.0.0",
+  "description": "Various tools used in the Zephyr SIOT workflow",
+  "license": "",
+  "author": "",
+  "type": "",
+  "main": "",
+  "directories": {},
+  "scripts": {},
+  "devDependencies": {
+    "elm-format": "^0.8.7",
+    "elm-review": "^2.12.0",
+    "elm-test": "^0.19.1-revision12",
+    "prettier": "^3.5.0"
+  }
+}
