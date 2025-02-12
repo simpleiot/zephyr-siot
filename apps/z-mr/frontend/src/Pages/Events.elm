@@ -55,7 +55,7 @@ type alias Model =
 init : () -> ( Model, Effect Msg )
 init () =
     ( Model Api.Loading mockEvents
-    , Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
+    , pointFetch
     )
 
 
@@ -72,7 +72,7 @@ mockEvents =
 
 type Msg
     = ApiRespPointList (Result Http.Error (List Point))
-    | Tick Time.Posix
+    | PollPointList
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -88,9 +88,9 @@ update msg model =
             , Effect.none
             )
 
-        Tick _ ->
+        PollPointList ->
             ( model
-            , Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
+            , pointFetch
             )
 
 
@@ -100,7 +100,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Time.every 3000 Tick
+    Time.every 3000 (\_ -> PollPointList)
 
 
 
@@ -257,6 +257,11 @@ transition { property, duration } =
         (Attr.style "transition"
             (property ++ " " ++ String.fromInt duration ++ "ms ease-in-out")
         )
+
+
+pointFetch : Effect Msg
+pointFetch =
+    Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
 
 
 

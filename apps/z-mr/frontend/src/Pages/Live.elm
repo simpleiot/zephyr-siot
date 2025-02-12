@@ -14,7 +14,6 @@ import Page exposing (Page)
 import Round
 import Route exposing (Route)
 import Shared
-import Task
 import Time
 import UI.Nav as Nav
 import UI.Style as Style
@@ -46,26 +45,26 @@ init () =
     ( Model Api.Loading False
     , Effect.batch <|
         [ Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
-        , Effect.sendCmd <| Task.perform Tick Time.now
+        , pointFetch
         ]
     )
 
 
 type Msg
-    = Tick Time.Posix
-    | BlinkTick Time.Posix
+    = PollPointList
+    | BlinkTick
     | ApiRespPointList (Result Http.Error (List Point))
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        Tick _ ->
+        PollPointList ->
             ( model
-            , Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
+            , pointFetch
             )
 
-        BlinkTick _ ->
+        BlinkTick ->
             ( { model | blink = not model.blink }
             , Effect.none
             )
@@ -88,8 +87,8 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
-        [ Time.every 3000 Tick
-        , Time.every 500 BlinkTick
+        [ Time.every 3000 (\_ -> PollPointList)
+        , Time.every 500 (\_ -> BlinkTick)
         ]
 
 
@@ -418,3 +417,8 @@ transition { property, duration } =
         (Attr.style "transition"
             (property ++ " " ++ String.fromInt duration ++ "ms ease-in-out")
         )
+
+
+pointFetch : Effect Msg
+pointFetch =
+    Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
