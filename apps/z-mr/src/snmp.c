@@ -28,24 +28,26 @@ ZBUS_MSG_SUBSCRIBER_DEFINE(z_snmp_sub);
 ZBUS_CHAN_ADD_OBS(point_chan, z_snmp_sub, 3);
 ZBUS_CHAN_ADD_OBS(ticker_chan, z_snmp_sub, 4);
 
+#define TRAP_INTERVAL_MSEC 2000U
+#define STARTUP_DELAY_MSEC 10000U
 
-#define TRAP_INTERVAL_MSEC   2000U
-#define STARTUP_DELAY_MSEC  10000U
-
-extern void snmp_init (void);
-extern void snmp_loop (void);
+extern void snmp_init(void);
+extern void snmp_loop(void);
 
 static bool snmp_active = 1;
 static bool has_started;
 static char ip_address[16] = "192.168.1.23";
 
 void snmp_prepare_trap_test(const char *ip_address);
-static int compose_and_send_snmp_trap(const char *name, const char *oid_string, u32_t value, unsigned asn_type);
-static int oid_string_to_array(struct snmp_obj_id * oid_result, const char *oid_string);
+static int compose_and_send_snmp_trap(const char *name, const char *oid_string, u32_t value,
+				      unsigned asn_type);
+static int oid_string_to_array(struct snmp_obj_id *oid_result, const char *oid_string);
 static void send_ats_traps(void);
 static int handle_sendtrap(const struct shell *shell, size_t argc, char **argv);
 
 SHELL_CMD_REGISTER(sendtrap, NULL, "Sends a SNMP traps for testing.", handle_sendtrap);
+
+void test_it();
 
 static int handle_sendtrap(const struct shell *shell, size_t argc, char **argv)
 {
@@ -55,18 +57,19 @@ static int handle_sendtrap(const struct shell *shell, size_t argc, char **argv)
 	ARG_UNUSED(argv);
 	for (index = 1; index < argc; index++) {
 		/* Use provided an IP address. */
-		if (strncmp (argv[index], "start", 5) == 0) {
+		if (strncmp(argv[index], "start", 5) == 0) {
 			snmp_active = true;
-		} else if (strncmp (argv[index], "stop", 4) == 0) {
+		} else if (strncmp(argv[index], "stop", 4) == 0) {
 			snmp_active = false;
-		} else if (isdigit (argv[index][0])) {
-			snprintf (ip_address, sizeof ip_address, "%s", argv[1]);
+		} else if (isdigit(argv[index][0])) {
+			snprintf(ip_address, sizeof ip_address, "%s", argv[1]);
 		}
 	}
 	if (argc < 2) {
 		shell_print(shell, "Usage: sendtrap [ <ip address> ] [ start | stop ]");
 		shell_print(shell, "IP-address now %s\n", ip_address);
 	}
+	test_it();
 
 	return 0;
 }
@@ -95,9 +98,11 @@ void z_snmp_thread(void *arg1, void *arg2, void *arg3)
 		if (!zbus_sub_wait_msg(&z_snmp_sub, &chan, &p, K_FOREVER)) {
 			if (chan == &point_chan) {
 				if (strcmp(p.type, POINT_TYPE_ATS_A) == 0) {
-					// TODO: eventually, send ATS event out SNMP after we define MIB
+					// TODO: eventually, send ATS event out SNMP after we define
+					// MIB
 				} else if (strcmp(p.type, POINT_TYPE_ATS_B) == 0) {
-					// TODO: eventually, send ATS event out SNMP after we define MIB
+					// TODO: eventually, send ATS event out SNMP after we define
+					// MIB
 				}
 			} else if (chan == &ticker_chan) {
 				// can do periodic stuff here
@@ -129,7 +134,7 @@ static void send_ats_traps()
 	 * EATON-ATS2-MIB and EATON-OIDS
 	 * Download : https://github.com/librenms/librenms/tree/master/mibs/eaton
 	 * A helpful JSON can be found here:
-	 *     https://mibbrowser.online/mibdb_search.php?mib=EATON-ATS2-MIB 
+	 *     https://mibbrowser.online/mibdb_search.php?mib=EATON-ATS2-MIB
 	 */
 	enum ats2OperationMode {
 		opModeInvalid = 0,
@@ -153,27 +158,34 @@ static void send_ats_traps()
 		prefSource2 = 2
 	};
 
-	unsigned voltage_in   = 235 * 10; /* Unit: 0.1 Volt. */
-	unsigned freq_in      = 60 * 10;  /* Unit: 0.1 Hz. */
-	unsigned voltage_out  = 238 * 10;
-	unsigned curr_out     = 12 * 10;  /* Unit: 0.1 A. */
-	unsigned op_mode      = opModeSource1;
+	unsigned voltage_in = 235 * 10; /* Unit: 0.1 Volt. */
+	unsigned freq_in = 60 * 10;     /* Unit: 0.1 Hz. */
+	unsigned voltage_out = 238 * 10;
+	unsigned curr_out = 12 * 10; /* Unit: 0.1 A. */
+	unsigned op_mode = opModeSource1;
 	unsigned freq_in_stat = inStatFreqGood;
-	unsigned pref_source  = prefSource2;
+	unsigned pref_source = prefSource2;
 
-	compose_and_send_snmp_trap("ats2InputVoltage",         "1.3.6.1.4.1.534.10.2.2.2.1.2", voltage_in,   SNMP_ASN1_TYPE_UNSIGNED32);
-	compose_and_send_snmp_trap("ats2InputFrequency",       "1.3.6.1.4.1.534.10.2.2.2.1.3", freq_in,      SNMP_ASN1_TYPE_UNSIGNED32);
-	compose_and_send_snmp_trap("ats2OutputVoltage",        "1.3.6.1.4.1.534.10.2.2.3.1",   voltage_out,  SNMP_ASN1_TYPE_UNSIGNED32);
-	compose_and_send_snmp_trap("ats2OutputCurrent",        "1.3.6.1.4.1.534.10.2.2.3.2",   curr_out,     SNMP_ASN1_TYPE_UNSIGNED32);
-	compose_and_send_snmp_trap("ats2OperationMode",        "1.3.6.1.4.1.534.10.2.2.4",     op_mode,      SNMP_ASN1_TYPE_UNSIGNED32);
-	compose_and_send_snmp_trap("ats2InputStatusFrequency", "1.3.6.1.4.1.534.10.2.3.2.1.2", freq_in_stat, SNMP_ASN1_TYPE_UNSIGNED32);
-	compose_and_send_snmp_trap("ats2ConfigPreferred",      "1.3.6.1.4.1.534.10.2.4.5",     pref_source,  SNMP_ASN1_TYPE_UNSIGNED32);
+	compose_and_send_snmp_trap("ats2InputVoltage", "1.3.6.1.4.1.534.10.2.2.2.1.2", voltage_in,
+				   SNMP_ASN1_TYPE_UNSIGNED32);
+	compose_and_send_snmp_trap("ats2InputFrequency", "1.3.6.1.4.1.534.10.2.2.2.1.3", freq_in,
+				   SNMP_ASN1_TYPE_UNSIGNED32);
+	compose_and_send_snmp_trap("ats2OutputVoltage", "1.3.6.1.4.1.534.10.2.2.3.1", voltage_out,
+				   SNMP_ASN1_TYPE_UNSIGNED32);
+	compose_and_send_snmp_trap("ats2OutputCurrent", "1.3.6.1.4.1.534.10.2.2.3.2", curr_out,
+				   SNMP_ASN1_TYPE_UNSIGNED32);
+	compose_and_send_snmp_trap("ats2OperationMode", "1.3.6.1.4.1.534.10.2.2.4", op_mode,
+				   SNMP_ASN1_TYPE_UNSIGNED32);
+	compose_and_send_snmp_trap("ats2InputStatusFrequency", "1.3.6.1.4.1.534.10.2.3.2.1.2",
+				   freq_in_stat, SNMP_ASN1_TYPE_UNSIGNED32);
+	compose_and_send_snmp_trap("ats2ConfigPreferred", "1.3.6.1.4.1.534.10.2.4.5", pref_source,
+				   SNMP_ASN1_TYPE_UNSIGNED32);
 }
 
 /*
  * compose_and_send_snmp_trap()
  */
-#define ENTERPRISE_OID {9, {1, 3, 6, 1, 6, 3, 1, 1, 5 }} // 1.3.6.1.6.3.1.1.5.1
+#define ENTERPRISE_OID {9, {1, 3, 6, 1, 6, 3, 1, 1, 5}} // 1.3.6.1.6.3.1.1.5.1
 
 /**
  * @brief Prepare an SNMP trap and send it. The target IP-address
@@ -186,20 +198,21 @@ static void send_ats_traps()
  *
  * @return An err_t, see defines of SNMP_ERR_...
  */
-static int compose_and_send_snmp_trap(const char *name, const char *oid_string, u32_t value, unsigned asn_type)
+static int compose_and_send_snmp_trap(const char *name, const char *oid_string, u32_t value,
+				      unsigned asn_type)
 {
 	struct snmp_varbind *varbinds = NULL;
 	static const struct snmp_obj_id enterprise_oid = ENTERPRISE_OID; // Set enterprise OID
 	s32_t generic_trap = 6;  // Generic trap code (e.g., 6 for enterprise specific)
 	s32_t specific_trap = 1; // Specific trap code (customize as needed) ,
-							 // will be appended to '1.3.6.1.6.3.1.1.5'.
+				 // will be appended to '1.3.6.1.6.3.1.1.5'.
 
 	err_t err = SNMP_ERR_RESOURCEUNAVAILABLE;
 	varbinds = (struct snmp_varbind *)mem_malloc(sizeof(struct snmp_varbind));
 
 	if (varbinds != NULL) {
 		int index;
-		memset (varbinds, 0, sizeof *varbinds);
+		memset(varbinds, 0, sizeof *varbinds);
 
 		// Copy a string to an array of 32-bit numbers
 		int rc = oid_string_to_array(&varbinds->oid, oid_string);
@@ -209,7 +222,7 @@ static int compose_and_send_snmp_trap(const char *name, const char *oid_string, 
 		varbinds->value_len = sizeof(value); // Length of value
 
 		err = snmp_send_trap(&enterprise_oid, generic_trap, specific_trap, varbinds);
-		
+
 		zephyr_log("SNMP trap sent %s (err = %d).\n", err == ERR_OK ? "good" : "BAD", err);
 
 		// Free allocated memory for varbinds
@@ -228,12 +241,12 @@ static int compose_and_send_snmp_trap(const char *name, const char *oid_string, 
  *
  * @return The number of digits that were stored, also stored in oid_result->len
  */
-static int oid_string_to_array(struct snmp_obj_id * oid_result, const char *oid_string)
+static int oid_string_to_array(struct snmp_obj_id *oid_result, const char *oid_string)
 {
 	int rc = 0;
 	const char *source = oid_string;
 	int target = 0;
-	memset (oid_result, 0, sizeof *oid_result);
+	memset(oid_result, 0, sizeof *oid_result);
 	while (*source) {
 		unsigned value = 0;
 		int has_digit = 0;
@@ -251,7 +264,8 @@ static int oid_string_to_array(struct snmp_obj_id * oid_result, const char *oid_
 			break;
 		}
 		if (target >= SNMP_MAX_OBJ_ID_LEN) {
-			zephyr_log("oid_string_to_array: IOD string too long (> %u)\n", SNMP_MAX_OBJ_ID_LEN);
+			zephyr_log("oid_string_to_array: IOD string too long (> %u)\n",
+				   SNMP_MAX_OBJ_ID_LEN);
 			break;
 		}
 		source++;
@@ -259,6 +273,29 @@ static int oid_string_to_array(struct snmp_obj_id * oid_result, const char *oid_
 	oid_result->len = target;
 	/* Returns the number of digits decoded. */
 	return target;
+}
+
+static int snmp_trap_it(const char *apName, const unsigned *oid, size_t oid_size, unsigned value,
+			unsigned type)
+{
+	zephyr_log("name  = '%s'\n", apName);
+	zephyr_log("oid   = '%d.%d.%d.%d'\n", oid[0], oid[1], oid[2], oid[3]);
+	zephyr_log("size  = '%u'\n", oid_size);
+	zephyr_log("value = '%u'\n", value);
+	zephyr_log("type  = '%u'\n", type);
+}
+
+#define MK_STRING(NAME) NAME##_str
+#define MK_OID(NAME)    NAME##_oid
+#define SNMP_CALL_TRAP(name, value, value_type)                                                    \
+	snmp_trap_it(#name, MK_OID(name), LWIP_ARRAYSIZE(MK_OID(name)), value, value_type)
+
+void test_it()
+{
+	const unsigned ats2OperationMode_oid[] = {1, 3, 6, 1, 4, 1, 534, 10, 2, 2, 4};
+	unsigned op_mode = 4u;
+
+	SNMP_CALL_TRAP(ats2OperationMode, op_mode, SNMP_ASN1_TYPE_UNSIGNED32);
 }
 
 K_THREAD_DEFINE(z_snmp, STACKSIZE, z_snmp_thread, NULL, NULL, NULL, PRIORITY, K_ESSENTIAL, 0);
