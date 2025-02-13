@@ -211,11 +211,10 @@ static int compose_and_send_snmp_trap(const char *name, const char *oid_string, 
 	varbinds = (struct snmp_varbind *)mem_malloc(sizeof(struct snmp_varbind));
 
 	if (varbinds != NULL) {
-		int index;
 		memset(varbinds, 0, sizeof *varbinds);
 
 		// Copy a string to an array of 32-bit numbers
-		int rc = oid_string_to_array(&varbinds->oid, oid_string);
+		oid_string_to_array(&varbinds->oid, oid_string);
 
 		varbinds->type = asn_type;           // Type of the variable: see SNMP_ASN1_TYPE_...
 		varbinds->value = (void *)&value;    // Pointer to value
@@ -243,7 +242,6 @@ static int compose_and_send_snmp_trap(const char *name, const char *oid_string, 
  */
 static int oid_string_to_array(struct snmp_obj_id *oid_result, const char *oid_string)
 {
-	int rc = 0;
 	const char *source = oid_string;
 	int target = 0;
 	memset(oid_result, 0, sizeof *oid_result);
@@ -275,7 +273,7 @@ static int oid_string_to_array(struct snmp_obj_id *oid_result, const char *oid_s
 	return target;
 }
 
-static int snmp_trap_it(const char *apName, const unsigned *oid, size_t oid_size, unsigned value,
+static void snmp_trap_it(const char *apName, const unsigned *oid, size_t oid_size, unsigned value,
 			unsigned type)
 {
 	zephyr_log("name  = '%s'\n", apName);
