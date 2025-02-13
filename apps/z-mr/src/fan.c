@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "zephyr/sys/util.h"
 #include "zpoint.h"
 
 #include <point.h>
@@ -268,6 +269,13 @@ ZBUS_MSG_SUBSCRIBER_DEFINE(z_fan_sub);
 ZBUS_CHAN_ADD_OBS(point_chan, z_fan_sub, 3);
 ZBUS_CHAN_ADD_OBS(ticker_chan, z_fan_sub, 4);
 
+enum fan_mode_enum {
+	FAN_MODE_OFF,
+	FAN_MODE_TEMP,
+	FAN_MODE_TACH,
+	FAN_MODE_PWM,
+};
+
 void fan_thread(void *arg1, void *arg2, void *arg3)
 {
 
@@ -278,10 +286,31 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 
 	fan_init();
 
+	int fan_mode = FAN_MODE_OFF;
+	float fan_set_speed[2] = {0};
+
 	while (!zbus_sub_wait_msg(&z_fan_sub, &chan, &p, K_FOREVER)) {
 		if (chan == &point_chan) {
 			if (strcmp(p.type, POINT_TYPE_FAN_MODE) == 0) {
+				fan_mode = point_get_int(&p);
 				LOG_DBG("Fan mode: %s", p.data);
+				if (strcmp(p.data, POINT_VALUE_OFF) == 0) {
+					fan_mode = FAN_MODE_OFF;
+				} else if (strcmp(p.data, POINT_VALUE_TEMP)) {
+					fan_mode = FAN_MODE_TEMP;
+				} else if (strcmp(p.data, POINT_VALUE_PWM)) {
+					fan_mode = FAN_MODE_PWM;
+				} else if (strcmp(p.data, POINT_VALUE_TACH)) {
+					fan_mode = FAN_MODE_TACH;
+				}
+			} else if (strcmp(p.type, POINT_TYPE_FAN_SET_SPEED) == 0) {
+				LOG_DBG("Fan speed %s: %s", p.key, p.data);
+				int index = atoi(p.key);
+				if (index >= ARRAY_SIZE(fan_set_speed)) {
+					LOG_ERR("Set fan speed, index out of bounds: %i", index);
+					continue;
+				}
+				fan_set_speed[index] = point_get_float(&p);
 			}
 		} else if (chan == &ticker_chan) {
 			status_tick++;
