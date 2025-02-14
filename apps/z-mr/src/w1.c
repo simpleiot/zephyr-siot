@@ -73,8 +73,7 @@ void z_w1_thread(void *arg1, void *arg2, void *arg3)
 
 		LOG_DBG("Temp: %.3f", (double)v);
 		k_sleep(K_MSEC(2000));
-	
-	}	
+	}
 }
 
 K_THREAD_DEFINE(z_w1, STACKSIZE, z_w1_thread, NULL, NULL, NULL, PRIORITY, 0, 0);
