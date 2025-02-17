@@ -12,7 +12,4 @@ and this project adheres to
 - added frontend testing
 - added elm-review for frontend
 - updated package.json at project root
-
-### PR 132
-
 - Fixed crash when 1-wire sensor is not attached.
