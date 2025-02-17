@@ -42,37 +42,41 @@ static const struct device *get_ds18b20_device(void)
 
 void z_w1_thread(void *arg1, void *arg2, void *arg3)
 {
-	const struct device *dev = get_ds18b20_device();
-	int res;
-
-	if (dev == NULL) {
-		LOG_ERR("Cannot get ds18b20 device");
-		return;
-	}
 
 	while (true) {
-		struct sensor_value temp;
 
-		res = sensor_sample_fetch(dev);
-		if (res != 0) {
-			LOG_ERR("sample_fetch() failed: %d", res);
+		const struct device *dev = get_ds18b20_device();
+		int res;
+
+		if (dev == NULL) {
+
+			LOG_ERR("Cannot get ds18b20 device");
+
+		} else {
+
+			struct sensor_value temp;
+
+			res = sensor_sample_fetch(dev);
+			if (res != 0) {
+				LOG_ERR("sample_fetch() failed: %d", res);
+			}
+
+			res = sensor_channel_get(dev, SENSOR_CHAN_AMBIENT_TEMP, &temp);
+			if (res != 0) {
+				LOG_ERR("channel_get() failed: %d", res);
+			}
+
+			float v = sensor_value_to_float(&temp);
+			point p;
+
+			point_set_type_key(&p, POINT_TYPE_TEMPERATURE, "0");
+			point_put_float(&p, v);
+
+			zbus_chan_pub(&point_chan, &p, K_MSEC(500));
+
+			LOG_DBG("Temp: %.3f", (double)v);
+			k_sleep(K_MSEC(2000));
 		}
-
-		res = sensor_channel_get(dev, SENSOR_CHAN_AMBIENT_TEMP, &temp);
-		if (res != 0) {
-			LOG_ERR("channel_get() failed: %d", res);
-		}
-
-		float v = sensor_value_to_float(&temp);
-		point p;
-
-		point_set_type_key(&p, POINT_TYPE_TEMPERATURE, "0");
-		point_put_float(&p, v);
-
-		zbus_chan_pub(&point_chan, &p, K_MSEC(500));
-
-		LOG_DBG("Temp: %.3f", (double)v);
-		k_sleep(K_MSEC(2000));
 	}
 }
 

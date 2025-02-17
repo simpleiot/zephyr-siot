@@ -15,3 +15,4 @@ and this project adheres to
 - code formatting scripts and check formatting as part of `z_test`
 - add display of Fan 1/2 speed
 - add display of user switch state
+- Fixed crash when 1-wire sensor is not attached.
