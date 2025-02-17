@@ -75,8 +75,11 @@ void z_w1_thread(void *arg1, void *arg2, void *arg3)
 			zbus_chan_pub(&point_chan, &p, K_MSEC(500));
 
 			LOG_DBG("Temp: %.3f", (double)v);
-			k_sleep(K_MSEC(2000));
+			
 		}
+
+		k_sleep(K_MSEC(2000));
+
 	}
 }
 

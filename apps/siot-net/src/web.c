@@ -166,7 +166,7 @@ struct http_resource_detail_dynamic v1_resource_detail = {
 	.user_data = NULL,
 };
 
-HTTP_RESOURCE_DEFINE(points_resource, siot_http_service, "/v1/*", &v1_resource_detail);
+// HTTP_RESOURCE_DEFINE(points_resource, siot_http_service, "/v1/*", &v1_resource_detail);
 
 ZBUS_MSG_SUBSCRIBER_DEFINE(web_sub);
 ZBUS_CHAN_ADD_OBS(point_chan, web_sub, 3);
