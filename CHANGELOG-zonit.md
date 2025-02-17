@@ -15,6 +15,4 @@ and this project adheres to
 
 ### PR 132
 
-- Removed the K_ESSENTIAL flag from w1.c, to avoid kernel panic
-- Discussed with Cliff how this should be changed for every process and updated
-  to involve a time.sleep style functionality
+- Fixed crash when 1-wire sensor is not attached.
