@@ -274,7 +274,7 @@ static int oid_string_to_array(struct snmp_obj_id *oid_result, const char *oid_s
 }
 
 static void snmp_trap_it(const char *apName, const unsigned *oid, size_t oid_size, unsigned value,
-			unsigned type)
+			 unsigned type)
 {
 	zephyr_log("name  = '%s'\n", apName);
 	zephyr_log("oid   = '%d.%d.%d.%d'\n", oid[0], oid[1], oid[2], oid[3]);
