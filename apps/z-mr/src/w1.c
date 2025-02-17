@@ -43,13 +43,13 @@ static const struct device *get_ds18b20_device(void)
 void z_w1_thread(void *arg1, void *arg2, void *arg3)
 {
 
-	while(true) {
+	while (true) {
 
 		const struct device *dev = get_ds18b20_device();
 		int res;
 
 		if (dev == NULL) {
-			
+
 			LOG_ERR("Cannot get ds18b20 device");
 
 		} else {
@@ -76,7 +76,6 @@ void z_w1_thread(void *arg1, void *arg2, void *arg3)
 
 			LOG_DBG("Temp: %.3f", (double)v);
 			k_sleep(K_MSEC(2000));
-
 		}
 	}
 }
