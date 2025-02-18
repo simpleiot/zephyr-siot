@@ -45,6 +45,7 @@ ZBUS_CHAN_DECLARE(ticker_chan);
 #define EMC230X_REG_FAN_SPIN_STATUS   0x26
 #define EMC230X_REG_DRIVE_FAIL_STATUS 0x27
 #define EMC230X_REG_OUTPUT_CONFIG     0x2b
+#define EMC230X_REG_PWM_BASE_FREQ     0x2d
 #define EMC230X_REG_VENDOR            0xfe
 
 #define EMC230X_FAN_MAX              0xff
@@ -91,6 +92,7 @@ ZBUS_CHAN_DECLARE(ticker_chan);
 #define EMC230X_RPM_FACTOR 3932160
 
 #define EMC230X_REG_FAN_DRIVE(n)     (0x30 + 0x10 * (n))
+#define EMC230X_REG_PWM_DIVIDE(n)    (0x31 + 0x10 * (n))
 #define EMC230X_REG_FAN_CFG(n)       (0x32 + 0x10 * (n))
 #define EMC230X_REG_FAN_MIN_DRIVE(n) (0x38 + 0x10 * (n))
 #define EMC230X_REG_FAN_TACH(n)      (0x3e + 0x10 * (n))
@@ -268,6 +270,16 @@ int fan_init()
 	// set to manual mode initially
 	fan_i2c_write_uint8(EMC230X_REG_FAN_CFG(0), EMC230X_FAN_CFG_VALUE);
 	fan_i2c_write_uint8(EMC230X_REG_FAN_CFG(1), EMC230X_FAN_CFG_VALUE);
+
+	// set drive to push/pull
+	fan_i2c_write_uint8(EMC230X_REG_OUTPUT_CONFIG, 0x3);
+
+	// set PWM freq base to 19.53KHz
+	fan_i2c_write_uint8(EMC230X_REG_PWM_BASE_FREQ, 0x5);
+
+	// set PWM divide to 3
+	fan_i2c_write_uint8(EMC230X_REG_PWM_DIVIDE(0), 0x2);
+	fan_i2c_write_uint8(EMC230X_REG_PWM_DIVIDE(1), 0x2);
 
 	// set speed to max
 	fan_set_drive(0, 0xff);
