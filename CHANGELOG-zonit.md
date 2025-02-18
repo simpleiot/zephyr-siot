@@ -13,6 +13,8 @@ and this project adheres to
 - added elm-review for frontend
 - updated package.json at project root
 - code formatting scripts and check formatting as part of `z_test`
-- add display of Fan 1/2 speed
-- add display of user switch state
 - Fixed crash when 1-wire sensor is not attached.
+- add display of user switch state
+- Fan control
+  - add display of Fan speed and status
+  - Fan mode and speed settings

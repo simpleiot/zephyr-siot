@@ -30,13 +30,13 @@ static const struct device *get_ds18b20_device(void)
 	}
 
 	if (!device_is_ready(dev)) {
-		printk("\nError: Device \"%s\" is not ready; "
-		       "check the driver initialization logs for errors.\n",
-		       dev->name);
+		LOG_DBG("\nError: Device \"%s\" is not ready; "
+			"check the driver initialization logs for errors.\n",
+			dev->name);
 		return NULL;
 	}
 
-	printk("Found device \"%s\", getting sensor data\n", dev->name);
+	LOG_DBG("Found device \"%s\", getting sensor data\n", dev->name);
 	return dev;
 }
 
@@ -75,11 +75,9 @@ void z_w1_thread(void *arg1, void *arg2, void *arg3)
 			zbus_chan_pub(&point_chan, &p, K_MSEC(500));
 
 			LOG_DBG("Temp: %.3f", (double)v);
-			
 		}
 
 		k_sleep(K_MSEC(2000));
-
 	}
 }
 
