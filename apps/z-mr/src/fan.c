@@ -42,7 +42,9 @@ ZBUS_CHAN_DECLARE(ticker_chan);
 
 #define EMC230X_REG_FAN_STATUS        0x24
 #define EMC230X_REG_FAN_STALL_STATUS  0x25
+#define EMC230X_REG_FAN_SPIN_STATUS   0x26
 #define EMC230X_REG_DRIVE_FAIL_STATUS 0x27
+#define EMC230X_REG_OUTPUT_CONFIG     0x2b
 #define EMC230X_REG_VENDOR            0xfe
 
 #define EMC230X_FAN_MAX              0xff
@@ -252,6 +254,15 @@ bool fan_init_old(void)
 	return true;
 }
 
+// if in automatic mode, this function has no affect
+int fan_set_drive(int index, uint8_t value)
+{
+	if (index >= 4) {
+		LOG_ERR("invalide fan index: %i", index);
+	}
+	return fan_i2c_write_uint8(EMC230X_REG_FAN_DRIVE(index), value);
+}
+
 int fan_init()
 {
 	// set to manual mode initially
@@ -259,8 +270,8 @@ int fan_init()
 	fan_i2c_write_uint8(EMC230X_REG_FAN_CFG(1), EMC230X_FAN_CFG_VALUE);
 
 	// set speed to max
-	fan_i2c_write_uint8(EMC230X_REG_FAN_DRIVE(0), 0xff);
-	fan_i2c_write_uint8(EMC230X_REG_FAN_DRIVE(1), 0xff);
+	fan_set_drive(0, 0xff);
+	fan_set_drive(1, 0xff);
 
 	return 0;
 }
@@ -276,6 +287,16 @@ enum fan_mode_enum {
 	FAN_MODE_PWM,
 };
 
+enum fan_status_enum {
+	FAN_STATUS_NOT_SET,
+	FAN_STATUS_OK,
+	FAN_STATUS_STALL,
+	FAN_STATUS_SPIN_FAIL,
+	FAN_STATUS_DRIVE_FAIL,
+};
+
+#define FAN_COUNT 2
+
 void fan_thread(void *arg1, void *arg2, void *arg3)
 {
 
@@ -287,7 +308,8 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 	fan_init();
 
 	int fan_mode = FAN_MODE_OFF;
-	float fan_set_speed[2] = {0};
+	float fan_set_speed[2] = {FAN_COUNT};
+	int fan_status[2] = {FAN_COUNT};
 
 	while (!zbus_sub_wait_msg(&z_fan_sub, &chan, &p, K_FOREVER)) {
 		if (chan == &point_chan) {
@@ -296,20 +318,21 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 				LOG_DBG("Fan mode: %s", p.data);
 				if (strcmp(p.data, POINT_VALUE_OFF) == 0) {
 					fan_mode = FAN_MODE_OFF;
-				} else if (strcmp(p.data, POINT_VALUE_TEMP)) {
+				} else if (strcmp(p.data, POINT_VALUE_TEMP) == 0) {
 					fan_mode = FAN_MODE_TEMP;
-				} else if (strcmp(p.data, POINT_VALUE_PWM)) {
+				} else if (strcmp(p.data, POINT_VALUE_PWM) == 0) {
 					fan_mode = FAN_MODE_PWM;
-				} else if (strcmp(p.data, POINT_VALUE_TACH)) {
+				} else if (strcmp(p.data, POINT_VALUE_TACH) == 0) {
 					fan_mode = FAN_MODE_TACH;
 				}
 			} else if (strcmp(p.type, POINT_TYPE_FAN_SET_SPEED) == 0) {
-				LOG_DBG("Fan speed %s: %s", p.key, p.data);
 				int index = atoi(p.key);
 				if (index >= ARRAY_SIZE(fan_set_speed)) {
 					LOG_ERR("Set fan speed, index out of bounds: %i", index);
 					continue;
 				}
+				float speed = point_get_float(&p);
+				LOG_DBG("Fan speed %i: %f", index, (double)speed);
 				fan_set_speed[index] = point_get_float(&p);
 			}
 		} else if (chan == &ticker_chan) {
@@ -323,7 +346,6 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 					if (value <= EMC230X_TACH_RANGE_MIN) {
 						value = 0;
 					}
-					// fan_get_status();
 					status_tick = 0;
 
 					point p;
@@ -332,7 +354,86 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 					point_set_type_key(&p, POINT_TYPE_FAN_SPEED, index);
 					point_put_int(&p, value);
 					zbus_chan_pub(&point_chan, &p, K_MSEC(500));
+
+					uint8_t b;
+					fan_i2c_read_uint8(EMC230X_REG_FAN_STALL_STATUS, &b);
+					if (b & (1 << i)) {
+						// we have a stall
+						if (fan_status[i] != FAN_STATUS_STALL) {
+							fan_status[i] = FAN_STATUS_STALL;
+							point_set_type_key(
+								&p, POINT_TYPE_FAN_STATUS, index);
+							point_put_string(&p, POINT_VALUE_STALL);
+							zbus_chan_pub(&point_chan, &p, K_MSEC(500));
+						}
+						// only report one problem
+						continue;
+					}
+
+					fan_i2c_read_uint8(EMC230X_REG_FAN_SPIN_STATUS, &b);
+					if (b & (1 << i)) {
+						// we have a stall
+						if (fan_status[i] != FAN_STATUS_SPIN_FAIL) {
+							fan_status[i] = FAN_STATUS_SPIN_FAIL;
+							point_set_type_key(
+								&p, POINT_TYPE_FAN_STATUS, index);
+							point_put_string(&p, POINT_VALUE_SPIN_FAIL);
+							zbus_chan_pub(&point_chan, &p, K_MSEC(500));
+						}
+						// only report one problem
+						continue;
+					}
+
+					fan_i2c_read_uint8(EMC230X_REG_DRIVE_FAIL_STATUS, &b);
+					if (b & (1 << i)) {
+						// we have a stall
+						if (fan_status[i] != FAN_STATUS_DRIVE_FAIL) {
+							fan_status[i] = FAN_STATUS_DRIVE_FAIL;
+							point_set_type_key(
+								&p, POINT_TYPE_FAN_STATUS, index);
+							point_put_string(&p,
+									 POINT_VALUE_DRIVE_FAIL);
+							zbus_chan_pub(&point_chan, &p, K_MSEC(500));
+						}
+						// only report one problem
+						continue;
+					}
+
+					// no errors found, make sure status is set to OK
+					if (fan_status[i] != FAN_STATUS_OK) {
+						fan_status[i] = FAN_STATUS_OK;
+						point_set_type_key(&p, POINT_TYPE_FAN_STATUS,
+								   index);
+						point_put_string(&p, POINT_VALUE_OK);
+						zbus_chan_pub(&point_chan, &p, K_MSEC(500));
+					}
 				}
+			}
+
+			// fan control
+			switch (fan_mode) {
+			case FAN_MODE_OFF:
+				fan_set_drive(0, 0);
+				fan_set_drive(1, 0);
+				break;
+			case FAN_MODE_PWM:
+				for (int i = 0; i < ARRAY_SIZE(fan_set_speed); i++) {
+					int v = fan_set_speed[i] * 255 / 100;
+					if (v > 255) {
+						v = 255;
+					}
+
+					if (v < 0) {
+						v = 0;
+					}
+
+					fan_set_drive(i, (uint8_t)v);
+				}
+				break;
+			case FAN_MODE_TACH:
+				break;
+			case FAN_MODE_TEMP:
+				break;
 			}
 		}
 	}

@@ -239,6 +239,8 @@ statusCard points =
             , { name = "Temperature", value = Round.round 2 (Point.getFloat points Point.typeTemperature "0") ++ " °C" }
             , { name = "Fan 1 speed", value = formatNumber (Point.getInt points ZPoint.typeFanSpeed "0") ++ " RPM" }
             , { name = "Fan 2 speed", value = formatNumber (Point.getInt points ZPoint.typeFanSpeed "1") ++ " RPM" }
+            , { name = "Fan 1 status", value = Point.getText points ZPoint.typeFanStatus "0" }
+            , { name = "Fan 2 status", value = Point.getText points ZPoint.typeFanStatus "1" }
             , { name = "User switch", value = formatOnOff (Point.getInt points ZPoint.typeSwitch "0") }
             ]
     in

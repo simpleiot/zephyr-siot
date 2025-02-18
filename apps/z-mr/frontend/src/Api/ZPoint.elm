@@ -4,6 +4,7 @@ module Api.ZPoint exposing
     , typeFanMode
     , typeFanSetSpeed
     , typeFanSpeed
+    , typeFanStatus
     , typeSNMPServer
     , typeSwitch
     , typeTestLEDs
@@ -74,3 +75,8 @@ valueTach =
 valuePwm : String
 valuePwm =
     "pwm"
+
+
+typeFanStatus : String
+typeFanStatus =
+    "fanStatus"
