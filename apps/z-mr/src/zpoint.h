@@ -23,6 +23,12 @@
 #define POINT_TYPE_FAN_SET_SPEED "fanSetSpeed"
 #define POINT_TYPE_FAN_SPEED     "fanSpeed"
 
+#define POINT_TYPE_FAN_STATUS  "fanStatus"
+#define POINT_VALUE_OK         "ok"
+#define POINT_VALUE_STALL      "stall"
+#define POINT_VALUE_SPIN_FAIL  "spinFail"
+#define POINT_VALUE_DRIVE_FAIL "driveFail"
+
 typedef enum {
 	ATS_OFF,
 	ATS_ON,
