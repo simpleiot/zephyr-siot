@@ -95,6 +95,7 @@ ZBUS_CHAN_DECLARE(ticker_chan);
 #define EMC230X_REG_PWM_DIVIDE(n)    (0x31 + 0x10 * (n))
 #define EMC230X_REG_FAN_CFG(n)       (0x32 + 0x10 * (n))
 #define EMC230X_REG_FAN_MIN_DRIVE(n) (0x38 + 0x10 * (n))
+#define EMC230X_REG_FAN_TARGET(n)    (0x3c + 0x10 * (n))
 #define EMC230X_REG_FAN_TACH(n)      (0x3e + 0x10 * (n))
 
 typedef enum fan_id {
@@ -265,6 +266,35 @@ int fan_set_drive(int index, uint8_t value)
 	return fan_i2c_write_uint8(EMC230X_REG_FAN_DRIVE(index), value);
 }
 
+// returns RPM
+int fan_read_tach(int index, int *rpm)
+{
+	uint16_t value;
+	fan_i2c_read_uint16_be(EMC230X_REG_FAN_TACH(index), &value);
+	value = value >> EMC230X_TACH_REGS_UNUSE_BITS;
+	*rpm = EMC230X_RPM_FACTOR * 2 / value;
+	if (*rpm <= EMC230X_TACH_RANGE_MIN) {
+		*rpm = 0;
+	}
+
+	// FIXME error checking
+	return 0;
+}
+
+int fan_set_target(int index, int rpm)
+{
+	int value = EMC230X_RPM_FACTOR * 2 / rpm;
+	value = value << EMC230X_TACH_REGS_UNUSE_BITS;
+	// check if we overflow 16 bits
+	if (value > 0xffff) {
+		value = 0xffff;
+	}
+
+	fan_i2c_write_uint16(EMC230X_REG_FAN_TARGET(index), (uint16_t)value);
+	// FIXME error checking
+	return 0;
+}
+
 int fan_init(bool enable_speed_control)
 {
 	uint8_t cfg_value = EMC230X_FAN_CFG_VALUE;
@@ -273,8 +303,8 @@ int fan_init(bool enable_speed_control)
 		cfg_value |= (1 << 7);
 	}
 	// set to manual mode initially
-	fan_i2c_write_uint8(EMC230X_REG_FAN_CFG(0), EMC230X_FAN_CFG_VALUE);
-	fan_i2c_write_uint8(EMC230X_REG_FAN_CFG(1), EMC230X_FAN_CFG_VALUE);
+	fan_i2c_write_uint8(EMC230X_REG_FAN_CFG(0), cfg_value);
+	fan_i2c_write_uint8(EMC230X_REG_FAN_CFG(1), cfg_value);
 
 	// set drive to push/pull
 	fan_i2c_write_uint8(EMC230X_REG_OUTPUT_CONFIG, 0x3);
@@ -289,6 +319,11 @@ int fan_init(bool enable_speed_control)
 	// set speed to max
 	fan_set_drive(0, 0xff);
 	fan_set_drive(1, 0xff);
+
+	// set min drive to 25%
+	uint8_t min_drive = 255 / 4;
+	fan_i2c_write_uint8(EMC230X_REG_FAN_MIN_DRIVE(0), min_drive);
+	fan_i2c_write_uint8(EMC230X_REG_FAN_MIN_DRIVE(1), min_drive);
 
 	return 0;
 }
@@ -360,20 +395,15 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 			status_tick++;
 			if (status_tick >= 2) {
 				for (int i = 0; i < FAN_COUNT; i++) {
-					uint16_t value;
-					fan_i2c_read_uint16_be(EMC230X_REG_FAN_TACH(i), &value);
-					value = value >> EMC230X_TACH_REGS_UNUSE_BITS;
-					value = EMC230X_RPM_FACTOR * 2 / value;
-					if (value <= EMC230X_TACH_RANGE_MIN) {
-						value = 0;
-					}
+					int rpm;
+					fan_read_tach(i, &rpm);
 					status_tick = 0;
 
 					point p;
 					char index[10];
 					itoa(i, index, 10);
 					point_set_type_key(&p, POINT_TYPE_FAN_SPEED, index);
-					point_put_int(&p, value);
+					point_put_int(&p, rpm);
 					zbus_chan_pub(&point_chan, &p, K_MSEC(500));
 
 					uint8_t b;
@@ -452,6 +482,9 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 				}
 				break;
 			case FAN_MODE_TACH:
+				for (int i = 0; i < ARRAY_SIZE(fan_set_speed); i++) {
+					fan_set_target(i, (int)fan_set_speed[i]);
+				}
 				break;
 			case FAN_MODE_TEMP:
 				break;
@@ -482,8 +515,8 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 
 		// fan_get_tach_period(&tach1, &tach2);
 		// temp_delta = fan_get_temp(TEMP_INPUT) - fan_get_temp(TEMP_OUTPUT);
-		// LOG_DBG("TACH: %d, %d, tem_deltap=%.1f\n", tach1, tach2, (double)temp_delta);
-		// if (temp_delta > FAN_TEMP_THRESHOLD) {
+		// LOG_DBG("TACH: %d, %d, tem_deltap=%.1f\n", tach1, tach2,
+		// (double)temp_delta); if (temp_delta > FAN_TEMP_THRESHOLD) {
 		// 	// Only turn on fans if the temperature delta is above the
 		// 	// FAN_TEMP_THRESHOLD
 		// 	float duty = (temp_delta - FAN_TEMP_THRESHOLD) /
@@ -495,9 +528,9 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 		// 		tach_target = new_tach_target;
 		// 		if (duty < 0.9f) {
 		// 			// Only run one fan at a time
-		// 			fan_set_tach_target_period(fan1_on ? tach_target : 0xffff,
-		// 						   fan2_on ? tach_target : 0xffff);
-		// 		} else {
+		// 			fan_set_tach_target_period(fan1_on ? tach_target :
+		// 0xffff, 						   fan2_on ? tach_target :
+		// 0xffff); 		} else {
 		// 			// Run both fans
 		// 			fan_set_tach_target_period(FAN_TACH_PERIOD_MIN,
 		// 						   FAN_TACH_PERIOD_MIN);
