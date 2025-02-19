@@ -19,6 +19,8 @@ target_sources(app PRIVATE
 	src/ats.c
 	src/snmp.c
 	# src/ble.c
+	snmp/EATON-ATS2-MIB.c
+	snmp/snmp_example.c
 )
 
 set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)
