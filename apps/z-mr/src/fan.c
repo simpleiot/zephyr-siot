@@ -265,8 +265,13 @@ int fan_set_drive(int index, uint8_t value)
 	return fan_i2c_write_uint8(EMC230X_REG_FAN_DRIVE(index), value);
 }
 
-int fan_init()
+int fan_init(bool enable_speed_control)
 {
+	uint8_t cfg_value = EMC230X_FAN_CFG_VALUE;
+
+	if (enable_speed_control) {
+		cfg_value |= (1 << 7);
+	}
 	// set to manual mode initially
 	fan_i2c_write_uint8(EMC230X_REG_FAN_CFG(0), EMC230X_FAN_CFG_VALUE);
 	fan_i2c_write_uint8(EMC230X_REG_FAN_CFG(1), EMC230X_FAN_CFG_VALUE);
@@ -317,7 +322,7 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 
 	int status_tick = 0;
 
-	fan_init();
+	fan_init(false);
 
 	int fan_mode = FAN_MODE_OFF;
 	float fan_set_speed[2] = {FAN_COUNT};
@@ -330,12 +335,16 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 				LOG_DBG("Fan mode: %s", p.data);
 				if (strcmp(p.data, POINT_VALUE_OFF) == 0) {
 					fan_mode = FAN_MODE_OFF;
+					fan_init(false);
 				} else if (strcmp(p.data, POINT_VALUE_TEMP) == 0) {
 					fan_mode = FAN_MODE_TEMP;
+					fan_init(true);
 				} else if (strcmp(p.data, POINT_VALUE_PWM) == 0) {
 					fan_mode = FAN_MODE_PWM;
+					fan_init(false);
 				} else if (strcmp(p.data, POINT_VALUE_TACH) == 0) {
 					fan_mode = FAN_MODE_TACH;
+					fan_init(true);
 				}
 			} else if (strcmp(p.type, POINT_TYPE_FAN_SET_SPEED) == 0) {
 				int index = atoi(p.key);
