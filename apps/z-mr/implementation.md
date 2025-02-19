@@ -73,9 +73,10 @@ parse terminal activity to read and set points.
 1. add command to dump points to serial terminal (we may have a command to
    enable/disable this so it is not noisy during development)
 1. add a terminal command to send points
-1. create JS code in Z-MR web UI to open a serial port and read the terminal data
-1. create an ELM UI to configure the serial connection and communicate over ports
-   to the JS code.
+1. create JS code in Z-MR web UI to open a serial port and read the terminal
+   data
+1. create an ELM UI to configure the serial connection and communicate over
+   ports to the JS code.
 1. once connection is made, the serial code will listen to the same Elm ports as
    BT to receive and send points.
 1. BONUS: display raw terminal traffic in ELM web UI (perhaps a diagnostic page)
@@ -106,22 +107,22 @@ SIOT data structures that are already in place on the zIQ.
 
 ## Z-MR Local History Storage
 
-We will store a short number of events on the Z-MR so we can display
-recent events on the local web UI. We will use the NVS storage to store
-this data as points.
+We will store a short number of events on the Z-MR so we can display recent
+events on the local web UI. We will use the NVS storage to store this data as
+points.
 
 1. get time working on Z-MR
 1. ensure all points that are stored in history have point time field populated
 1. define a point type for ATS event in `zpoint.h`
-1. allocate a range of nvs IDs for history data (say X slots from 501 to 501 + X)
+1. allocate a range of nvs IDs for history data (say X slots from 501 to 501 +
+   X)
 1. these slots will form a circular buffer
 1. allocate a NVS entry for the current head of the history buffer
 1. create a NVS api to specify points that will be stored in history
 1. when NVS thread sees a history point, it stores it in the circular buffer
    - adds one to current head, and wraps when at the end of history buffer
 1. create an API to get points from history
-1. update web.c to add a history REST endpoint that will return all history points
+1. update web.c to add a history REST endpoint that will return all history
+   points
 1. update web.c to populate time in JSON points as RFC3339
 1. add UI code to display points on Events tab
-
-
