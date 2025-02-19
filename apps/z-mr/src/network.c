@@ -37,14 +37,20 @@ void configure_static_ip(void) {
     struct in_addr gateway;
 
     net_addr_pton(AF_INET, buffer.static_ip_address, &address);
-    net_addr_pton(AF_INET, buffer.static_ip_gateway, &gateway);
     net_addr_pton(AF_INET, buffer.static_ip_netmask, &netmask);
 
     net_if_ipv4_addr_rm_all(iface);
 
     net_if_ipv4_addr_add(iface, &address, NET_ADDR_MANUAL, 0);
     net_if_ipv4_set_netmask(iface, &netmask);
-    net_if_ipv4_set_gw(iface, &gateway);
+
+    if (strcmp(buffer.static_ip_gateway, "") != 0) {
+
+        net_addr_pton(AF_INET, buffer.static_ip_gateway, &gateway);
+        net_if_ipv4_set_gw(iface, &gateway);
+
+    }
+
     net_dhcpv4_stop(iface);
 
 }
@@ -73,8 +79,7 @@ static int network_init_start() {
 
     if (buffer.static_ip_state == 1 &&
         strcmp(buffer.static_ip_address, "") != 0 &&
-        strcmp(buffer.static_ip_netmask, "") != 0 &&
-        strcmp(buffer.static_ip_gateway, "") != 0) {
+        strcmp(buffer.static_ip_netmask, "") != 0) {
 
         configure_static_ip();
 
