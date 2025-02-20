@@ -236,17 +236,7 @@ settingsCard points edit =
         , column [ spacing 24, Form.onEnterEsc (ApiPostPoints points) DiscardEdits ]
             [ inputText points "0" Point.typeDescription "Description" "desc" inputStyle
             , inputText points "0" "snmpServer" "SNMP Server" "IP address" inputStyle
-            , inputOption points
-                "0"
-                ZPoint.typeFanMode
-                "Fan mode"
-                [ ( ZPoint.valueOff, "Off" )
-                , ( ZPoint.valuePwm, "PWM" )
-                , ( ZPoint.valueTach, "Tachometer" )
-                , ( ZPoint.valueTemp, "Temperature" )
-                ]
-            , inputFloat points "0" ZPoint.typeFanSetSpeed "Fan 1 Speed"
-            , inputFloat points "1" ZPoint.typeFanSetSpeed "Fan 2 Speed"
+            , fanSettings points
             , inputCheckbox points "0" Point.typeStaticIP "Static IP" []
             , viewIf staticIP <|
                 column [ spacing 16 ]
@@ -280,6 +270,59 @@ settingsCard points edit =
                         }
                     ]
             ]
+        ]
+
+
+fanSettings : List Point -> Element Msg
+fanSettings points =
+    let
+        mode =
+            Point.getText points ZPoint.typeFanMode "0"
+
+        speedUnits =
+            case mode of
+                "pwm" ->
+                    "%"
+
+                "tach" ->
+                    "RPM"
+
+                "temp" ->
+                    "°C"
+
+                _ ->
+                    ""
+
+        setting1Desc =
+            case mode of
+                "temp" ->
+                    "Fan start temp"
+
+                _ ->
+                    "Fan 1 Speed"
+
+        setting2Desc =
+            case mode of
+                "temp" ->
+                    "Fan max temp"
+
+                _ ->
+                    "Fan 2 Speed"
+    in
+    column [ spacing 24 ]
+        [ inputOption points
+            "0"
+            ZPoint.typeFanMode
+            "Fan mode"
+            [ ( ZPoint.valueOff, "Off" )
+            , ( ZPoint.valuePwm, "PWM" )
+            , ( ZPoint.valueTach, "Tachometer" )
+            , ( ZPoint.valueTemp, "Temperature" )
+            ]
+        , viewIf (mode /= ZPoint.valueOff) <|
+            row [ spacing 10 ] [ inputFloat points "0" ZPoint.typeFanSetSpeed setting1Desc, text speedUnits ]
+        , viewIf (mode /= ZPoint.valueOff) <|
+            row [ spacing 10 ] [ inputFloat points "1" ZPoint.typeFanSetSpeed setting2Desc, text speedUnits ]
         ]
 
 
