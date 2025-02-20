@@ -32,6 +32,10 @@ ZBUS_CHAN_DECLARE(ticker_chan);
 
 #define FAN_COUNT 2
 
+// Min and max fan speeds
+#define FAN_SPEED_MIN_RPM 5000
+#define FAN_SPEED_MAX_RPM 12000
+
 // Temp sensor delta threshold to turn on fans
 #define FAN_TEMP_THRESHOLD 10
 #define FAN_TEMP_MAX       20
@@ -273,6 +277,10 @@ int fan_read_tach(int index, int *rpm)
 {
 	uint16_t value;
 	fan_i2c_read_uint16_be(EMC230X_REG_FAN_TACH(index), &value);
+	// don't let divide by zero
+	if (value == 0) {
+		value = 1;
+	}
 	value = value >> EMC230X_TACH_REGS_UNUSE_BITS;
 	*rpm = EMC230X_RPM_FACTOR * 2 / value;
 	if (*rpm <= EMC230X_TACH_RANGE_MIN) {
@@ -285,11 +293,16 @@ int fan_read_tach(int index, int *rpm)
 
 uint16_t fan_rpm_to_tach(int rpm)
 {
-	int value = EMC230X_RPM_FACTOR * 2 / rpm;
-	value = value << EMC230X_TACH_REGS_UNUSE_BITS;
-	// check if we overflow 16 bits
-	if (value > 0xffff) {
+	int value;
+	if (rpm == 0) {
 		value = 0xffff;
+	} else {
+		value = EMC230X_RPM_FACTOR * 2 / rpm;
+		value = value << EMC230X_TACH_REGS_UNUSE_BITS;
+		// check if we overflow 16 bits
+		if (value > 0xffff) {
+			value = 0xffff;
+		}
 	}
 
 	return (uint16_t)value;
@@ -399,6 +412,9 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 	int fan_mode = FAN_MODE_OFF;
 	float fan_set_speed[2] = {FAN_COUNT};
 	int fan_status[2] = {FAN_COUNT};
+	// TODO: we should store the timestamp of the last valid temp
+	// and run the fans at high speed if we are not getting temp values
+	float temp = 0;
 
 	while (!zbus_sub_wait_msg(&z_fan_sub, &chan, &p, K_FOREVER)) {
 		if (chan == &point_chan) {
@@ -427,6 +443,8 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 				float speed = point_get_float(&p);
 				LOG_DBG("Fan speed %i: %f", index, (double)speed);
 				fan_set_speed[index] = point_get_float(&p);
+			} else if (strcmp(p.type, POINT_TYPE_TEMPERATURE) == 0) {
+				temp = point_get_float(&p);
 			}
 		} else if (chan == &ticker_chan) {
 			status_tick++;
@@ -523,8 +541,35 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 					fan_set_target(i, (int)fan_set_speed[i]);
 				}
 				break;
-			case FAN_MODE_TEMP:
-				break;
+			case FAN_MODE_TEMP: {
+				// the fan_set_speed contain start and max temp and we linearly
+				// increase fan speed between these two temp points
+				float temp_min = fan_set_speed[0];
+				float temp_max = fan_set_speed[1];
+
+				float speed;
+
+				// check for invalid settings
+				if (temp_max < temp_min || temp_min == temp_max || temp_min == 0 ||
+				    temp_max == 0) {
+					// run fans at full speed
+					speed = FAN_SPEED_MAX_RPM;
+				} else {
+					speed = FAN_SPEED_MIN_RPM +
+						(FAN_SPEED_MAX_RPM - FAN_SPEED_MIN_RPM) *
+							(temp - temp_min) / (temp_max - temp_min);
+				}
+
+				if (speed < FAN_SPEED_MIN_RPM) {
+					speed = 0;
+				}
+
+				for (int i = 0; i < FAN_COUNT; i++) {
+					fan_set_target(i, (int)speed);
+				}
+			}
+
+			break;
 			}
 		}
 	}
