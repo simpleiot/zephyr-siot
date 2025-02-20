@@ -5,7 +5,6 @@
 // #include <ble.h>
 #include <stdint.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/net/net_mgmt.h>
 #include <zephyr/zbus/zbus.h>
 #include <zephyr/drivers/eeprom.h>
 #include <zephyr/device.h>
@@ -26,19 +25,6 @@ static const struct nvs_point nvs_pts[] = {
 	{5, &point_def_gateway, "0"},     {6, &point_def_netmask, "0"},
 	{7, &point_def_snmp_server, "0"},
 };
-
-// ==================================================
-// Network manager
-
-static struct net_mgmt_event_callback mgmt_cb;
-
-static void net_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event,
-			      struct net_if *iface)
-{
-	if (mgmt_event == NET_EVENT_L4_CONNECTED) {
-		LOG_INF("Network connected\n");
-	}
-}
 
 static void input_callback(struct input_event *evt, void *user_data)
 {
@@ -62,9 +48,7 @@ int main(void)
 
 	// ble_init();
 
-	// In your initialization code:
-	net_mgmt_init_event_callback(&mgmt_cb, net_event_handler, NET_EVENT_L4_CONNECTED);
-	net_mgmt_add_event_callback(&mgmt_cb);
+
 
 	const struct device *eeprom = DEVICE_DT_GET(DT_NODELABEL(m24512));
 	uint8_t data[4] = {0x01, 0x02, 0x03, 0x04};
