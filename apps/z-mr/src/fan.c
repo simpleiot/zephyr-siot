@@ -91,12 +91,14 @@ ZBUS_CHAN_DECLARE(ticker_chan);
  */
 #define EMC230X_RPM_FACTOR 3932160
 
-#define EMC230X_REG_FAN_DRIVE(n)     (0x30 + 0x10 * (n))
-#define EMC230X_REG_PWM_DIVIDE(n)    (0x31 + 0x10 * (n))
-#define EMC230X_REG_FAN_CFG(n)       (0x32 + 0x10 * (n))
-#define EMC230X_REG_FAN_MIN_DRIVE(n) (0x38 + 0x10 * (n))
-#define EMC230X_REG_FAN_TARGET(n)    (0x3c + 0x10 * (n))
-#define EMC230X_REG_FAN_TACH(n)      (0x3e + 0x10 * (n))
+#define EMC230X_REG_FAN_DRIVE(n)       (0x30 + 0x10 * (n))
+#define EMC230X_REG_PWM_DIVIDE(n)      (0x31 + 0x10 * (n))
+#define EMC230X_REG_FAN_CFG(n)         (0x32 + 0x10 * (n))
+#define EMC230X_REG_FAN_MIN_DRIVE(n)   (0x38 + 0x10 * (n))
+#define EMC230X_REG_FAN_VALID(n)       (0x39 + 0x10 * (n))
+#define EMC230X_REG_DRIVE_FAIL_BAND(n) (0x3a + 0x10 * (n))
+#define EMC230X_REG_FAN_TARGET(n)      (0x3c + 0x10 * (n))
+#define EMC230X_REG_FAN_TACH(n)        (0x3e + 0x10 * (n))
 
 typedef enum fan_id {
 	FAN_NONE = 0,
@@ -261,7 +263,7 @@ bool fan_init_old(void)
 int fan_set_drive(int index, uint8_t value)
 {
 	if (index >= 4) {
-		LOG_ERR("invalide fan index: %i", index);
+		LOG_ERR("invalid fan index: %i", index);
 	}
 	return fan_i2c_write_uint8(EMC230X_REG_FAN_DRIVE(index), value);
 }
@@ -281,7 +283,7 @@ int fan_read_tach(int index, int *rpm)
 	return 0;
 }
 
-int fan_set_target(int index, int rpm)
+uint16_t fan_rpm_to_tach(int rpm)
 {
 	int value = EMC230X_RPM_FACTOR * 2 / rpm;
 	value = value << EMC230X_TACH_REGS_UNUSE_BITS;
@@ -290,7 +292,33 @@ int fan_set_target(int index, int rpm)
 		value = 0xffff;
 	}
 
+	return (uint16_t)value;
+}
+
+int fan_set_target(int index, int rpm)
+{
+	uint16_t value = fan_rpm_to_tach(rpm);
+
 	fan_i2c_write_uint16(EMC230X_REG_FAN_TARGET(index), (uint16_t)value);
+	// FIXME error checking
+	return 0;
+}
+
+int fan_set_valid(int index, int rpm)
+{
+	uint16_t value = fan_rpm_to_tach(rpm);
+	value = value >> 8;
+
+	fan_i2c_write_uint8(EMC230X_REG_FAN_VALID(index), (uint8_t)value);
+	// FIXME error checking
+	return 0;
+}
+
+int fan_set_fail_band(int index, int rpm)
+{
+	uint16_t value = fan_rpm_to_tach(rpm);
+
+	fan_i2c_write_uint16(EMC230X_REG_DRIVE_FAIL_BAND(index), (uint16_t)value);
 	// FIXME error checking
 	return 0;
 }
@@ -324,6 +352,15 @@ int fan_init(bool enable_speed_control)
 	uint8_t min_drive = 255 / 4;
 	fan_i2c_write_uint8(EMC230X_REG_FAN_MIN_DRIVE(0), min_drive);
 	fan_i2c_write_uint8(EMC230X_REG_FAN_MIN_DRIVE(1), min_drive);
+
+	// anything below 3000 RPM is flagged as a stall
+	fan_set_valid(0, 3000);
+	fan_set_valid(1, 3000);
+
+	// at full drive, if the actual drive is 2000 less than commanded, flag a drive failure
+	// TODO: this is not working yet
+	fan_set_fail_band(0, 2000);
+	fan_set_fail_band(1, 2000);
 
 	return 0;
 }
