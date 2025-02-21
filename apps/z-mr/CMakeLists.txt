@@ -17,7 +17,7 @@ target_sources(app PRIVATE
 	src/dc.c
 	src/fan.c
 	src/ats.c
-	src/snmp.c
+	# src/snmp.c
 	# src/ble.c
 )
 
