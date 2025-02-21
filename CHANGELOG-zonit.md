@@ -13,3 +13,4 @@ and this project adheres to
 - added elm-review for frontend
 - updated package.json at project root
 - Fixed crash when 1-wire sensor is not attached.
+- Enable LLMNR responder in Zephyr. It saves looking up IP-addresses.
