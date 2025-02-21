@@ -32,9 +32,28 @@ ZBUS_CHAN_DECLARE(ticker_chan);
 
 #define FAN_COUNT 2
 
+// ================================================
+// FAN Control tuning
+// The following settings need to be tuned for:
+//   - fan model
+//   - power filtering circuit
+//   - input voltage level
+//
+// Run the fan in PWM mode and watch the power
+// and tachometer stability over the PWM range
+// to determine the valid PWM and RPM control
+// ranges for the fan.
+
 // Min and max fan speeds
-#define FAN_SPEED_MIN_RPM 5000
-#define FAN_SPEED_MAX_RPM 12000
+#define FAN_SPEED_MIN_RPM 4500
+#define FAN_SPEED_MAX_RPM 10500
+
+// Min PWM duty cycle, currently 5%
+// the below value is 8-bit count, so calculate
+// by duty-cycle * 255/100
+#define FAN_MIN_DUTY_CYCLE_COUNT 13
+
+// ================================================
 
 // Temp sensor delta threshold to turn on fans
 #define FAN_TEMP_THRESHOLD 10
@@ -361,10 +380,8 @@ int fan_init(bool enable_speed_control)
 	fan_set_drive(0, 0xff);
 	fan_set_drive(1, 0xff);
 
-	// set min drive to 25%
-	uint8_t min_drive = 255 / 4;
-	fan_i2c_write_uint8(EMC230X_REG_FAN_MIN_DRIVE(0), min_drive);
-	fan_i2c_write_uint8(EMC230X_REG_FAN_MIN_DRIVE(1), min_drive);
+	fan_i2c_write_uint8(EMC230X_REG_FAN_MIN_DRIVE(0), FAN_MIN_DUTY_CYCLE_COUNT);
+	fan_i2c_write_uint8(EMC230X_REG_FAN_MIN_DRIVE(1), FAN_MIN_DUTY_CYCLE_COUNT);
 
 	// anything below 3000 RPM is flagged as a stall
 	fan_set_valid(0, 3000);
