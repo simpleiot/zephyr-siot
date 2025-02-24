@@ -16,12 +16,12 @@ import View exposing (View)
 
 
 page : Shared.Model -> Route () -> Page Model Msg
-page _ _ =
+page shared _ =
     Page.new
         { init = init
         , update = update
         , subscriptions = subscriptions
-        , view = view
+        , view = view shared
         }
 
 
@@ -66,30 +66,30 @@ subscriptions _ =
 -- VIEW
 
 
-view : Model -> View Msg
-view _ =
+view : Shared.Model -> Model -> View Msg
+view shared _ =
     { title = "Z-MR"
     , attributes = []
     , element =
         column
-            [ spacing (responsiveSpacing 32)
-            , padding (responsiveSpacing 40)
+            [ spacing (responsiveSpacing shared.windowWidth 32)
+            , padding (responsiveSpacing shared.windowWidth 40)
             , width (fill |> maximum 1280)
             , height fill
             , centerX
             , Background.color Style.colors.pale
             ]
-            [ header
-            , welcomeCard
+            [ header shared
+            , welcomeCard shared
             ]
     }
 
 
-header : Element Msg
-header =
+header : Shared.Model -> Element Msg
+header shared =
     column
         [ spacing 16
-        , padding (responsiveSpacing 24)
+        , padding (responsiveSpacing shared.windowWidth 24)
         , width fill
         , Background.color Style.colors.white
         , Border.rounded 12
@@ -102,22 +102,22 @@ header =
             { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
             , description = "Z-MR"
             }
-        , el [ Font.size (responsiveFontSize 32), Font.bold, Font.color Style.colors.jet ] <| text "Welcome"
+        , el [ Font.size (responsiveFontSize shared.windowWidth 32), Font.bold, Font.color Style.colors.jet ] <| text "Welcome"
         ]
 
 
-welcomeCard : Element Msg
-welcomeCard =
+welcomeCard : Shared.Model -> Element Msg
+welcomeCard shared =
     column
         [ spacing 24
-        , padding (responsiveSpacing 32)
+        , padding (responsiveSpacing shared.windowWidth 32)
         , width fill
         , Background.color Style.colors.white
         , Border.rounded 12
         , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
         ]
         [ el
-            [ Font.size (responsiveFontSize 24)
+            [ Font.size (responsiveFontSize shared.windowWidth 24)
             , Font.semiBold
             , Font.color Style.colors.jet
             , centerX
@@ -133,20 +133,20 @@ welcomeCard =
             ]
             [ text "Welcome to the Z-MR management interface. Choose a section below to get started." ]
         , wrappedRow
-            [ spacing (responsiveSpacing 24)
+            [ spacing (responsiveSpacing shared.windowWidth 24)
             , centerX
             , width fill
             , paddingEach { top = 16, right = 0, bottom = 0, left = 0 }
             ]
-            [ navButton Nav.Live "Live View" "Monitor system status and ATS states in real-time"
-            , navButton Nav.Settings "Settings" "Configure network settings and system parameters"
-            , navButton Nav.Events "Events" "View system events and notifications"
+            [ navButton shared Nav.Live "Live View" "Monitor system status and ATS states in real-time"
+            , navButton shared Nav.Settings "Settings" "Configure network settings and system parameters"
+            , navButton shared Nav.Events "Events" "View system events and notifications"
             ]
         ]
 
 
-navButton : Nav.Route -> String -> String -> Element Msg
-navButton route label description =
+navButton : Shared.Model -> Nav.Route -> String -> String -> Element Msg
+navButton shared route label description =
     link
         [ width (fill |> minimum 250 |> maximum 350)
         ]
@@ -154,7 +154,7 @@ navButton route label description =
         , label =
             column
                 [ spacing 12
-                , padding (responsiveSpacing 24)
+                , padding (responsiveSpacing shared.windowWidth 24)
                 , width fill
                 , height (px 160)
                 , Background.color Style.colors.pale
@@ -163,7 +163,7 @@ navButton route label description =
                 , transition { property = "background-color", duration = 150 }
                 ]
                 [ el
-                    [ Font.size (responsiveFontSize 20)
+                    [ Font.size (responsiveFontSize shared.windowWidth 20)
                     , Font.semiBold
                     , Font.color Style.colors.jet
                     ]
@@ -171,7 +171,7 @@ navButton route label description =
                     text label
                 , paragraph
                     [ Font.color Style.colors.gray
-                    , Font.size (responsiveFontSize 14)
+                    , Font.size (responsiveFontSize shared.windowWidth 14)
                     ]
                     [ text description ]
                 ]
@@ -199,17 +199,17 @@ transition { property, duration } =
         )
 
 
-responsiveSpacing : Int -> Int
-responsiveSpacing base =
-    if deviceWidth <= 480 then
+responsiveSpacing : Int -> Int -> Int
+responsiveSpacing windowWidth base =
+    if windowWidth <= 480 then
         base // 2
     else
         base
 
 
-responsiveFontSize : Int -> Int
-responsiveFontSize base =
-    if deviceWidth <= 480 then
+responsiveFontSize : Int -> Int -> Int
+responsiveFontSize windowWidth base =
+    if windowWidth <= 480 then
         base * 4 // 5
     else
         base
@@ -217,4 +217,4 @@ responsiveFontSize base =
 
 deviceWidth : Int
 deviceWidth =
-    Element.classifyDevice (Element.width fill) |> .width
+    480  -- Default to mobile breakpoint for now. We'll need to pass actual window dimensions from the app level.

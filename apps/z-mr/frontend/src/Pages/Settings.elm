@@ -22,12 +22,12 @@ import View exposing (View)
 
 
 page : Shared.Model -> Route () -> Page Model Msg
-page _ _ =
+page shared _ =
     Page.new
         { init = init
         , update = update
         , subscriptions = subscriptions
-        , view = view
+        , view = view shared
         }
 
 
@@ -108,31 +108,31 @@ subscriptions _ =
 -- VIEW
 
 
-view : Model -> View Msg
-view model =
+view : Shared.Model -> Model -> View Msg
+view shared model =
     { title = "Z-MR Settings"
     , attributes = []
     , element =
         column
-            [ spacing (responsiveSpacing 32)
-            , padding (responsiveSpacing 40)
+            [ spacing (responsiveSpacing shared.windowWidth 32)
+            , padding (responsiveSpacing shared.windowWidth 40)
             , width (fill |> maximum 1280)
             , height fill
             , centerX
             , Background.color Style.colors.pale
             ]
-            [ header
+            [ header shared
             , Nav.view Nav.Settings
-            , deviceContent model
+            , deviceContent shared model
             ]
     }
 
 
-header : Element Msg
-header =
+header : Shared.Model -> Element Msg
+header shared =
     column
         [ spacing 16
-        , padding (responsiveSpacing 24)
+        , padding (responsiveSpacing shared.windowWidth 24)
         , width fill
         , Background.color Style.colors.white
         , Border.rounded 12
@@ -145,14 +145,14 @@ header =
             { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
             , description = "Z-MR"
             }
-        , el [ Font.size (responsiveFontSize 32), Font.bold, Font.color Style.colors.jet ] <| text "Settings"
+        , el [ Font.size (responsiveFontSize shared.windowWidth 32), Font.bold, Font.color Style.colors.jet ] <| text "Settings"
         ]
 
 
-h1 : String -> Element Msg
-h1 txt =
+h1 : Shared.Model -> String -> Element Msg
+h1 shared txt =
     el
-        [ Font.size (responsiveFontSize 24)
+        [ Font.size (responsiveFontSize shared.windowWidth 24)
         , Font.semiBold
         , Font.color Style.colors.jet
         , paddingEach { top = 16, right = 0, bottom = 8, left = 0 }
@@ -161,11 +161,11 @@ h1 txt =
         text txt
 
 
-card : List (Element Msg) -> Element Msg
-card content =
+card : Shared.Model -> List (Element Msg) -> Element Msg
+card shared content =
     column
-        [ spacing (responsiveSpacing 16)
-        , padding (responsiveSpacing 24)
+        [ spacing (responsiveSpacing shared.windowWidth 16)
+        , padding (responsiveSpacing shared.windowWidth 24)
         , width fill
         , height fill
         , Background.color Style.colors.white
@@ -175,8 +175,8 @@ card content =
         content
 
 
-deviceContent : Model -> Element Msg
-deviceContent model =
+deviceContent : Shared.Model -> Model -> Element Msg
+deviceContent shared model =
     case model.points of
         Api.Loading ->
             let
@@ -189,21 +189,21 @@ deviceContent model =
                     , Point Point.typeGateway "0" Point.dataTypeString "192.168.1.1"
                     ]
             in
-            settingsCard mockPoints False
+            settingsCard shared mockPoints False
 
         Api.Success points ->
             let
                 pointsMerge =
                     Point.updatePoints points model.pointMods
             in
-            settingsCard pointsMerge (List.length model.pointMods > 0)
+            settingsCard shared pointsMerge (List.length model.pointMods > 0)
 
         Api.Failure httpError ->
-            card
+            card shared
                 [ el
                     [ Font.color Style.colors.red
-                    , Font.size 16
-                    , padding 16
+                    , Font.size (responsiveFontSize shared.windowWidth 16)
+                    , padding (responsiveSpacing shared.windowWidth 16)
                     , width fill
                     , Border.rounded 8
                     , Background.color (rgba 1 0 0 0.1)
@@ -215,15 +215,15 @@ deviceContent model =
                 ]
 
 
-settingsCard : List Point -> Bool -> Element Msg
-settingsCard points edit =
+settingsCard : Shared.Model -> List Point -> Bool -> Element Msg
+settingsCard shared points edit =
     let
         staticIP =
             Point.getBool points Point.typeStaticIP ""
 
         inputStyle =
             [ width fill
-            , padding (responsiveSpacing 12)
+            , padding (responsiveSpacing shared.windowWidth 12)
             , Border.width 1
             , Border.color Style.colors.ltgray
             , Border.rounded 8
@@ -231,23 +231,23 @@ settingsCard points edit =
             , transition { property = "border-color", duration = 150 }
             ]
     in
-    card
-        [ h1 "Settings"
-        , column [ spacing (responsiveSpacing 24), Form.onEnterEsc (ApiPostPoints points) DiscardEdits ]
-            [ inputText points "0" Point.typeDescription "Description" "desc" inputStyle
-            , inputText points "0" "snmpServer" "SNMP Server" "IP address" inputStyle
-            , fanSettings points
-            , inputCheckbox points "0" Point.typeStaticIP "Static IP" []
+    card shared
+        [ h1 shared "Settings"
+        , column [ spacing (responsiveSpacing shared.windowWidth 24), Form.onEnterEsc (ApiPostPoints points) DiscardEdits ]
+            [ inputText shared points "0" Point.typeDescription "Description" "desc" inputStyle
+            , inputText shared points "0" "snmpServer" "SNMP Server" "IP address" inputStyle
+            , fanSettings shared points
+            , inputCheckbox shared points "0" Point.typeStaticIP "Static IP" []
             , viewIf staticIP <|
-                column [ spacing (responsiveSpacing 16) ]
-                    [ inputText points "0" Point.typeAddress "IP Addr" "ex: 10.0.0.23" inputStyle
-                    , inputText points "0" Point.typeNetmask "Netmask" "ex: 255.255.255.0" inputStyle
-                    , inputText points "0" Point.typeGateway "Gateway" "ex: 10.0.0.1" inputStyle
+                column [ spacing (responsiveSpacing shared.windowWidth 16) ]
+                    [ inputText shared points "0" Point.typeAddress "IP Addr" "ex: 10.0.0.23" inputStyle
+                    , inputText shared points "0" Point.typeNetmask "Netmask" "ex: 255.255.255.0" inputStyle
+                    , inputText shared points "0" Point.typeGateway "Gateway" "ex: 10.0.0.1" inputStyle
                     ]
             , viewIf edit <|
-                wrappedRow [ spacing (responsiveSpacing 16), width fill ]
+                wrappedRow [ spacing (responsiveSpacing shared.windowWidth 16), width fill ]
                     [ Input.button
-                        [ padding (responsiveSpacing 12)
+                        [ padding (responsiveSpacing shared.windowWidth 12)
                         , Border.rounded 8
                         , Background.color Style.colors.blue
                         , Font.color Style.colors.white
@@ -258,7 +258,7 @@ settingsCard points edit =
                         , label = text "Save Changes"
                         }
                     , Input.button
-                        [ padding (responsiveSpacing 12)
+                        [ padding (responsiveSpacing shared.windowWidth 12)
                         , Border.rounded 8
                         , Background.color Style.colors.ltgray
                         , Font.color Style.colors.jet
@@ -273,8 +273,8 @@ settingsCard points edit =
         ]
 
 
-fanSettings : List Point -> Element Msg
-fanSettings points =
+fanSettings : Shared.Model -> List Point -> Element Msg
+fanSettings shared points =
     let
         mode =
             Point.getText points ZPoint.typeFanMode "0"
@@ -309,8 +309,8 @@ fanSettings points =
                 _ ->
                     "Fan 2 Speed"
     in
-    column [ spacing (responsiveSpacing 24) ]
-        [ inputOption points
+    column [ spacing (responsiveSpacing shared.windowWidth 24) ]
+        [ inputOption shared points
             "0"
             ZPoint.typeFanMode
             "Fan mode"
@@ -320,14 +320,14 @@ fanSettings points =
             , ( ZPoint.valueTemp, "Temperature" )
             ]
         , viewIf (mode /= ZPoint.valueOff) <|
-            wrappedRow [ spacing 10, width fill ] [ inputFloat points "0" ZPoint.typeFanSetSpeed setting1Desc, text speedUnits ]
+            wrappedRow [ spacing 10, width fill ] [ inputFloat shared points "0" ZPoint.typeFanSetSpeed setting1Desc, text speedUnits ]
         , viewIf (mode /= ZPoint.valueOff) <|
-            wrappedRow [ spacing 10, width fill ] [ inputFloat points "1" ZPoint.typeFanSetSpeed setting2Desc, text speedUnits ]
+            wrappedRow [ spacing 10, width fill ] [ inputFloat shared points "1" ZPoint.typeFanSetSpeed setting2Desc, text speedUnits ]
         ]
 
 
-inputText : List Point -> String -> String -> String -> String -> List (Attribute Msg) -> Element Msg
-inputText pts key typ lbl placeholder styles =
+inputText : Shared.Model -> List Point -> String -> String -> String -> String -> List (Attribute Msg) -> Element Msg
+inputText shared pts key typ lbl placeholder styles =
     column
         [ width fill
         , spacing 8
@@ -335,7 +335,7 @@ inputText pts key typ lbl placeholder styles =
         [ if lbl /= "" then
             el
                 [ Font.color Style.colors.gray
-                , Font.size (responsiveFontSize 14)
+                , Font.size (responsiveFontSize shared.windowWidth 14)
                 ]
             <|
                 text lbl
@@ -353,8 +353,8 @@ inputText pts key typ lbl placeholder styles =
         ]
 
 
-inputCheckbox : List Point -> String -> String -> String -> List (Attribute Msg) -> Element Msg
-inputCheckbox pts key typ lbl styles =
+inputCheckbox : Shared.Model -> List Point -> String -> String -> String -> List (Attribute Msg) -> Element Msg
+inputCheckbox shared pts key typ lbl styles =
     row
         [ spacing 8
         , width fill
@@ -378,7 +378,7 @@ inputCheckbox pts key typ lbl styles =
         , if lbl /= "" then
             el
                 [ Font.color Style.colors.gray
-                , Font.size (responsiveFontSize 14)
+                , Font.size (responsiveFontSize shared.windowWidth 14)
                 ]
             <|
                 text lbl
@@ -392,8 +392,8 @@ blankMajicValue =
     "123BLANK123"
 
 
-inputFloat : List Point -> String -> String -> String -> Element Msg
-inputFloat pts key typ lbl =
+inputFloat : Shared.Model -> List Point -> String -> String -> String -> Element Msg
+inputFloat shared pts key typ lbl =
     let
         currentText =
             Point.getText pts typ key
@@ -419,7 +419,7 @@ inputFloat pts key typ lbl =
         [ if lbl /= "" then
             el
                 [ Font.color Style.colors.gray
-                , Font.size (responsiveFontSize 14)
+                , Font.size (responsiveFontSize shared.windowWidth 14)
                 ]
             <|
                 text lbl
@@ -427,7 +427,7 @@ inputFloat pts key typ lbl =
             none
         , Input.text
             [ width (fill |> maximum 120)
-            , padding (responsiveSpacing 12)
+            , padding (responsiveSpacing shared.windowWidth 12)
             , Border.width 1
             , Border.color Style.colors.ltgray
             , Border.rounded 8
@@ -451,8 +451,8 @@ inputFloat pts key typ lbl =
         ]
 
 
-inputOption : List Point -> String -> String -> String -> List ( String, String ) -> Element Msg
-inputOption pts key typ lbl options =
+inputOption : Shared.Model -> List Point -> String -> String -> String -> List ( String, String ) -> Element Msg
+inputOption shared pts key typ lbl options =
     let
         labelWidth =
             200
@@ -463,7 +463,7 @@ inputOption pts key typ lbl options =
             \sel ->
                 EditPoint [ Point typ key Point.dataTypeString sel ]
         , label =
-            Input.labelLeft [ padding 12, width (px labelWidth) ] <|
+            Input.labelLeft [ padding (responsiveSpacing shared.windowWidth 12), width (px labelWidth) ] <|
                 el [ alignRight ] <|
                     text <|
                         lbl
@@ -495,17 +495,17 @@ transition { property, duration } =
         )
 
 
-responsiveSpacing : Int -> Int
-responsiveSpacing base =
-    if deviceWidth <= 480 then
+responsiveSpacing : Int -> Int -> Int
+responsiveSpacing windowWidth base =
+    if windowWidth <= 480 then
         base // 2
     else
         base
 
 
-responsiveFontSize : Int -> Int
-responsiveFontSize base =
-    if deviceWidth <= 480 then
+responsiveFontSize : Int -> Int -> Int
+responsiveFontSize windowWidth base =
+    if windowWidth <= 480 then
         base * 4 // 5
     else
         base
@@ -513,4 +513,4 @@ responsiveFontSize base =
 
 deviceWidth : Int
 deviceWidth =
-    Element.classifyDevice (Element.width fill) |> .width
+    480  -- Default to mobile breakpoint for now. We'll need to pass actual window dimensions from the app level.

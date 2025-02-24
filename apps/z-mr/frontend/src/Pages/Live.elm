@@ -22,12 +22,12 @@ import View exposing (View)
 
 
 page : Shared.Model -> Route () -> Page Model Msg
-page _ _ =
+page shared _ =
     Page.new
         { init = init
         , update = update
         , subscriptions = subscriptions
-        , view = view
+        , view = view shared
         }
 
 
@@ -97,31 +97,31 @@ subscriptions _ =
 -- VIEW
 
 
-view : Model -> View Msg
-view model =
+view : Shared.Model -> Model -> View Msg
+view shared model =
     { title = "Z-MR Live View"
     , attributes = []
     , element =
         column
-            [ spacing (responsiveSpacing 32)
-            , padding (responsiveSpacing 40)
+            [ spacing (responsiveSpacing shared.windowWidth 32)
+            , padding (responsiveSpacing shared.windowWidth 40)
             , width (fill |> maximum 1280)
             , height fill
             , centerX
             , Background.color Style.colors.pale
             ]
-            [ header
+            [ header shared
             , Nav.view Nav.Live
-            , deviceContent model
+            , deviceContent shared model
             ]
     }
 
 
-header : Element Msg
-header =
+header : Shared.Model -> Element Msg
+header shared =
     column
         [ spacing 16
-        , padding (responsiveSpacing 24)
+        , padding (responsiveSpacing shared.windowWidth 24)
         , width fill
         , Background.color Style.colors.white
         , Border.rounded 12
@@ -134,14 +134,14 @@ header =
             { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
             , description = "Z-MR"
             }
-        , el [ Font.size (responsiveFontSize 32), Font.bold, Font.color Style.colors.jet ] <| text "Live View"
+        , el [ Font.size (responsiveFontSize shared.windowWidth 32), Font.bold, Font.color Style.colors.jet ] <| text "Live View"
         ]
 
 
-h1 : String -> Element Msg
-h1 txt =
+h1 : Shared.Model -> String -> Element Msg
+h1 shared txt =
     el
-        [ Font.size (responsiveFontSize 24)
+        [ Font.size (responsiveFontSize shared.windowWidth 24)
         , Font.semiBold
         , Font.color Style.colors.jet
         , paddingEach { top = 16, right = 0, bottom = 8, left = 0 }
@@ -150,11 +150,11 @@ h1 txt =
         text txt
 
 
-card : List (Element Msg) -> Element Msg
-card content =
+card : Shared.Model -> List (Element Msg) -> Element Msg
+card shared content =
     column
-        [ spacing (responsiveSpacing 16)
-        , padding (responsiveSpacing 24)
+        [ spacing (responsiveSpacing shared.windowWidth 16)
+        , padding (responsiveSpacing shared.windowWidth 24)
         , width fill
         , height fill
         , Background.color Style.colors.white
@@ -164,11 +164,11 @@ card content =
         content
 
 
-deviceContent : Model -> Element Msg
-deviceContent model =
+deviceContent : Shared.Model -> Model -> Element Msg
+deviceContent shared model =
     let
         contentLayout =
-            if deviceWidth <= 768 then
+            if shared.windowWidth <= 768 then
                 column
             else
                 row
@@ -185,28 +185,28 @@ deviceContent model =
                     ]
             in
             contentLayout
-                [ spacing (responsiveSpacing 24)
+                [ spacing (responsiveSpacing shared.windowWidth 24)
                 , width fill
                 ]
-                [ el [ width fill ] <| statusCard mockPoints
-                , el [ width fill ] <| atsStateCard mockPoints model.blink
+                [ el [ width fill ] <| statusCard shared mockPoints
+                , el [ width fill ] <| atsStateCard shared mockPoints model.blink
                 ]
 
         Api.Success points ->
             contentLayout
-                [ spacing (responsiveSpacing 24)
+                [ spacing (responsiveSpacing shared.windowWidth 24)
                 , width fill
                 ]
-                [ el [ width fill ] <| statusCard points
-                , el [ width fill ] <| atsStateCard points model.blink
+                [ el [ width fill ] <| statusCard shared points
+                , el [ width fill ] <| atsStateCard shared points model.blink
                 ]
 
         Api.Failure httpError ->
-            card
+            card shared
                 [ el
                     [ Font.color Style.colors.red
-                    , Font.size (responsiveFontSize 16)
-                    , padding (responsiveSpacing 16)
+                    , Font.size (responsiveFontSize shared.windowWidth 16)
+                    , padding (responsiveSpacing shared.windowWidth 16)
                     , width fill
                     , Border.rounded 8
                     , Background.color (rgba 1 0 0 0.1)
@@ -218,13 +218,13 @@ deviceContent model =
                 ]
 
 
-statusCard : List Point -> Element Msg
-statusCard points =
+statusCard : Shared.Model -> List Point -> Element Msg
+statusCard shared points =
     let
         metricRow name value =
             row
-                [ spacing (responsiveSpacing 16)
-                , padding (responsiveSpacing 16)
+                [ spacing (responsiveSpacing shared.windowWidth 16)
+                , padding (responsiveSpacing shared.windowWidth 16)
                 , width fill
                 , Border.rounded 8
                 , mouseOver [ Background.color Style.colors.pale ]
@@ -233,14 +233,14 @@ statusCard points =
                 [ el
                     [ Font.color Style.colors.gray
                     , width (px 120)
-                    , Font.size (responsiveFontSize 14)
+                    , Font.size (responsiveFontSize shared.windowWidth 14)
                     ]
                   <|
                     text name
                 , el
                     [ Font.semiBold
                     , Font.color Style.colors.jet
-                    , Font.size (responsiveFontSize 14)
+                    , Font.size (responsiveFontSize shared.windowWidth 14)
                     ]
                   <|
                     text value
@@ -259,9 +259,9 @@ statusCard points =
             , { name = "User switch", value = formatOnOff (Point.getInt points ZPoint.typeSwitch "0") }
             ]
     in
-    card
-        [ h1 "System Status"
-        , column [ spacing (responsiveSpacing 4), width fill ] <|
+    card shared
+        [ h1 shared "System Status"
+        , column [ spacing (responsiveSpacing shared.windowWidth 4), width fill ] <|
             List.map (\d -> metricRow d.name d.value) data
         ]
 
@@ -322,8 +322,8 @@ atsStateToLed side blink state =
             circleLtGray
 
 
-atsStateCard : List Point -> Bool -> Element Msg
-atsStateCard pts blink =
+atsStateCard : Shared.Model -> List Point -> Bool -> Element Msg
+atsStateCard shared pts blink =
     let
         sideA =
             List.map
@@ -346,28 +346,28 @@ atsStateCard pts blink =
 
         cell content =
             el
-                [ paddingXY (responsiveSpacing 8) (responsiveSpacing 12)
+                [ paddingXY (responsiveSpacing shared.windowWidth 8) (responsiveSpacing shared.windowWidth 12)
                 , centerX
                 , centerY
                 , Font.center
-                , Font.size (responsiveFontSize 14)
+                , Font.size (responsiveFontSize shared.windowWidth 14)
                 ]
                 content
 
         headerCell content =
             el
-                [ paddingXY (responsiveSpacing 8) (responsiveSpacing 12)
+                [ paddingXY (responsiveSpacing shared.windowWidth 8) (responsiveSpacing shared.windowWidth 12)
                 , centerX
                 , centerY
                 , Font.center
                 , Font.semiBold
                 , Font.color Style.colors.gray
-                , Font.size (responsiveFontSize 14)
+                , Font.size (responsiveFontSize shared.windowWidth 14)
                 ]
                 content
     in
-    card
-        [ h1 "ATS Status"
+    card shared
+        [ h1 shared "ATS Status"
         , column [ height fill, width fill, spacing 0 ] <|
             [ table
                 [ spacing 12
@@ -480,17 +480,17 @@ formatNumber number =
         groupedDigits
 
 
-responsiveSpacing : Int -> Int
-responsiveSpacing base =
-    if deviceWidth <= 480 then
+responsiveSpacing : Int -> Int -> Int
+responsiveSpacing windowWidth base =
+    if windowWidth <= 480 then
         base // 2
     else
         base
 
 
-responsiveFontSize : Int -> Int
-responsiveFontSize base =
-    if deviceWidth <= 480 then
+responsiveFontSize : Int -> Int -> Int
+responsiveFontSize windowWidth base =
+    if windowWidth <= 480 then
         base * 4 // 5
     else
         base
@@ -498,4 +498,4 @@ responsiveFontSize base =
 
 deviceWidth : Int
 deviceWidth =
-    Element.classifyDevice (Element.width fill) |> .width
+    480  -- Default to mobile breakpoint for now. We'll need to pass actual window dimensions from the app level.
