@@ -8,7 +8,7 @@ module Shared exposing
     , update
     )
 
-import Json.Decode as Decode exposing (Decoder)
+import Json.Decode
 import Ports
 import Shared.Model
 
@@ -19,11 +19,11 @@ type alias Flags =
     }
 
 
-decoder : Decoder Flags
+decoder : Json.Decode.Decoder Flags
 decoder =
-    Decode.map2 Flags
-        (Decode.field "width" Decode.int)
-        (Decode.field "height" Decode.int)
+    Json.Decode.map2 Flags
+        (Json.Decode.field "width" Json.Decode.int)
+        (Json.Decode.field "height" Json.Decode.int)
 
 
 type alias Model =
