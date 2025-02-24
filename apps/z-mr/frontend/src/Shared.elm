@@ -8,8 +8,10 @@ module Shared exposing
     , update
     )
 
+import Effect exposing (Effect)
 import Json.Decode
 import Ports
+import Route exposing (Route)
 import Shared.Model
 
 
@@ -34,13 +36,23 @@ type Msg
     = WindowResized { width : Int, height : Int }
 
 
-init : Flags -> ( Model, Cmd Msg )
-init flags =
-    ( { windowWidth = flags.width
-      , windowHeight = flags.height
-      }
-    , Cmd.none
-    )
+init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
+init flagsResult route =
+    case flagsResult of
+        Ok flags ->
+            ( { windowWidth = flags.width
+              , windowHeight = flags.height
+              }
+            , Effect.none
+            )
+        
+        Err _ ->
+            -- Fallback to default dimensions if decoding fails
+            ( { windowWidth = 1024
+              , windowHeight = 768
+              }
+            , Effect.none
+            )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
