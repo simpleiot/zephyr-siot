@@ -72,8 +72,8 @@ view _ =
     , attributes = []
     , element =
         column
-            [ spacing 32
-            , padding 40
+            [ spacing (responsiveSpacing 32)
+            , padding (responsiveSpacing 40)
             , width (fill |> maximum 1280)
             , height fill
             , centerX
@@ -87,22 +87,22 @@ view _ =
 
 header : Element Msg
 header =
-    row
-        [ spacing 32
-        , padding 24
+    column
+        [ spacing 16
+        , padding (responsiveSpacing 24)
         , width fill
         , Background.color Style.colors.white
         , Border.rounded 12
         , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
         ]
         [ image
-            [ width (px 180)
+            [ width (fill |> maximum 180)
             , alignLeft
             ]
             { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
             , description = "Z-MR"
             }
-        , el [ Font.size 32, Font.bold, Font.color Style.colors.jet ] <| text "Welcome"
+        , el [ Font.size (responsiveFontSize 32), Font.bold, Font.color Style.colors.jet ] <| text "Welcome"
         ]
 
 
@@ -110,14 +110,14 @@ welcomeCard : Element Msg
 welcomeCard =
     column
         [ spacing 24
-        , padding 32
+        , padding (responsiveSpacing 32)
         , width fill
         , Background.color Style.colors.white
         , Border.rounded 12
         , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
         ]
         [ el
-            [ Font.size 24
+            [ Font.size (responsiveFontSize 24)
             , Font.semiBold
             , Font.color Style.colors.jet
             , centerX
@@ -132,9 +132,10 @@ welcomeCard =
             , spacing 8
             ]
             [ text "Welcome to the Z-MR management interface. Choose a section below to get started." ]
-        , row
-            [ spacing 24
+        , wrappedRow
+            [ spacing (responsiveSpacing 24)
             , centerX
+            , width fill
             , paddingEach { top = 16, right = 0, bottom = 0, left = 0 }
             ]
             [ navButton Nav.Live "Live View" "Monitor system status and ATS states in real-time"
@@ -147,13 +148,13 @@ welcomeCard =
 navButton : Nav.Route -> String -> String -> Element Msg
 navButton route label description =
     link
-        [ width (px 250)
+        [ width (fill |> minimum 250 |> maximum 350)
         ]
         { url = routeToUrl route
         , label =
             column
                 [ spacing 12
-                , padding 24
+                , padding (responsiveSpacing 24)
                 , width fill
                 , height (px 160)
                 , Background.color Style.colors.pale
@@ -162,7 +163,7 @@ navButton route label description =
                 , transition { property = "background-color", duration = 150 }
                 ]
                 [ el
-                    [ Font.size 20
+                    [ Font.size (responsiveFontSize 20)
                     , Font.semiBold
                     , Font.color Style.colors.jet
                     ]
@@ -170,7 +171,7 @@ navButton route label description =
                     text label
                 , paragraph
                     [ Font.color Style.colors.gray
-                    , Font.size 14
+                    , Font.size (responsiveFontSize 14)
                     ]
                     [ text description ]
                 ]
@@ -196,3 +197,24 @@ transition { property, duration } =
         (Attr.style "transition"
             (property ++ " " ++ String.fromInt duration ++ "ms ease-in-out")
         )
+
+
+responsiveSpacing : Int -> Int
+responsiveSpacing base =
+    if deviceWidth <= 480 then
+        base // 2
+    else
+        base
+
+
+responsiveFontSize : Int -> Int
+responsiveFontSize base =
+    if deviceWidth <= 480 then
+        base * 4 // 5
+    else
+        base
+
+
+deviceWidth : Int
+deviceWidth =
+    Element.classifyDevice (Element.width fill) |> .width

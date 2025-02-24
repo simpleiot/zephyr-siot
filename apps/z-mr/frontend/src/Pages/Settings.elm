@@ -114,8 +114,8 @@ view model =
     , attributes = []
     , element =
         column
-            [ spacing 32
-            , padding 40
+            [ spacing (responsiveSpacing 32)
+            , padding (responsiveSpacing 40)
             , width (fill |> maximum 1280)
             , height fill
             , centerX
@@ -130,29 +130,29 @@ view model =
 
 header : Element Msg
 header =
-    row
-        [ spacing 32
-        , padding 24
+    column
+        [ spacing 16
+        , padding (responsiveSpacing 24)
         , width fill
         , Background.color Style.colors.white
         , Border.rounded 12
         , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
         ]
         [ image
-            [ width (px 180)
+            [ width (fill |> maximum 180)
             , alignLeft
             ]
             { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
             , description = "Z-MR"
             }
-        , el [ Font.size 32, Font.bold, Font.color Style.colors.jet ] <| text "Settings"
+        , el [ Font.size (responsiveFontSize 32), Font.bold, Font.color Style.colors.jet ] <| text "Settings"
         ]
 
 
 h1 : String -> Element Msg
 h1 txt =
     el
-        [ Font.size 24
+        [ Font.size (responsiveFontSize 24)
         , Font.semiBold
         , Font.color Style.colors.jet
         , paddingEach { top = 16, right = 0, bottom = 8, left = 0 }
@@ -164,8 +164,8 @@ h1 txt =
 card : List (Element Msg) -> Element Msg
 card content =
     column
-        [ spacing 16
-        , padding 24
+        [ spacing (responsiveSpacing 16)
+        , padding (responsiveSpacing 24)
         , width fill
         , height fill
         , Background.color Style.colors.white
@@ -223,7 +223,7 @@ settingsCard points edit =
 
         inputStyle =
             [ width fill
-            , padding 12
+            , padding (responsiveSpacing 12)
             , Border.width 1
             , Border.color Style.colors.ltgray
             , Border.rounded 8
@@ -233,21 +233,21 @@ settingsCard points edit =
     in
     card
         [ h1 "Settings"
-        , column [ spacing 24, Form.onEnterEsc (ApiPostPoints points) DiscardEdits ]
+        , column [ spacing (responsiveSpacing 24), Form.onEnterEsc (ApiPostPoints points) DiscardEdits ]
             [ inputText points "0" Point.typeDescription "Description" "desc" inputStyle
             , inputText points "0" "snmpServer" "SNMP Server" "IP address" inputStyle
             , fanSettings points
             , inputCheckbox points "0" Point.typeStaticIP "Static IP" []
             , viewIf staticIP <|
-                column [ spacing 16 ]
+                column [ spacing (responsiveSpacing 16) ]
                     [ inputText points "0" Point.typeAddress "IP Addr" "ex: 10.0.0.23" inputStyle
                     , inputText points "0" Point.typeNetmask "Netmask" "ex: 255.255.255.0" inputStyle
                     , inputText points "0" Point.typeGateway "Gateway" "ex: 10.0.0.1" inputStyle
                     ]
             , viewIf edit <|
-                row [ spacing 16 ]
+                wrappedRow [ spacing (responsiveSpacing 16), width fill ]
                     [ Input.button
-                        [ padding 12
+                        [ padding (responsiveSpacing 12)
                         , Border.rounded 8
                         , Background.color Style.colors.blue
                         , Font.color Style.colors.white
@@ -258,7 +258,7 @@ settingsCard points edit =
                         , label = text "Save Changes"
                         }
                     , Input.button
-                        [ padding 12
+                        [ padding (responsiveSpacing 12)
                         , Border.rounded 8
                         , Background.color Style.colors.ltgray
                         , Font.color Style.colors.jet
@@ -309,7 +309,7 @@ fanSettings points =
                 _ ->
                     "Fan 2 Speed"
     in
-    column [ spacing 24 ]
+    column [ spacing (responsiveSpacing 24) ]
         [ inputOption points
             "0"
             ZPoint.typeFanMode
@@ -320,75 +320,71 @@ fanSettings points =
             , ( ZPoint.valueTemp, "Temperature" )
             ]
         , viewIf (mode /= ZPoint.valueOff) <|
-            row [ spacing 10 ] [ inputFloat points "0" ZPoint.typeFanSetSpeed setting1Desc, text speedUnits ]
+            wrappedRow [ spacing 10, width fill ] [ inputFloat points "0" ZPoint.typeFanSetSpeed setting1Desc, text speedUnits ]
         , viewIf (mode /= ZPoint.valueOff) <|
-            row [ spacing 10 ] [ inputFloat points "1" ZPoint.typeFanSetSpeed setting2Desc, text speedUnits ]
+            wrappedRow [ spacing 10, width fill ] [ inputFloat points "1" ZPoint.typeFanSetSpeed setting2Desc, text speedUnits ]
         ]
 
 
 inputText : List Point -> String -> String -> String -> String -> List (Attribute Msg) -> Element Msg
 inputText pts key typ lbl placeholder styles =
-    Input.text
-        styles
-        { onChange =
-            \d ->
-                EditPoint [ Point typ key Point.dataTypeString d ]
-        , text = Point.getText pts typ key
-        , placeholder = Just <| Input.placeholder [] <| text placeholder
-        , label =
-            if lbl == "" then
-                Input.labelHidden ""
-
-            else
-                let
-                    labelWidth =
-                        200
-                in
-                Input.labelLeft
-                    [ width (px labelWidth)
-                    , Font.color Style.colors.gray
-                    ]
-                <|
-                    el [ alignRight ] <|
-                        text <|
-                            lbl
-                                ++ ":"
-        }
+    column
+        [ width fill
+        , spacing 8
+        ]
+        [ if lbl /= "" then
+            el
+                [ Font.color Style.colors.gray
+                , Font.size (responsiveFontSize 14)
+                ]
+            <|
+                text lbl
+          else
+            none
+        , Input.text
+            styles
+            { onChange =
+                \d ->
+                    EditPoint [ Point typ key Point.dataTypeString d ]
+            , text = Point.getText pts typ key
+            , placeholder = Just <| Input.placeholder [] <| text placeholder
+            , label = Input.labelHidden ""
+            }
+        ]
 
 
 inputCheckbox : List Point -> String -> String -> String -> List (Attribute Msg) -> Element Msg
 inputCheckbox pts key typ lbl styles =
-    Input.checkbox
-        styles
-        { onChange =
-            \d ->
-                let
-                    v =
-                        if d then
-                            "1"
-
-                        else
-                            "0"
-                in
-                EditPoint [ Point typ key Point.dataTypeInt v ]
-        , checked =
-            Point.getBool pts typ key
-        , icon = Input.defaultCheckbox
-        , label =
-            if lbl /= "" then
-                let
-                    labelWidth =
-                        200
-                in
-                Input.labelLeft [ width (px labelWidth) ] <|
-                    el [ alignRight ] <|
-                        text <|
-                            lbl
-                                ++ ":"
-
-            else
-                Input.labelHidden ""
-        }
+    row
+        [ spacing 8
+        , width fill
+        ]
+        [ Input.checkbox
+            styles
+            { onChange =
+                \d ->
+                    let
+                        v =
+                            if d then
+                                "1"
+                            else
+                                "0"
+                    in
+                    EditPoint [ Point typ key Point.dataTypeInt v ]
+            , checked = Point.getBool pts typ key
+            , icon = Input.defaultCheckbox
+            , label = Input.labelHidden ""
+            }
+        , if lbl /= "" then
+            el
+                [ Font.color Style.colors.gray
+                , Font.size (responsiveFontSize 14)
+                ]
+            <|
+                text lbl
+          else
+            none
+        ]
 
 
 blankMajicValue : String
@@ -416,35 +412,43 @@ inputFloat pts key typ lbl =
                 _ ->
                     Sanitize.float currentText
     in
-    Input.text
-        []
-        { onChange =
-            \d ->
-                let
-                    v =
-                        if d == "" then
-                            blankMajicValue
-
-                        else if d == "-" then
-                            "-"
-
-                        else
-                            Sanitize.float d
-                in
-                EditPoint [ Point typ key Point.dataTypeFloat v ]
-        , text = currentValue
-        , placeholder = Nothing
-        , label =
-            if lbl == "" then
-                Input.labelHidden ""
-
-            else
-                let
-                    labelWidth =
-                        200
-                in
-                Input.labelLeft [ width (px labelWidth) ] <| el [ alignRight ] <| text <| lbl ++ ":"
-        }
+    column
+        [ width fill
+        , spacing 8
+        ]
+        [ if lbl /= "" then
+            el
+                [ Font.color Style.colors.gray
+                , Font.size (responsiveFontSize 14)
+                ]
+            <|
+                text lbl
+          else
+            none
+        , Input.text
+            [ width (fill |> maximum 120)
+            , padding (responsiveSpacing 12)
+            , Border.width 1
+            , Border.color Style.colors.ltgray
+            , Border.rounded 8
+            ]
+            { onChange =
+                \d ->
+                    let
+                        v =
+                            if d == "" then
+                                blankMajicValue
+                            else if d == "-" then
+                                "-"
+                            else
+                                Sanitize.float d
+                    in
+                    EditPoint [ Point typ key Point.dataTypeFloat v ]
+            , text = currentValue
+            , placeholder = Nothing
+            , label = Input.labelHidden ""
+            }
+        ]
 
 
 inputOption : List Point -> String -> String -> String -> List ( String, String ) -> Element Msg
@@ -489,3 +493,24 @@ transition { property, duration } =
         (Attr.style "transition"
             (property ++ " " ++ String.fromInt duration ++ "ms ease-in-out")
         )
+
+
+responsiveSpacing : Int -> Int
+responsiveSpacing base =
+    if deviceWidth <= 480 then
+        base // 2
+    else
+        base
+
+
+responsiveFontSize : Int -> Int
+responsiveFontSize base =
+    if deviceWidth <= 480 then
+        base * 4 // 5
+    else
+        base
+
+
+deviceWidth : Int
+deviceWidth =
+    Element.classifyDevice (Element.width fill) |> .width

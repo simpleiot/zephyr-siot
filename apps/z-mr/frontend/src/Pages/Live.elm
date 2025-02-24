@@ -103,8 +103,8 @@ view model =
     , attributes = []
     , element =
         column
-            [ spacing 32
-            , padding 40
+            [ spacing (responsiveSpacing 32)
+            , padding (responsiveSpacing 40)
             , width (fill |> maximum 1280)
             , height fill
             , centerX
@@ -119,29 +119,29 @@ view model =
 
 header : Element Msg
 header =
-    row
-        [ spacing 32
-        , padding 24
+    column
+        [ spacing 16
+        , padding (responsiveSpacing 24)
         , width fill
         , Background.color Style.colors.white
         , Border.rounded 12
         , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
         ]
         [ image
-            [ width (px 180)
+            [ width (fill |> maximum 180)
             , alignLeft
             ]
             { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
             , description = "Z-MR"
             }
-        , el [ Font.size 32, Font.bold, Font.color Style.colors.jet ] <| text "Live View"
+        , el [ Font.size (responsiveFontSize 32), Font.bold, Font.color Style.colors.jet ] <| text "Live View"
         ]
 
 
 h1 : String -> Element Msg
 h1 txt =
     el
-        [ Font.size 24
+        [ Font.size (responsiveFontSize 24)
         , Font.semiBold
         , Font.color Style.colors.jet
         , paddingEach { top = 16, right = 0, bottom = 8, left = 0 }
@@ -153,8 +153,8 @@ h1 txt =
 card : List (Element Msg) -> Element Msg
 card content =
     column
-        [ spacing 16
-        , padding 24
+        [ spacing (responsiveSpacing 16)
+        , padding (responsiveSpacing 24)
         , width fill
         , height fill
         , Background.color Style.colors.white
@@ -166,6 +166,13 @@ card content =
 
 deviceContent : Model -> Element Msg
 deviceContent model =
+    let
+        contentLayout =
+            if deviceWidth <= 768 then
+                column
+            else
+                row
+    in
     case model.points of
         Api.Loading ->
             let
@@ -177,23 +184,29 @@ deviceContent model =
                     , Point Point.typeTemperature "0" Point.dataTypeFloat "35.2"
                     ]
             in
-            row [ spacing 24, width fill ]
-                [ el [ width (fillPortion 3) ] <| statusCard mockPoints
-                , el [ width (fillPortion 2) ] <| atsStateCard mockPoints model.blink
+            contentLayout
+                [ spacing (responsiveSpacing 24)
+                , width fill
+                ]
+                [ el [ width fill ] <| statusCard mockPoints
+                , el [ width fill ] <| atsStateCard mockPoints model.blink
                 ]
 
         Api.Success points ->
-            row [ spacing 24, width fill ]
-                [ el [ width (fillPortion 3) ] <| statusCard points
-                , el [ width (fillPortion 2) ] <| atsStateCard points model.blink
+            contentLayout
+                [ spacing (responsiveSpacing 24)
+                , width fill
+                ]
+                [ el [ width fill ] <| statusCard points
+                , el [ width fill ] <| atsStateCard points model.blink
                 ]
 
         Api.Failure httpError ->
             card
                 [ el
                     [ Font.color Style.colors.red
-                    , Font.size 16
-                    , padding 16
+                    , Font.size (responsiveFontSize 16)
+                    , padding (responsiveSpacing 16)
                     , width fill
                     , Border.rounded 8
                     , Background.color (rgba 1 0 0 0.1)
@@ -210,8 +223,8 @@ statusCard points =
     let
         metricRow name value =
             row
-                [ spacing 16
-                , padding 16
+                [ spacing (responsiveSpacing 16)
+                , padding (responsiveSpacing 16)
                 , width fill
                 , Border.rounded 8
                 , mouseOver [ Background.color Style.colors.pale ]
@@ -220,12 +233,14 @@ statusCard points =
                 [ el
                     [ Font.color Style.colors.gray
                     , width (px 120)
+                    , Font.size (responsiveFontSize 14)
                     ]
                   <|
                     text name
                 , el
                     [ Font.semiBold
                     , Font.color Style.colors.jet
+                    , Font.size (responsiveFontSize 14)
                     ]
                   <|
                     text value
@@ -246,7 +261,7 @@ statusCard points =
     in
     card
         [ h1 "System Status"
-        , column [ spacing 4, width fill ] <|
+        , column [ spacing (responsiveSpacing 4), width fill ] <|
             List.map (\d -> metricRow d.name d.value) data
         ]
 
@@ -331,21 +346,23 @@ atsStateCard pts blink =
 
         cell content =
             el
-                [ paddingXY 8 12
+                [ paddingXY (responsiveSpacing 8) (responsiveSpacing 12)
                 , centerX
                 , centerY
                 , Font.center
+                , Font.size (responsiveFontSize 14)
                 ]
                 content
 
         headerCell content =
             el
-                [ paddingXY 8 12
+                [ paddingXY (responsiveSpacing 8) (responsiveSpacing 12)
                 , centerX
                 , centerY
                 , Font.center
                 , Font.semiBold
                 , Font.color Style.colors.gray
+                , Font.size (responsiveFontSize 14)
                 ]
                 content
     in
@@ -461,3 +478,24 @@ formatNumber number =
 
     else
         groupedDigits
+
+
+responsiveSpacing : Int -> Int
+responsiveSpacing base =
+    if deviceWidth <= 480 then
+        base // 2
+    else
+        base
+
+
+responsiveFontSize : Int -> Int
+responsiveFontSize base =
+    if deviceWidth <= 480 then
+        base * 4 // 5
+    else
+        base
+
+
+deviceWidth : Int
+deviceWidth =
+    Element.classifyDevice (Element.width fill) |> .width
