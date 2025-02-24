@@ -8,11 +8,14 @@
 #include <zephyr/net/net_mgmt.h>
 #include <zephyr/net/dhcpv4.h>
 #include <zephyr/net/socket.h>
+#include <zephyr/net/sntp.h>
 
 
 #define STACKSIZE 1024
 #define PRIORITY 1
 #define BROADCAST_PORT 64209
+#define NTP_TIMEOUT 5000
+#define NTP_SERVER_BUFFER_LENGTH 3
 
 // debug levels
 LOG_MODULE_REGISTER(z_network, LOG_LEVEL_DBG);
@@ -65,14 +68,18 @@ struct networkInfo {
 // stores our most important points
 static struct networkInfo buffer = {0,"","",""};
 
+struct ntpInfo {
+    char ntp_server_address[20];
+};
+
+static struct ntpInfo ntp_servers[NTP_SERVER_BUFFER_LENGTH];
+
 void remove_all_ipv4_addresses(struct net_if *iface)
 {
     int index = net_if_get_by_iface(iface);
     struct in_addr addr;
     int i;
-
     LOG_DBG("removing all ipv4 interfaces");
-
     for (i = 0; i < NET_IF_MAX_IPV4_ADDR; i++) {
         if (net_if_ipv4_addr_lookup_by_index(&addr) >= 0) {
             net_if_ipv4_addr_rm_by_index(index, &addr);
@@ -114,6 +121,40 @@ void broadcast_new_ip(const char *new_ip) {
     }
 
     close(sock);
+}
+
+void configure_ntp(void) {
+
+    struct sntp_time timestamp;
+
+    int i;
+
+    for(i=0; i<NTP_SERVER_BUFFER_LENGTH; i++) {
+
+        int rc = sntp_simple(ntp_servers[i].ntp_server_address, NTP_TIMEOUT, &timestamp);
+        if (rc == 0) {
+
+            LOG_DBG("NTP Config Successful!");
+            return;
+
+
+        } else {
+
+            // there was an error
+            LOG_ERR("NTP CONFIG FAILED");
+
+        }
+
+    }
+
+    // if we get to this point, we need to configure DHCP in order to get NTP info
+    // this should not affect static IP, as once we have set up static IP, DHCP should give us the IP we have.
+
+    // TODO: Does this actually work? Does this F up our static IP configuration? Are we now "leasing" our static IP?
+
+
+    configure_dhcp();
+
 }
 
 // this configures our static IP
@@ -231,10 +272,11 @@ static int network_init_start() {
         strcmp(buffer.static_ip_netmask, "") != 0) {
 
         configure_static_ip();
+        configure_ntp();
 
     } else {
 
-        configure_dhcp();
+        configure_ntp();
 
     }
 
@@ -275,10 +317,16 @@ void network_thread(void *arg1, void *arg2, void *arg3) {
                     strncpy(buffer.static_ip_netmask, p.data, sizeof(buffer.static_ip_netmask)-1);
                     network_init_start();
                 } else if (strcmp(p.type, POINT_TYPE_GATEWAY) == 0) {
-                    ("StaticIP gateway received");
+                    LOG_DBG("StaticIP gateway received");
                     // change to static IP gateway received
                     strncpy(buffer.static_ip_gateway, p.data, sizeof(buffer.static_ip_gateway)-1);
                     network_init_start();
+                } else if (strcmp(p.type, POINT_TYPE_NTP) == 0) {
+                    LOG_DB("NTP Point Received");
+                    // check what key the NTP server is, as this will tell us what network we should configure.
+                    int server_priority = atoi(p.key);
+                    strncpy(ntp_servers[server_priority].ntp_server_address, p.data, sizeof(ntp_servers[server_priority].ntp_server_address)-1);
+                    configure_ntp();
                 }
             }
         }

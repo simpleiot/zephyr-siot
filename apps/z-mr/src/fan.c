@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "zephyr/sys/util.h"
 #include "zpoint.h"
 
 #include <point.h>
@@ -31,6 +32,29 @@ ZBUS_CHAN_DECLARE(ticker_chan);
 
 #define FAN_COUNT 2
 
+// ================================================
+// FAN Control tuning
+// The following settings need to be tuned for:
+//   - fan model
+//   - power filtering circuit
+//   - input voltage level
+//
+// Run the fan in PWM mode and watch the power
+// and tachometer stability over the PWM range
+// to determine the valid PWM and RPM control
+// ranges for the fan.
+
+// Min and max fan speeds
+#define FAN_SPEED_MIN_RPM 4500
+#define FAN_SPEED_MAX_RPM 10500
+
+// Min PWM duty cycle, currently 5%
+// the below value is 8-bit count, so calculate
+// by duty-cycle * 255/100
+#define FAN_MIN_DUTY_CYCLE_COUNT 13
+
+// ================================================
+
 // Temp sensor delta threshold to turn on fans
 #define FAN_TEMP_THRESHOLD 10
 #define FAN_TEMP_MAX       20
@@ -41,7 +65,10 @@ ZBUS_CHAN_DECLARE(ticker_chan);
 
 #define EMC230X_REG_FAN_STATUS        0x24
 #define EMC230X_REG_FAN_STALL_STATUS  0x25
+#define EMC230X_REG_FAN_SPIN_STATUS   0x26
 #define EMC230X_REG_DRIVE_FAIL_STATUS 0x27
+#define EMC230X_REG_OUTPUT_CONFIG     0x2b
+#define EMC230X_REG_PWM_BASE_FREQ     0x2d
 #define EMC230X_REG_VENDOR            0xfe
 
 #define EMC230X_FAN_MAX              0xff
@@ -87,10 +114,14 @@ ZBUS_CHAN_DECLARE(ticker_chan);
  */
 #define EMC230X_RPM_FACTOR 3932160
 
-#define EMC230X_REG_FAN_DRIVE(n)     (0x30 + 0x10 * (n))
-#define EMC230X_REG_FAN_CFG(n)       (0x32 + 0x10 * (n))
-#define EMC230X_REG_FAN_MIN_DRIVE(n) (0x38 + 0x10 * (n))
-#define EMC230X_REG_FAN_TACH(n)      (0x3e + 0x10 * (n))
+#define EMC230X_REG_FAN_DRIVE(n)       (0x30 + 0x10 * (n))
+#define EMC230X_REG_PWM_DIVIDE(n)      (0x31 + 0x10 * (n))
+#define EMC230X_REG_FAN_CFG(n)         (0x32 + 0x10 * (n))
+#define EMC230X_REG_FAN_MIN_DRIVE(n)   (0x38 + 0x10 * (n))
+#define EMC230X_REG_FAN_VALID(n)       (0x39 + 0x10 * (n))
+#define EMC230X_REG_DRIVE_FAIL_BAND(n) (0x3a + 0x10 * (n))
+#define EMC230X_REG_FAN_TARGET(n)      (0x3c + 0x10 * (n))
+#define EMC230X_REG_FAN_TACH(n)        (0x3e + 0x10 * (n))
 
 typedef enum fan_id {
 	FAN_NONE = 0,
@@ -251,15 +282,115 @@ bool fan_init_old(void)
 	return true;
 }
 
-int fan_init()
+// if in automatic mode, this function has no affect
+int fan_set_drive(int index, uint8_t value)
 {
+	if (index >= 4) {
+		LOG_ERR("invalid fan index: %i", index);
+	}
+	return fan_i2c_write_uint8(EMC230X_REG_FAN_DRIVE(index), value);
+}
+
+// returns RPM
+int fan_read_tach(int index, int *rpm)
+{
+	uint16_t value;
+	fan_i2c_read_uint16_be(EMC230X_REG_FAN_TACH(index), &value);
+	// don't let divide by zero
+	if (value == 0) {
+		value = 1;
+	}
+	value = value >> EMC230X_TACH_REGS_UNUSE_BITS;
+	*rpm = EMC230X_RPM_FACTOR * 2 / value;
+	if (*rpm <= EMC230X_TACH_RANGE_MIN) {
+		*rpm = 0;
+	}
+
+	// FIXME error checking
+	return 0;
+}
+
+uint16_t fan_rpm_to_tach(int rpm)
+{
+	int value;
+	if (rpm == 0) {
+		value = 0xffff;
+	} else {
+		value = EMC230X_RPM_FACTOR * 2 / rpm;
+		value = value << EMC230X_TACH_REGS_UNUSE_BITS;
+		// check if we overflow 16 bits
+		if (value > 0xffff) {
+			value = 0xffff;
+		}
+	}
+
+	return (uint16_t)value;
+}
+
+int fan_set_target(int index, int rpm)
+{
+	uint16_t value = fan_rpm_to_tach(rpm);
+
+	fan_i2c_write_uint16(EMC230X_REG_FAN_TARGET(index), (uint16_t)value);
+	// FIXME error checking
+	return 0;
+}
+
+int fan_set_valid(int index, int rpm)
+{
+	uint16_t value = fan_rpm_to_tach(rpm);
+	value = value >> 8;
+
+	fan_i2c_write_uint8(EMC230X_REG_FAN_VALID(index), (uint8_t)value);
+	// FIXME error checking
+	return 0;
+}
+
+int fan_set_fail_band(int index, int rpm)
+{
+	uint16_t value = fan_rpm_to_tach(rpm);
+
+	fan_i2c_write_uint16(EMC230X_REG_DRIVE_FAIL_BAND(index), (uint16_t)value);
+	// FIXME error checking
+	return 0;
+}
+
+int fan_init(bool enable_speed_control)
+{
+	uint8_t cfg_value = EMC230X_FAN_CFG_VALUE;
+
+	if (enable_speed_control) {
+		cfg_value |= (1 << 7);
+	}
 	// set to manual mode initially
-	fan_i2c_write_uint8(EMC230X_REG_FAN_CFG(0), EMC230X_FAN_CFG_VALUE);
-	fan_i2c_write_uint8(EMC230X_REG_FAN_CFG(1), EMC230X_FAN_CFG_VALUE);
+	fan_i2c_write_uint8(EMC230X_REG_FAN_CFG(0), cfg_value);
+	fan_i2c_write_uint8(EMC230X_REG_FAN_CFG(1), cfg_value);
+
+	// set drive to push/pull
+	fan_i2c_write_uint8(EMC230X_REG_OUTPUT_CONFIG, 0x3);
+
+	// set PWM freq base to 19.53KHz
+	fan_i2c_write_uint8(EMC230X_REG_PWM_BASE_FREQ, 0x5);
+
+	// set PWM divide to 3
+	fan_i2c_write_uint8(EMC230X_REG_PWM_DIVIDE(0), 0x2);
+	fan_i2c_write_uint8(EMC230X_REG_PWM_DIVIDE(1), 0x2);
 
 	// set speed to max
-	fan_i2c_write_uint8(EMC230X_REG_FAN_DRIVE(0), 0xff);
-	fan_i2c_write_uint8(EMC230X_REG_FAN_DRIVE(1), 0xff);
+	fan_set_drive(0, 0xff);
+	fan_set_drive(1, 0xff);
+
+	fan_i2c_write_uint8(EMC230X_REG_FAN_MIN_DRIVE(0), FAN_MIN_DUTY_CYCLE_COUNT);
+	fan_i2c_write_uint8(EMC230X_REG_FAN_MIN_DRIVE(1), FAN_MIN_DUTY_CYCLE_COUNT);
+
+	// anything below 3000 RPM is flagged as a stall
+	fan_set_valid(0, 3000);
+	fan_set_valid(1, 3000);
+
+	// at full drive, if the actual drive is 2000 less than commanded, flag a drive failure
+	// TODO: this is not working yet
+	fan_set_fail_band(0, 2000);
+	fan_set_fail_band(1, 2000);
 
 	return 0;
 }
@@ -267,6 +398,23 @@ int fan_init()
 ZBUS_MSG_SUBSCRIBER_DEFINE(z_fan_sub);
 ZBUS_CHAN_ADD_OBS(point_chan, z_fan_sub, 3);
 ZBUS_CHAN_ADD_OBS(ticker_chan, z_fan_sub, 4);
+
+enum fan_mode_enum {
+	FAN_MODE_OFF,
+	FAN_MODE_TEMP,
+	FAN_MODE_TACH,
+	FAN_MODE_PWM,
+};
+
+enum fan_status_enum {
+	FAN_STATUS_NOT_SET,
+	FAN_STATUS_OK,
+	FAN_STATUS_STALL,
+	FAN_STATUS_SPIN_FAIL,
+	FAN_STATUS_DRIVE_FAIL,
+};
+
+#define FAN_COUNT 2
 
 void fan_thread(void *arg1, void *arg2, void *arg3)
 {
@@ -276,100 +424,171 @@ void fan_thread(void *arg1, void *arg2, void *arg3)
 
 	int status_tick = 0;
 
-	fan_init();
+	fan_init(false);
+
+	int fan_mode = FAN_MODE_OFF;
+	float fan_set_speed[2] = {FAN_COUNT};
+	int fan_status[2] = {FAN_COUNT};
+	// TODO: we should store the timestamp of the last valid temp
+	// and run the fans at high speed if we are not getting temp values
+	float temp = 0;
 
 	while (!zbus_sub_wait_msg(&z_fan_sub, &chan, &p, K_FOREVER)) {
 		if (chan == &point_chan) {
 			if (strcmp(p.type, POINT_TYPE_FAN_MODE) == 0) {
+				fan_mode = point_get_int(&p);
 				LOG_DBG("Fan mode: %s", p.data);
+				if (strcmp(p.data, POINT_VALUE_OFF) == 0) {
+					fan_mode = FAN_MODE_OFF;
+					fan_init(false);
+				} else if (strcmp(p.data, POINT_VALUE_TEMP) == 0) {
+					fan_mode = FAN_MODE_TEMP;
+					fan_init(true);
+				} else if (strcmp(p.data, POINT_VALUE_PWM) == 0) {
+					fan_mode = FAN_MODE_PWM;
+					fan_init(false);
+				} else if (strcmp(p.data, POINT_VALUE_TACH) == 0) {
+					fan_mode = FAN_MODE_TACH;
+					fan_init(true);
+				}
+			} else if (strcmp(p.type, POINT_TYPE_FAN_SET_SPEED) == 0) {
+				int index = atoi(p.key);
+				if (index >= ARRAY_SIZE(fan_set_speed)) {
+					LOG_ERR("Set fan speed, index out of bounds: %i", index);
+					continue;
+				}
+				float speed = point_get_float(&p);
+				LOG_DBG("Fan speed %i: %f", index, (double)speed);
+				fan_set_speed[index] = point_get_float(&p);
+			} else if (strcmp(p.type, POINT_TYPE_TEMPERATURE) == 0) {
+				temp = point_get_float(&p);
 			}
 		} else if (chan == &ticker_chan) {
 			status_tick++;
 			if (status_tick >= 2) {
 				for (int i = 0; i < FAN_COUNT; i++) {
-					uint16_t value;
-					fan_i2c_read_uint16_be(EMC230X_REG_FAN_TACH(i), &value);
-					value = value >> EMC230X_TACH_REGS_UNUSE_BITS;
-					value = EMC230X_RPM_FACTOR * 2 / value;
-					if (value <= EMC230X_TACH_RANGE_MIN) {
-						value = 0;
-					}
-					// fan_get_status();
+					int rpm;
+					fan_read_tach(i, &rpm);
 					status_tick = 0;
 
 					point p;
 					char index[10];
 					itoa(i, index, 10);
 					point_set_type_key(&p, POINT_TYPE_FAN_SPEED, index);
-					point_put_int(&p, value);
+					point_put_int(&p, rpm);
 					zbus_chan_pub(&point_chan, &p, K_MSEC(500));
+
+					uint8_t b;
+					fan_i2c_read_uint8(EMC230X_REG_FAN_STALL_STATUS, &b);
+					if (b & (1 << i)) {
+						// we have a stall
+						if (fan_status[i] != FAN_STATUS_STALL) {
+							fan_status[i] = FAN_STATUS_STALL;
+							point_set_type_key(
+								&p, POINT_TYPE_FAN_STATUS, index);
+							point_put_string(&p, POINT_VALUE_STALL);
+							zbus_chan_pub(&point_chan, &p, K_MSEC(500));
+						}
+						// only report one problem
+						continue;
+					}
+
+					fan_i2c_read_uint8(EMC230X_REG_FAN_SPIN_STATUS, &b);
+					if (b & (1 << i)) {
+						// we have a stall
+						if (fan_status[i] != FAN_STATUS_SPIN_FAIL) {
+							fan_status[i] = FAN_STATUS_SPIN_FAIL;
+							point_set_type_key(
+								&p, POINT_TYPE_FAN_STATUS, index);
+							point_put_string(&p, POINT_VALUE_SPIN_FAIL);
+							zbus_chan_pub(&point_chan, &p, K_MSEC(500));
+						}
+						// only report one problem
+						continue;
+					}
+
+					fan_i2c_read_uint8(EMC230X_REG_DRIVE_FAIL_STATUS, &b);
+					if (b & (1 << i)) {
+						// we have a stall
+						if (fan_status[i] != FAN_STATUS_DRIVE_FAIL) {
+							fan_status[i] = FAN_STATUS_DRIVE_FAIL;
+							point_set_type_key(
+								&p, POINT_TYPE_FAN_STATUS, index);
+							point_put_string(&p,
+									 POINT_VALUE_DRIVE_FAIL);
+							zbus_chan_pub(&point_chan, &p, K_MSEC(500));
+						}
+						// only report one problem
+						continue;
+					}
+
+					// no errors found, make sure status is set to OK
+					if (fan_status[i] != FAN_STATUS_OK) {
+						fan_status[i] = FAN_STATUS_OK;
+						point_set_type_key(&p, POINT_TYPE_FAN_STATUS,
+								   index);
+						point_put_string(&p, POINT_VALUE_OK);
+						zbus_chan_pub(&point_chan, &p, K_MSEC(500));
+					}
 				}
 			}
+
+			// fan control
+			switch (fan_mode) {
+			case FAN_MODE_OFF:
+				fan_set_drive(0, 0);
+				fan_set_drive(1, 0);
+				break;
+			case FAN_MODE_PWM:
+				for (int i = 0; i < ARRAY_SIZE(fan_set_speed); i++) {
+					int v = fan_set_speed[i] * 255 / 100;
+					if (v > 255) {
+						v = 255;
+					}
+
+					if (v < 0) {
+						v = 0;
+					}
+
+					fan_set_drive(i, (uint8_t)v);
+				}
+				break;
+			case FAN_MODE_TACH:
+				for (int i = 0; i < ARRAY_SIZE(fan_set_speed); i++) {
+					fan_set_target(i, (int)fan_set_speed[i]);
+				}
+				break;
+			case FAN_MODE_TEMP: {
+				// the fan_set_speed contain start and max temp and we linearly
+				// increase fan speed between these two temp points
+				float temp_min = fan_set_speed[0];
+				float temp_max = fan_set_speed[1];
+
+				float speed;
+
+				// check for invalid settings
+				if (temp_max < temp_min || temp_min == temp_max || temp_min == 0 ||
+				    temp_max == 0) {
+					// run fans at full speed
+					speed = FAN_SPEED_MAX_RPM;
+				} else {
+					speed = FAN_SPEED_MIN_RPM +
+						(FAN_SPEED_MAX_RPM - FAN_SPEED_MIN_RPM) *
+							(temp - temp_min) / (temp_max - temp_min);
+				}
+
+				if (speed < FAN_SPEED_MIN_RPM) {
+					speed = 0;
+				}
+
+				for (int i = 0; i < FAN_COUNT; i++) {
+					fan_set_target(i, (int)speed);
+				}
+			}
+
+			break;
+			}
 		}
-	}
-	// uint16_t tach1 = 0;
-	// uint16_t tach2 = 0;
-	// uint16_t tach_target = 0xffff;
-	// float temp_delta;
-	// bool fan1_on = false;
-	// bool fan2_on = false;
-	// uint16_t fan_change_counter = 0;
-
-	while (1) {
-		// if (!alarm && polled_mode) {
-		// 	if (gpio_pin_get(gpio_dev, 13) == 0) {
-		// 		alarm = true;
-		// 	}
-		// }
-		// if (alarm) {
-		// 	fan_get_status();
-		// 	if (gpio_pin_get(gpio_dev, 13) == 1) {
-		// 		alarm = false;
-		// 		LOG_DBG("Fan alarm cleared\n");
-		// 	}
-		// }
-
-		// fan_get_tach_period(&tach1, &tach2);
-		// temp_delta = fan_get_temp(TEMP_INPUT) - fan_get_temp(TEMP_OUTPUT);
-		// LOG_DBG("TACH: %d, %d, tem_deltap=%.1f\n", tach1, tach2, (double)temp_delta);
-		// if (temp_delta > FAN_TEMP_THRESHOLD) {
-		// 	// Only turn on fans if the temperature delta is above the
-		// 	// FAN_TEMP_THRESHOLD
-		// 	float duty = (temp_delta - FAN_TEMP_THRESHOLD) /
-		// 		     (FAN_TEMP_MAX - FAN_TEMP_THRESHOLD);
-		// 	uint16_t new_tach_target =
-		// 		FAN_TACH_PERIOD_MAX -
-		// 		(FAN_TACH_PERIOD_MAX - FAN_TACH_PERIOD_MIN) * duty;
-		// 	if (tach_target != new_tach_target) {
-		// 		tach_target = new_tach_target;
-		// 		if (duty < 0.9f) {
-		// 			// Only run one fan at a time
-		// 			fan_set_tach_target_period(fan1_on ? tach_target : 0xffff,
-		// 						   fan2_on ? tach_target : 0xffff);
-		// 		} else {
-		// 			// Run both fans
-		// 			fan_set_tach_target_period(FAN_TACH_PERIOD_MIN,
-		// 						   FAN_TACH_PERIOD_MIN);
-		// 		}
-		// 	}
-		// } else {
-		// 	// Fans off
-		// 	tach_target = 0xffff;
-		// }
-		// if (++fan_change_counter >= FAN_CHANGE_SECONDS) {
-		// 	// Change which fan is running
-		// 	if (fan1_on) {
-		// 		fan1_on = false;
-		// 		fan2_on = true;
-		// 	} else {
-		// 		fan1_on = true;
-		// 		fan2_on = false;
-		// 	}
-		// 	fan_set_tach_target_period(fan1_on ? tach_target : 0xffff,
-		// 				   fan2_on ? tach_target : 0xffff);
-		// 	fan_change_counter = 0;
-		// }
-		k_msleep(1000);
 	}
 }
 
