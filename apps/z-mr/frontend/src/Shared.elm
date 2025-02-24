@@ -1,7 +1,6 @@
 module Shared exposing
     ( Flags
     , Model
-    , Msg(..)
     , decoder
     , init
     , subscriptions
@@ -13,6 +12,7 @@ import Json.Decode
 import Ports
 import Route exposing (Route)
 import Shared.Model
+import Shared.Msg exposing (Msg(..))
 
 
 type alias Flags =
@@ -30,10 +30,6 @@ decoder =
 
 type alias Model =
     Shared.Model.Model
-
-
-type Msg
-    = WindowResized { width : Int, height : Int }
 
 
 init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
