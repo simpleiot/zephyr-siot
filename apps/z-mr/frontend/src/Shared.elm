@@ -55,15 +55,15 @@ init flagsResult route =
             )
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : Route () -> Msg -> Model -> ( Model, Effect Msg )
+update route msg model =
     case msg of
         WindowResized dimensions ->
             ( { model
                 | windowWidth = dimensions.width
                 , windowHeight = dimensions.height
               }
-            , Cmd.none
+            , Effect.none
             )
 
 
