@@ -1,6 +1,7 @@
 module Shared exposing
     ( Flags
     , Model
+    , Msg
     , decoder
     , init
     , subscriptions
