@@ -68,5 +68,5 @@ update route msg model =
 
 
 subscriptions : Route () -> Model -> Sub Msg
-subscriptions _ =
+subscriptions _ model =
     Ports.onWindowResize WindowResized 
