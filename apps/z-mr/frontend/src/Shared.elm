@@ -67,6 +67,6 @@ update route msg model =
             )
 
 
-subscriptions : Route.Route () -> Model -> Sub Msg
+subscriptions : Route () -> Model -> Sub Msg
 subscriptions _ =
     Ports.onWindowResize WindowResized 
