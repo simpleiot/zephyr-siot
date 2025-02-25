@@ -228,8 +228,7 @@ It needs these 3 items to `z-mr/prj.conf`:
     CONFIG_NET_HOSTNAME="Z-MR"
     CONFIG_LLMNR_RESPONDER=y
 
-On the laptop(s) you use, you must enable looking up using LLMNR.
-Therefore, please add "LLMNR=yes" in your /etc/systemd/resolved.conf. 
+On the laptop(s) you use, you must enable looking up using LLMNR. Therefore,
+please add "LLMNR=yes" in your /etc/systemd/resolved.conf.
 
 Now you can use eg. `ping Z-MR` and get a response from the first Z-MR found.
-
