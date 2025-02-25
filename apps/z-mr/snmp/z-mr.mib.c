@@ -52,7 +52,7 @@ static const struct snmp_node *const ats2measure_subnodes[] = {
 	&ats2input_scalars.node.node,       // 1
 	&ats2inputtable.node.node,          // 2
 	&ats2output_scalars.node.node,      // 3
-	&ats2operationmode_scalar.node.node // 4 (1.3.6.1.4.1.62530.2.4.1.1.0
+	&ats2operationmode_scalar.node.node // 4 (1.3.6.1.4.1.62530.2.4.1.1.0)
 };
 // 62530.2.2.[1-4]
 static const struct snmp_tree_node ats2measure_treenode =
@@ -454,7 +454,8 @@ static s16_t ats2OperationMode_get_value(struct snmp_node_instance *instance, vo
 	s16_t value_len;
 	s32_t *v = (s32_t *)value;
 
-	zephyr_log("ats2OperationMode_get_value node %d\n", instance->node->oid);
+	*v = ask_ats_mode();
+	zephyr_log("ats2OperationMode_get_value node %d, return %d\n", instance->node->oid, *v);
 
 	LWIP_UNUSED_ARG(instance);
 	/* TODO: put requested value to '*v' here */

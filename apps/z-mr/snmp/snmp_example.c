@@ -39,7 +39,8 @@
 #include "lwip/private_mib.h"
 #include "lwip/apps/snmp_example.h"
 
-extern const struct snmp_mib mib_ats2;
+/* mib_ats2 is declared in this file: */
+#include "z-mr.mib.h"
 
 #if LWIP_SNMP
 static const struct snmp_mib *mibs[] = {&mib2, &mib_ats2
@@ -54,7 +55,7 @@ void init_snmp_agent(void)
 {
 #if LWIP_SNMP
 	s32_t req_nr;
-// lwip_privmib_init();
+
 #if SNMP_LWIP_MIB2
 #if SNMP_USE_NETCONN
 	snmp_threadsync_init(&snmp_mib2_lwip_locks, snmp_mib2_lwip_synchronizer);
@@ -68,18 +69,9 @@ void init_snmp_agent(void)
 	snmpv3_dummy_init();
 #endif
 
-	// mib_private;
-	(void)mib_ats2;
-
 	snmp_set_mibs(mibs, LWIP_ARRAYSIZE(mibs));
 
 	snmp_init();
-
-	//  snmp_trap_dst_ip_set(0, &netif_default->gw);
-	//  snmp_trap_dst_enable(0, 1);
-
-	snmp_send_inform_generic(SNMP_GENTRAP_COLDSTART, NULL, &req_nr);
-	snmp_send_trap_generic(SNMP_GENTRAP_COLDSTART);
 
 #endif /* LWIP_SNMP */
 }
