@@ -2,6 +2,7 @@ module Pages.Settings exposing (Model, Msg, page)
 
 import Api
 import Api.Point as Point exposing (Point)
+import Api.ZPoint as ZPoint
 import Effect exposing (Effect)
 import Element exposing (..)
 import Element.Background as Background
@@ -15,6 +16,7 @@ import Route exposing (Route)
 import Shared
 import UI.Form as Form
 import UI.Nav as Nav
+import UI.Sanitize as Sanitize
 import UI.Style as Style
 import View exposing (View)
 
@@ -234,6 +236,7 @@ settingsCard points edit =
         , column [ spacing 24, Form.onEnterEsc (ApiPostPoints points) DiscardEdits ]
             [ inputText points "0" Point.typeDescription "Description" "desc" inputStyle
             , inputText points "0" "snmpServer" "SNMP Server" "IP address" inputStyle
+            , fanSettings points
             , inputCheckbox points "0" Point.typeStaticIP "Static IP" []
             , viewIf staticIP <|
                 column [ spacing 16 ]
@@ -270,6 +273,59 @@ settingsCard points edit =
         ]
 
 
+fanSettings : List Point -> Element Msg
+fanSettings points =
+    let
+        mode =
+            Point.getText points ZPoint.typeFanMode "0"
+
+        speedUnits =
+            case mode of
+                "pwm" ->
+                    "%"
+
+                "tach" ->
+                    "RPM"
+
+                "temp" ->
+                    "°C"
+
+                _ ->
+                    ""
+
+        setting1Desc =
+            case mode of
+                "temp" ->
+                    "Fan start temp"
+
+                _ ->
+                    "Fan 1 Speed"
+
+        setting2Desc =
+            case mode of
+                "temp" ->
+                    "Fan max temp"
+
+                _ ->
+                    "Fan 2 Speed"
+    in
+    column [ spacing 24 ]
+        [ inputOption points
+            "0"
+            ZPoint.typeFanMode
+            "Fan mode"
+            [ ( ZPoint.valueOff, "Off" )
+            , ( ZPoint.valuePwm, "PWM" )
+            , ( ZPoint.valueTach, "Tachometer" )
+            , ( ZPoint.valueTemp, "Temperature" )
+            ]
+        , viewIf (mode /= ZPoint.valueOff) <|
+            row [ spacing 10 ] [ inputFloat points "0" ZPoint.typeFanSetSpeed setting1Desc, text speedUnits ]
+        , viewIf (mode /= ZPoint.valueOff) <|
+            row [ spacing 10 ] [ inputFloat points "1" ZPoint.typeFanSetSpeed setting2Desc, text speedUnits ]
+        ]
+
+
 inputText : List Point -> String -> String -> String -> String -> List (Attribute Msg) -> Element Msg
 inputText pts key typ lbl placeholder styles =
     Input.text
@@ -286,7 +342,7 @@ inputText pts key typ lbl placeholder styles =
             else
                 let
                     labelWidth =
-                        120
+                        200
                 in
                 Input.labelLeft
                     [ width (px labelWidth)
@@ -322,7 +378,7 @@ inputCheckbox pts key typ lbl styles =
             if lbl /= "" then
                 let
                     labelWidth =
-                        120
+                        200
                 in
                 Input.labelLeft [ width (px labelWidth) ] <|
                     el [ alignRight ] <|
@@ -332,6 +388,89 @@ inputCheckbox pts key typ lbl styles =
 
             else
                 Input.labelHidden ""
+        }
+
+
+blankMajicValue : String
+blankMajicValue =
+    "123BLANK123"
+
+
+inputFloat : List Point -> String -> String -> String -> Element Msg
+inputFloat pts key typ lbl =
+    let
+        currentText =
+            Point.getText pts typ key
+
+        currentValue =
+            case currentText of
+                "" ->
+                    ""
+
+                "123BLANK123" ->
+                    ""
+
+                "-" ->
+                    "-"
+
+                _ ->
+                    Sanitize.float currentText
+    in
+    Input.text
+        []
+        { onChange =
+            \d ->
+                let
+                    v =
+                        if d == "" then
+                            blankMajicValue
+
+                        else if d == "-" then
+                            "-"
+
+                        else
+                            Sanitize.float d
+                in
+                EditPoint [ Point typ key Point.dataTypeFloat v ]
+        , text = currentValue
+        , placeholder = Nothing
+        , label =
+            if lbl == "" then
+                Input.labelHidden ""
+
+            else
+                let
+                    labelWidth =
+                        200
+                in
+                Input.labelLeft [ width (px labelWidth) ] <| el [ alignRight ] <| text <| lbl ++ ":"
+        }
+
+
+inputOption : List Point -> String -> String -> String -> List ( String, String ) -> Element Msg
+inputOption pts key typ lbl options =
+    let
+        labelWidth =
+            200
+    in
+    Input.radio
+        [ spacing 6 ]
+        { onChange =
+            \sel ->
+                EditPoint [ Point typ key Point.dataTypeString sel ]
+        , label =
+            Input.labelLeft [ padding 12, width (px labelWidth) ] <|
+                el [ alignRight ] <|
+                    text <|
+                        lbl
+                            ++ ":"
+        , selected = Just <| Point.getText pts typ key
+        , options =
+            List.map
+                (\opt ->
+                    Input.option (Tuple.first opt) (text (Tuple.second opt))
+                )
+                options
         }
 
 

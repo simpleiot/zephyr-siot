@@ -100,6 +100,32 @@ where `<bin file>` is the binary image of the flash.
 
 ![image-20250122124617555](assets/image-20250122124617555.png)
 
+## Fan Control
+
+The EMC2302 Fan control can be run in three modes:
+
+- direct PWM control (we set the PWM %)
+- speed control (we set the speed, and the EMC2302 sets the PWM to reach that
+  speed)
+- temp control (we linearly set the speed between PRM (speed) and Temperature
+  endpoints)
+  - temp control endpoints can be set in UI
+  - speed endpoints are set in `fan.c`
+
+### Fan control tuning
+
+Based on the Fan characteristics, control circuit, and voltage level available,
+you may need to adjust the following parameters in `fan.c`:
+
+- FAN_SPEED_MIN_RPM
+- FAN_SPEED_MAX_RPM
+- FAN_MIN_DUTY_CYCLE_COUNT
+
+See also the following Jira tickets:
+
+- [MR-167](https://zonitrnd.atlassian.net/jira/software/projects/MR/boards/10?selectedIssue=MR-167)
+- [MR-151](https://zonitrnd.atlassian.net/jira/software/projects/MR/boards/10?selectedIssue=MR-151)
+
 ## Olimex Pin Mapping
 
 See this
