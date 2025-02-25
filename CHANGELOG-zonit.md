@@ -8,8 +8,13 @@ and this project adheres to
 
 ## [Unreleased]
 
-- improved workflow with scripts in `envsetup-zonit.sh`
-- added frontend testing
-- added elm-review for frontend
-- updated package.json at project root
+- improved workflow with scripts in `envsetup-zonit.sh` (ensures code is
+  working, tested, and documented before it is merged)
+- added frontend testing (improve frontend code quality)
+- added elm-review for frontend (improve frontend code quality)
+- code formatting scripts and check
+- add display of user switch state
+- Fan support:
+  - UI to display fan speed/state and settings
+  - initial tuning for 35mm fans with 0.25mH/3.25ohm inductor
 - Fixed crash when 1-wire sensor is not attached.

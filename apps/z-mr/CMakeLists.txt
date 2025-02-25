@@ -17,7 +17,7 @@ target_sources(app PRIVATE
 	src/dc.c
 	src/fan.c
 	src/ats.c
-	src/snmp.c
+	# src/snmp.c
 	# src/ble.c
 	snmp/EATON-ATS2-MIB.c
 	snmp/snmp_example.c
