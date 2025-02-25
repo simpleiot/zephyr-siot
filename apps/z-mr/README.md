@@ -196,19 +196,8 @@ disableAuthorization yes
 
 ##### Telegraf
 
-This can be tested using
-[Telegraf](https://www.influxdata.com/time-series-platform/telegraf/).
-
-Steps:
-
-- install Telegraf
-- SNMP listens on port 162 by default, which is a priveleged port. On Linux you
-  can do something like:
-  `sudo setcap cap_net_bind_service=+ep /usr/bin/telegraf`
-- run telegraf, run the following from this directory:
-  `telegraf  --config test/telegraf.conf`
-
-Now, Telegraf will print out any data it receives to `stdout`.
+I tried to test with Telegraf, but it was never of any help. The above sudo snmptrapd just
+works fine.
 
 #### Send a test trap
 

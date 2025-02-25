@@ -13,14 +13,22 @@
 IP_ADDRESS="Z-MR"
 USB_DEVICE="/dev/ttyUSB0"
 
+function quick_sleep {
+	read -t 0.5
+}
+
 if [ $# -ge 1 ]; then
     echo IP-address $1
     IP_ADDRESS=$1
+else
+    echo IP_ADDRESS=$IP_ADDRESS
 fi
 
 if [ $# -ge 2 ]; then
     echo USB device $2
     USB_DEVICE=$2
+else
+    echo USB_DEVICE=$USB_DEVICE
 fi
 
 echo
@@ -30,16 +38,21 @@ echo =======================================
 snmpget -v2c -c public ${IP_ADDRESS} 1.3.6.1.4.1.62530.2.2.4.0
 
 # Get my Linux IP address
-MY_IP=`hostname -I`
+IFS=', ' read -r -a ip_array <<< $( hostname -I )
+# Get the first IP found
+MY_IP="${ip_array[0]}"
+
+echo MY_IP=${MY_IP}
+
 echo p snmpServer 0 STR ${MY_IP} > ${USB_DEVICE}
 
-sleep 1
+quick_sleep
 
 sudo echo
 
 # Start the SNMP-daemon for a while.
-#sudo snmptrapd -f -Loe &
 sudo snmptrapd -f -Lo &
+
 # remember the pid of the daemon
 PID=$!
 
@@ -47,10 +60,10 @@ echo
 echo Test-2: Sending source A/B switching
 echo =======================================
 
-sleep 2
+quick_sleep
 echo p atsA 0 INT 1 > ${USB_DEVICE}
 echo p atsB 0 INT 1 > ${USB_DEVICE}
-sleep 2
+sleep 1
 
 echo kill $PID
 kill $PID
