@@ -246,10 +246,10 @@ static bool has_valid_ip()
 {
 	bool rc = true;
 	size_t index;
-	size_t length = strlen (ip_address);
+	size_t length = strlen(ip_address);
 	for (index = 0; index < length; index++) {
 		char ch = ip_address[index];
-		if (isspace (ch)) {
+		if (isspace(ch)) {
 			ip_address[index] = 0;
 			break;
 		}
