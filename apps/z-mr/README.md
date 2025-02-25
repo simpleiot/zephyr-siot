@@ -196,13 +196,35 @@ disableAuthorization yes
 
 ##### Telegraf
 
-I tried to test with Telegraf, but it was never of any help. The above sudo snmptrapd just
-works fine.
+I tried to test with Telegraf, but it was never of any help. The above sudo
+snmptrapd just works fine.
 
-#### Send a test trap
+#### Teesting traps and get requests
 
-You can test a trap by:
+Now there is a bash script called `apps/z-mr/snmp/snmp_test.sh`.
+Note that envSetup also has a funcion `z_snmp_test()` calling the same script.
 
-- install: `net-snmp`
-- run:
-  `snmptrap -v 2c -c public localhost '' NET-SNMP-EXAMPLES-MIB::netSnmpExampleHeartbeatNotification netSnmpExampleHeartbeatRate i 123456`
+Here is a sample output of the test:
+~~~
+IP_ADDRESS=Z-MR
+USB_DEVICE=/dev/ttyUSB0
+
+Test-1: polling a Z-MR at Z-MR
+=======================================
+iso.3.6.1.4.1.62530.2.2.4.0 = INTEGER: 5
+MY_IP=192.168.2.24
+[sudo] password for hein:         
+
+
+Test-2: Sending source A/B switching
+=======================================
+NET-SNMP version 5.9.4.pre2
+2025-02-25 20:34:06 <UNKNOWN> [UDP: [192.168.2.13]:162->[192.168.2.24]:162]:
+iso.3.6.1.2.1.1.3.0 = Timeticks: (1561067) 4:20:10.67	iso.3.6.1.6.3.1.1.4.1.0 = OID: iso.17.6.1.6.3.1.1.5.0	iso.3.6.1.4.1.62530.2.2.4.0 = Gauge32: 4
+2025-02-25 20:34:06 <UNKNOWN> [UDP: [192.168.2.13]:162->[192.168.2.24]:162]:
+iso.3.6.1.2.1.1.3.0 = Timeticks: (1561067) 4:20:10.67	iso.3.6.1.6.3.1.1.4.1.0 = OID: iso.17.6.1.6.3.1.1.5.0	iso.3.6.1.4.1.62530.2.2.4.0 = Gauge32: 5
+~~~
+
+In the first test a Z-MR will be polled
+In the second test a Z-MR will be triggered to send traps
+
