@@ -35,20 +35,19 @@ ZBUS_CHAN_ADD_OBS(ticker_chan, z_snmp_sub, 4);
 #define TRAP_INTERVAL_MSEC 2000U
 #define STARTUP_DELAY_MSEC 12000U
 
-static const unsigned ats2OperationMode_oid[] = {1, 3, 6, 1, 4, 1, 62530, 2, 2, 4, 0};
-
+extern const struct snmp_mib mib_ats2;
 static const struct snmp_mib *mibs[] = {&mib2, &mib_ats2};
 
 /* A leaf in the ATS2 library is identified with the name, eg. 'ats2OperationMode'.
  * The macro MK_OID()
  */
 
-#define MK_OID(NAME) NAME##_oid
-#define SNMP_CALL_TRAP(name, value, value_type)                                                    \
-	snmp_trap_it(#name, MK_OID(name), LWIP_ARRAYSIZE(MK_OID(name)), value, value_type)
+#define MK_OID(NAME)                            NAME##_oid
+#define SNMP_CALL_TRAP(name, value, value_type) snmp_trap_it(#name, MK_OID(name), value, value_type)
 
-static void snmp_trap_it(const char *name, const unsigned *oid, size_t oid_size, unsigned value,
-			 unsigned type);
+static void snmp_trap_it(const char *name, const char *oid_string, unsigned value, unsigned type);
+
+static int oid_string_to_array(struct snmp_obj_id *oid_result, const char *oid_string);
 
 extern void snmp_init(void);
 extern void snmp_loop(void);
@@ -69,11 +68,13 @@ typedef enum {
 	opModeFault = 7
 } ats2OperationMode;
 
-static ats2OperationMode current_ats_mode = opModeOff;
+/* The ATS mode can be any of Source1, Source2, or Off. */
+static ats2OperationMode current_ats_mode = opModeSource1;
 
 void snmp_prepare_trap_test(const char *ip_address);
-static int compose_and_send_snmp_trap(const char *name, const unsigned *oid, size_t oid_length,
-				      u32_t value, unsigned asn_type);
+static int compose_and_send_snmp_trap(const char *name, const char *oid_string, u32_t value,
+				      unsigned asn_type);
+
 static void send_ats_traps(ats2OperationMode mode);
 
 /* This temporary function 'delay_has_passed()' will return after
@@ -135,7 +136,7 @@ void z_snmp_thread(void *arg1, void *arg2, void *arg3)
 					 */
 					if (delay_has_passed(STARTUP_DELAY_MSEC)) {
 						static const struct snmp_obj_id enterprise_oid = {
-							7, {1, 3, 6, 1, 4, 1, 62530}};
+							7, {1, 3, 6, 1, 4, 1, 62530, 2}};
 						snmp_set_device_enterprise_oid(&enterprise_oid);
 						/* Install MIB's in lwIP: 'mib2' and 'mib_ats2'. */
 						snmp_set_mibs(mibs, LWIP_ARRAYSIZE(mibs));
@@ -178,8 +179,8 @@ extern s32_t ask_ats_mode()
  *
  * @return An err_t, see defines of SNMP_ERR_...
  */
-static int compose_and_send_snmp_trap(const char *name, const unsigned *oid, size_t oid_length,
-				      u32_t value, unsigned asn_type)
+static int compose_and_send_snmp_trap(const char *name, const char *oid_string, u32_t value,
+				      unsigned asn_type)
 {
 	struct snmp_varbind *varbinds = NULL;
 	static const struct snmp_obj_id enterprise_oid = ENTERPRISE_OID; // Set enterprise OID
@@ -192,12 +193,9 @@ static int compose_and_send_snmp_trap(const char *name, const unsigned *oid, siz
 
 	if (varbinds != NULL) {
 		memset(varbinds, 0, sizeof *varbinds);
-		if (oid_length > SNMP_MAX_OBJ_ID_LEN) {
-			return 0;
-		}
 
-		varbinds->oid.len = oid_length;
-		memcpy(varbinds->oid.id, oid, oid_length * sizeof varbinds->oid.id[0]);
+		// Copy a string to an array of 32-bit numbers
+		int rc = oid_string_to_array(&varbinds->oid, oid_string);
 
 		varbinds->type = asn_type;           // Type of the variable: see SNMP_ASN1_TYPE_...
 		varbinds->value = (void *)&value;    // Pointer to value
@@ -216,17 +214,27 @@ static int compose_and_send_snmp_trap(const char *name, const unsigned *oid, siz
 	return err;
 }
 
-static void snmp_trap_it(const char *name, const unsigned *oid, size_t oid_size, unsigned value,
-			 unsigned type)
+static void snmp_trap_it(const char *name, const char *oid, unsigned value, unsigned type)
 {
 	snmp_prepare_trap_test(ip_address);
-	compose_and_send_snmp_trap(name, oid, oid_size, value, type);
+	compose_and_send_snmp_trap(name, oid, value, type);
 }
 
 static void send_ats_traps(ats2OperationMode mode)
 {
 	unsigned op_mode = (unsigned)mode;
-	SNMP_CALL_TRAP(ats2OperationMode, op_mode, SNMP_ASN1_TYPE_UNSIGNED32);
+	switch (op_mode) {
+	case opModeSource1:
+		SNMP_CALL_TRAP(ats2TrapOutputPoweredBySource1, op_mode, SNMP_ASN1_TYPE_UNSIGNED32);
+		break;
+	case opModeSource2:
+		SNMP_CALL_TRAP(ats2TrapOutputPoweredBySource2, op_mode, SNMP_ASN1_TYPE_UNSIGNED32);
+		break;
+	case opModeOff:
+	default:
+		SNMP_CALL_TRAP(ats2TrapOutputNotPowered, op_mode, SNMP_ASN1_TYPE_UNSIGNED32);
+		break;
+	}
 }
 
 static bool delay_has_passed(uint32_t duration_ms)
@@ -259,6 +267,47 @@ static bool has_valid_ip()
 		rc = false;
 	}
 	return rc;
+}
+
+/**
+ * @brief Copy a string like "1.3.6.1.4.1.62530" to an array of 32-bit numbers.
+ *
+ * @param[in] oid_string The character string representing an OID.
+ * @param[out] oid_result Will contain an array of 32-bit numbers
+ *
+ * @return The number of digits that were stored, also stored in oid_result->len
+ */
+static int oid_string_to_array(struct snmp_obj_id *oid_result, const char *oid_string)
+{
+	const char *source = oid_string;
+	int target = 0;
+	memset(oid_result, 0, sizeof *oid_result);
+	while (*source) {
+		unsigned value = 0;
+		int has_digit = 0;
+		while ((*source >= '0') && (*source <= '9')) {
+			value *= 10;
+			value += *source - '0';
+			source++;
+			has_digit++;
+		}
+		if (!has_digit) {
+			break;
+		}
+		oid_result->id[target++] = value;
+		if (*source != '.') {
+			break;
+		}
+		if (target >= SNMP_MAX_OBJ_ID_LEN) {
+			zephyr_log("oid_string_to_array: IOD string too long (> %u)\n",
+				   SNMP_MAX_OBJ_ID_LEN);
+			break;
+		}
+		source++;
+	}
+	oid_result->len = target;
+	/* Returns the number of digits decoded. */
+	return target;
 }
 
 K_THREAD_DEFINE(z_snmp, STACKSIZE, z_snmp_thread, NULL, NULL, NULL, PRIORITY, K_ESSENTIAL, 0);
