@@ -23,6 +23,10 @@ z_mr_flash() {
 	siot_flash_esp "$1"
 }
 
+z_snmp_test() {
+	(cd apps/z-mr/snmp && ./snmp_test.sh)
+}
+
 z_mr_frontend_watch() {
 	# TARGET_IP is not working yet in elm-land.json
 	# TARGET_IP=$1
