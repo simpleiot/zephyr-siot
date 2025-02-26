@@ -201,6 +201,9 @@ snmptrapd just works fine.
 
 #### Testing traps and get requests
 
+- install: `net-snmp`
+- run: `apps/z-mr/snmp/snmp_test.sh`
+
 Now there is a bash script called `apps/z-mr/snmp/snmp_test.sh`. Note that
 envSetup also has a funcion `z_snmp_test()` calling the same script.
 
@@ -231,3 +234,18 @@ In the first test a Z-MR will be polled. The reply will be shown as
 
 In the second test a Z-MR will be triggered to send traps. The received traps
 are shown as `iso.3.6.1.4.1.62530.2.2.4.0 = Gauge32: 5`
+
+##### Enabling name service LLMNR
+
+From now on, LLMNR is enabled by default.
+
+It needs these 3 items to `z-mr/prj.conf`:
+
+    CONFIG_NET_HOSTNAME_ENABLE=y
+    CONFIG_NET_HOSTNAME="Z-MR"
+    CONFIG_LLMNR_RESPONDER=y
+
+On the laptop(s) you use, you must enable looking up using LLMNR. Therefore,
+please add "LLMNR=yes" in your /etc/systemd/resolved.conf.
+
+Now you can use eg. `ping Z-MR` and get a response from the first Z-MR found.
