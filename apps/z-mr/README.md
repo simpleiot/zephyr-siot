@@ -217,3 +217,18 @@ You can test a trap by:
 - install: `net-snmp`
 - run:
   `snmptrap -v 2c -c public localhost '' NET-SNMP-EXAMPLES-MIB::netSnmpExampleHeartbeatNotification netSnmpExampleHeartbeatRate i 123456`
+
+##### Enabling name service LLMNR
+
+From now on, LLMNR is enabled by default.
+
+It needs these 3 items to `z-mr/prj.conf`:
+
+    CONFIG_NET_HOSTNAME_ENABLE=y
+    CONFIG_NET_HOSTNAME="Z-MR"
+    CONFIG_LLMNR_RESPONDER=y
+
+On the laptop(s) you use, you must enable looking up using LLMNR. Therefore,
+please add "LLMNR=yes" in your /etc/systemd/resolved.conf.
+
+Now you can use eg. `ping Z-MR` and get a response from the first Z-MR found.
