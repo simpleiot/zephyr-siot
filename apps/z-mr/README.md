@@ -3,6 +3,7 @@
 - [Product documentation](https://gitea.zonit.com/Zonit-Dev/product/src/branch/master/z-mr)
 - [Implementation notes](implementation.md)
 - [Manufacturing test plan](https://gitea.zonit.com/Zonit-Dev/product/src/branch/master/z-mr/z-mr-mfg-test.md)
+- [GPIO Mapping](z-mr_gpio-mapping.ods)
 
 This application is meant to run on the ESP32-POE board from Olimex.
 
