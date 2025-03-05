@@ -37,7 +37,7 @@ static void dhcp_handler(struct net_mgmt_event_callback *cb,
 
     char buf[NET_IPV4_ADDR_LEN];
     struct net_if_ipv4 *ipv4 = iface->config.ip.ipv4;
-    struct net_if_addr *if_addr = &ipv4->unicast[0];
+    struct net_if_addr *if_addr = &ipv4->unicast[0].ipv4;
 
     if (if_addr->addr_type != NET_ADDR_DHCP) {
         return;
@@ -123,7 +123,7 @@ void broadcast_new_ip(const char *new_ip) {
     close(sock);
 }
 
-void configure_ntp(void) {
+void configure_ntp_static(void) {
 
     struct sntp_time timestamp;
 
@@ -147,14 +147,6 @@ void configure_ntp(void) {
 
     }
 
-    // if we get to this point, we need to configure DHCP in order to get NTP info
-    // this should not affect static IP, as once we have set up static IP, DHCP should give us the IP we have.
-
-    // TODO: Does this actually work? Does this F up our static IP configuration? Are we now "leasing" our static IP?
-
-
-    configure_dhcp();
-
 }
 
 // this configures our static IP
@@ -167,23 +159,13 @@ void configure_static_ip(void) {
 
     LOG_DBG("Configuring static IP");
 
-    net_if_down(iface);
-
-    k_sleep(K_MSEC(1000));
-
-    struct net_if_addr *if_addr = net_if_ipv4_addr_get_first_by_index(net_if_get_by_iface(net_if_get_default()));
-
-    if (if_addr) {
-        net_if_ipv4_addr_rm(iface, &if_addr->address.in_addr);
-    }
-
-    LOG_DBG("Removed IP");
-
-    k_sleep(K_MSEC(1000));
-
     net_dhcpv4_stop(iface);
 
-    LOG_DBG("DHCP STOPPED");
+    k_sleep(K_MSEC(1000));
+
+    remove_all_ipv4_addresses(iface);
+
+    LOG_DBG("Removed IP");
 
     k_sleep(K_MSEC(1000));
 
@@ -198,19 +180,6 @@ void configure_static_ip(void) {
         return;
     }
 
-    char ipstr[NET_IPV4_ADDR_LEN];  // Array to store the IP address string
-
-    // Convert the address to string format
-    net_addr_ntop(AF_INET, &address, ipstr, sizeof(ipstr));
-
-    // Log the IP address
-    LOG_DBG("IP Address to add: %s", ipstr);
-
-    net_if_ipv4_addr_add(iface, &address, NET_ADDR_MANUAL, 0);
-    LOG_DBG("IF added");
-    net_if_ipv4_set_netmask(iface, &netmask);
-    LOG_DBG("Netmask set");
-
     if (strlen(buffer.static_ip_gateway) > 0) {
         if (net_addr_pton(AF_INET, buffer.static_ip_gateway, &gateway) < 0) {
             LOG_ERR("Invalid gateway: %s", buffer.static_ip_gateway);
@@ -219,18 +188,10 @@ void configure_static_ip(void) {
         }
     }
 
+    net_if_down(iface);
     net_if_up(iface);
 
     LOG_DBG("INTERFACE UP");
-
-    k_sleep(K_MSEC(1000));
-
-    char ip_str[NET_IPV4_ADDR_LEN];
-    struct net_if_ipv4 *ipv4 = iface->config.ip.ipv4;
-    if (ipv4) {
-        net_addr_ntop(AF_INET, &ipv4->unicast[0].ipv4.address.in_addr, ip_str, sizeof(ip_str));
-        LOG_INF("New IP address: %s", ip_str);
-    }
 
 }
 
@@ -272,11 +233,11 @@ static int network_init_start() {
         strcmp(buffer.static_ip_netmask, "") != 0) {
 
         configure_static_ip();
-        configure_ntp();
+        // configure_ntp_static();
 
     } else {
 
-        configure_ntp();
+        configure_dhcp();
 
     }
 
@@ -322,11 +283,11 @@ void network_thread(void *arg1, void *arg2, void *arg3) {
                     strncpy(buffer.static_ip_gateway, p.data, sizeof(buffer.static_ip_gateway)-1);
                     network_init_start();
                 } else if (strcmp(p.type, POINT_TYPE_NTP) == 0) {
-                    LOG_DB("NTP Point Received");
+                    LOG_DBG("NTP Point Received");
                     // check what key the NTP server is, as this will tell us what network we should configure.
                     int server_priority = atoi(p.key);
                     strncpy(ntp_servers[server_priority].ntp_server_address, p.data, sizeof(ntp_servers[server_priority].ntp_server_address)-1);
-                    configure_ntp();
+                    configure_ntp_static();
                 }
             }
         }
