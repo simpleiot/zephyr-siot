@@ -49,7 +49,7 @@ typedef struct {
 #define POINT_TYPE_TEMPERATURE            "temp"
 #define POINT_TYPE_BOARD                  "board"
 #define POINT_TYPE_BOOT_COUNT             "bootCount"
-#define POINT_TYPE_NTP					  "ntpIP"
+#define POINT_TYPE_NTP                    "ntpIP"
 
 typedef struct {
 	char *type;

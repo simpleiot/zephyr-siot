@@ -48,8 +48,6 @@ int main(void)
 
 	// ble_init();
 
-
-
 	const struct device *eeprom = DEVICE_DT_GET(DT_NODELABEL(m24512));
 	uint8_t data[4] = {0x01, 0x02, 0x03, 0x04};
 	int rc;
