@@ -166,8 +166,8 @@ ZBUS_MSG_SUBSCRIBER_DEFINE(state_sub);
 
 void nvs_store_thread(void *arg1, void *arg2, void *arg3)
 {
-	// we dynamically add the observer after we send the NVS state or else the application
-	// will lock up -- assume due to zbus loop deadlock
+	// we dynamically add the observer after we send the NVS state
+	// this allows the points to be sent before we start storing them
 	int ret = zbus_chan_add_obs(&point_chan, &state_sub, K_SECONDS(5));
 	if (ret != 0) {
 		LOG_DBG("Error adding observer: %i", ret);
