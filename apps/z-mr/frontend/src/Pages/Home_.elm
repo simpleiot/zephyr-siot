@@ -6,6 +6,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Html.Attributes as Attr
+import Page exposing (Page)
 import Route exposing (Route)
 import Shared
 import Task
@@ -15,7 +16,6 @@ import UI.Nav as Nav
 import UI.Page as PageUI
 import UI.Style as Style
 import View exposing (View)
-import Page exposing (Page)
 
 
 page : Shared.Model -> Route () -> Page Model Msg
@@ -78,7 +78,7 @@ view shared model =
     PageUI.view
         { title = "Z-MR"
         , device = device
-        , layout = PageUI.Standard Nav.Live  -- Home page shows Live view by default
+        , layout = PageUI.Standard Nav.Live -- Home page shows Live view by default
         , header = PageUI.header device "Testing"
         , content =
             [ welcomeCard device
@@ -88,11 +88,13 @@ view shared model =
 
 welcomeCard : Device -> Element Msg
 welcomeCard device =
-    Container.contentCard device "Z-MR Management Interface"
-        [ PageUI.paragraph device PageUI.Body
+    Container.contentCard device
+        "Z-MR Management Interface"
+        [ PageUI.paragraph device
+            PageUI.Body
             [ Font.center
             , Font.color Style.colors.gray
-            , width (fill |> maximum (round (toFloat Device.breakpoints.tablet * 0.8)))  -- 80% of tablet width
+            , width (fill |> maximum (round (toFloat Device.breakpoints.tablet * 0.8))) -- 80% of tablet width
             , centerX
             , spacing 8
             ]
@@ -108,13 +110,13 @@ navigationButtons device =
             case ( device.class, device.orientation ) of
                 ( Device.Phone, Device.Portrait ) ->
                     column
-                
+
                 ( Device.Phone, Device.Landscape ) ->
                     wrappedRow
-                
+
                 _ ->
                     wrappedRow
-                    
+
         spacingValue =
             Device.responsiveSpacing device 16
     in
@@ -137,23 +139,26 @@ navButton device route label description =
             case ( device.class, device.orientation ) of
                 ( Device.Phone, Device.Portrait ) ->
                     fill
-                
+
                 ( Device.Phone, Device.Landscape ) ->
                     fill |> minimum (round (toFloat device.width * 0.3)) |> maximum (round (toFloat device.width * 0.45))
-                
+
                 ( Device.Tablet, _ ) ->
                     fill |> minimum (round (toFloat Device.breakpoints.tablet * 0.25)) |> maximum (round (toFloat Device.breakpoints.tablet * 0.4))
-                
+
                 ( Device.Desktop, _ ) ->
                     fill |> minimum (round (toFloat Device.breakpoints.desktop * 0.2)) |> maximum (round (toFloat Device.breakpoints.desktop * 0.3))
-                    
+
         buttonHeight =
             case device.class of
                 Device.Phone ->
-                    px (round (toFloat Device.breakpoints.phone * 0.25))  -- 25% of phone width for height
-                
+                    px (round (toFloat Device.breakpoints.phone * 0.25))
+
+                -- 25% of phone width for height
                 _ ->
-                    px (round (toFloat Device.breakpoints.tablet * 0.2))  -- 20% of tablet width for height
+                    px (round (toFloat Device.breakpoints.tablet * 0.2))
+
+        -- 20% of tablet width for height
     in
     link
         [ width buttonWidth
@@ -171,7 +176,8 @@ navButton device route label description =
                 , transition { property = "background-color", duration = 150 }
                 ]
                 [ PageUI.text device PageUI.Large label
-                , PageUI.paragraph device PageUI.Small
+                , PageUI.paragraph device
+                    PageUI.Small
                     [ Font.color Style.colors.gray ]
                     [ Element.text description ]
                 ]

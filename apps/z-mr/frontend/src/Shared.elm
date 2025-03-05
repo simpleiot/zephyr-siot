@@ -22,7 +22,8 @@ type alias Flags =
     }
 
 
-type alias Msg = SharedMsg.Msg
+type alias Msg =
+    SharedMsg.Msg
 
 
 decoder : Json.Decode.Decoder Flags
@@ -45,7 +46,7 @@ init flagsResult route =
               }
             , Effect.none
             )
-        
+
         Err _ ->
             -- Fallback to default dimensions if decoding fails
             ( { windowWidth = 1024
@@ -69,4 +70,4 @@ update route msg model =
 
 subscriptions : Route () -> Model -> Sub Msg
 subscriptions _ model =
-    Ports.onWindowResize WindowResized 
+    Ports.onWindowResize WindowResized

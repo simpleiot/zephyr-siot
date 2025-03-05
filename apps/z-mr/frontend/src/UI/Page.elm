@@ -1,28 +1,36 @@
 module UI.Page exposing
     ( Layout(..)
-    , view
-    , header
-    , text
-    , paragraph
     , TextSize(..)
+    , header
+    , paragraph
+    , text
+    , view
     )
 
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import UI.Device as Device exposing (Device)
-import UI.Style as Style
-import UI.Nav as Nav
 import UI.Container as Container
+import UI.Device as Device exposing (Device)
+import UI.Nav as Nav
+import UI.Style as Style
+
+
 
 -- Layout options for different page types
+
+
 type Layout msg
     = Standard Nav.Route -- Standard layout with header, nav, and content
     | Full -- Full-width layout without nav
     | Custom (Device -> Element msg -> List (Element msg) -> Element msg) -- Custom layout function
 
+
+
 -- Text size presets
+
+
 type TextSize
     = Tiny -- 12px base
     | Small -- 14px base
@@ -31,7 +39,11 @@ type TextSize
     | Title -- 24px base
     | Header -- 32px base
 
+
+
 -- Main page layout
+
+
 view :
     { title : String
     , device : Device
@@ -39,10 +51,11 @@ view :
     , header : Element msg
     , content : List (Element msg)
     }
-    -> { title : String
-       , attributes : List (Attribute msg)
-       , element : Element msg
-       }
+    ->
+        { title : String
+        , attributes : List (Attribute msg)
+        , element : Element msg
+        }
 view config =
     { title = config.title
     , attributes = []
@@ -50,15 +63,19 @@ view config =
         case config.layout of
             Standard route ->
                 standardLayout config.device route config.header config.content
-                
+
             Full ->
                 fullLayout config.device config.header config.content
-                
+
             Custom layoutFn ->
                 layoutFn config.device config.header config.content
     }
 
+
+
 -- Standard layout with header, nav, and content
+
+
 standardLayout : Device -> Nav.Route -> Element msg -> List (Element msg) -> Element msg
 standardLayout device currentRoute header_ content =
     column
@@ -71,7 +88,11 @@ standardLayout device currentRoute header_ content =
         ]
         (header_ :: Nav.view currentRoute :: content)
 
+
+
 -- Full-width layout without nav
+
+
 fullLayout : Device -> Element msg -> List (Element msg) -> Element msg
 fullLayout device header_ content =
     column
@@ -83,7 +104,11 @@ fullLayout device header_ content =
         ]
         (header_ :: content)
 
+
+
 -- Standard page header with logo and title
+
+
 header : Device -> String -> Element msg
 header device title =
     column
@@ -99,13 +124,23 @@ header device title =
             , spacing (Device.responsiveSpacing device 16)
             ]
             [ image
-                [ width (fill |> maximum (if device.class == Device.Phone then 120 else 160))
+                [ width
+                    (fill
+                        |> maximum
+                            (if device.class == Device.Phone then
+                                120
+
+                             else
+                                160
+                            )
+                    )
                 , alignLeft
                 ]
                 { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
                 , description = "Z-MR"
                 }
-            , paragraph device Header
+            , paragraph device
+                Header
                 [ Font.size (textSizeToPixels device Header)
                 , Font.bold
                 , Font.color Style.colors.jet
@@ -115,34 +150,57 @@ header device title =
             ]
         ]
 
+
+
 -- Helper function to convert TextSize to actual pixel values based on device
+
+
 textSizeToPixels : Device -> TextSize -> Int
 textSizeToPixels device size =
     let
         baseSize =
             case size of
-                Tiny -> 12
-                Small -> 14
-                Body -> 16
-                Large -> 20
-                Title -> 24
-                Header -> 32
-                
+                Tiny ->
+                    12
+
+                Small ->
+                    14
+
+                Body ->
+                    16
+
+                Large ->
+                    20
+
+                Title ->
+                    24
+
+                Header ->
+                    32
+
         calculatedSize =
             Device.responsiveFontSize device baseSize
     in
     calculatedSize
 
+
+
 -- Responsive text element
+
+
 text : Device -> TextSize -> String -> Element msg
 text device size content =
-    el 
+    el
         [ Font.size (textSizeToPixels device size) ]
         (Element.text content)
 
+
+
 -- Responsive paragraph element
+
+
 paragraph : Device -> TextSize -> List (Attribute msg) -> List (Element msg) -> Element msg
 paragraph device size attrs content =
-    Element.paragraph 
+    Element.paragraph
         (Font.size (textSizeToPixels device size) :: attrs)
-        content 
+        content

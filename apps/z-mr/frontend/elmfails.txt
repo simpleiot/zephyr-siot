@@ -1,0 +1,368 @@
+NoUnused.Parameters: Parameter `model` is not used
+
+72| view : Shared.Model -> Model -> View Msg
+73| view shared model =
+                ^^^^^
+74|     let
+
+You should either use this parameter somewhere, or remove it at the location I
+pointed at.
+
+───────────────────────────────────────────────────── src/Pages/Home_.elm:169:28
+
+(fix) Simplify: Basics.toFloat, then Basics.round cancels each other out
+
+168|             column
+169|                 [ spacing (round (toFloat (Device.responsiveSpacing device 12)))
+                                ^^^^^
+170|                 , padding (Device.responsiveSpacing device 24)
+
+You can replace this call by the argument given to Basics.toFloat.
+
+src/Pages/Home_.elm  ↑
+====o======================================================================o====
+↓  src/Pages/Live.elm
+
+
+-- ELM-REVIEW ERROR ------------------------------------ src/Pages/Live.elm:5:22
+
+(fix) NoUnused.Variables: Module alias `ZPoint` is not used
+
+4| import Api.Point as Point exposing (Point)
+5| import Api.ZPoint as ZPoint
+                        ^^^^^^
+6| import Effect exposing (Effect)
+
+You should either use this value somewhere, or remove it at the location I
+pointed at.
+
+─────────────────────────────────────────────────────── src/Pages/Live.elm:120:1
+
+(fix) NoUnused.Variables: Top-level variable `header` is not used
+
+119| header : Device -> Element Msg
+120| header device =
+     ^^^^^^
+121|     let
+
+You should either use this value somewhere, or remove it at the location I
+pointed at.
+
+─────────────────────────────────────────────────────── src/Pages/Live.elm:263:9
+
+(fix) NoUnused.Variables: `let in` variable `fontSize` is not used
+
+263|         fontSize =
+             ^^^^^^^^
+264|             Device.responsiveFontSize device 14
+
+You should either use this value somewhere, or remove it at the location I
+pointed at.
+
+─────────────────────────────────────────────────────── src/Pages/Live.elm:527:1
+
+(fix) NoUnused.Variables: Top-level variable `transition` is not used
+
+526| transition : { property : String, duration : Int } -> Attribute msg
+527| transition { property, duration } =
+     ^^^^^^^^^^
+528|     Element.htmlAttribute
+
+You should either use this value somewhere, or remove it at the location I
+pointed at.
+
+─────────────────────────────────────────────────────── src/Pages/Live.elm:540:1
+
+(fix) NoUnused.Variables: Top-level variable `formatOnOff` is not used
+
+539| formatOnOff : Int -> String
+540| formatOnOff number =
+     ^^^^^^^^^^^
+541|     case number of
+
+You should either use this value somewhere, or remove it at the location I
+pointed at.
+
+─────────────────────────────────────────────────────── src/Pages/Live.elm:550:1
+
+(fix) NoUnused.Variables: Top-level variable `formatNumber` is not used
+
+549| formatNumber : Int -> String
+550| formatNumber number =
+     ^^^^^^^^^^^^
+551|     let
+
+You should either use this value somewhere, or remove it at the location I
+pointed at.
+
+─────────────────────────────────────────────────────── src/Pages/Live.elm:573:1
+
+(fix) NoUnused.Variables: Top-level variable `responsiveSpacing` is not used
+
+572| responsiveSpacing : Int -> Int -> Int
+573| responsiveSpacing windowWidth base =
+     ^^^^^^^^^^^^^^^^^
+574|     if windowWidth <= 428 then
+
+You should either use this value somewhere, or remove it at the location I
+pointed at.
+
+─────────────────────────────────────────────────────── src/Pages/Live.elm:582:1
+
+(fix) NoUnused.Variables: Top-level variable `responsiveFontSize` is not used
+
+581| responsiveFontSize : Int -> Int -> Int
+582| responsiveFontSize windowWidth base =
+     ^^^^^^^^^^^^^^^^^^
+583|     if windowWidth <= 428 then
+
+You should either use this value somewhere, or remove it at the location I
+pointed at.
+
+─────────────────────────────────────────────────────── src/Pages/Live.elm:591:1
+
+(fix) NoUnused.Variables: Top-level variable `deviceWidth` is not used
+
+590| deviceWidth : Int
+591| deviceWidth =
+     ^^^^^^^^^^^
+592|     480
+
+You should either use this value somewhere, or remove it at the location I
+pointed at.
+
+src/Pages/Live.elm  ↑
+====o======================================================================o====
+↓  src/Pages/Settings.elm
+
+
+-- ELM-REVIEW ERROR ------------------------------- src/Pages/Settings.elm:125:1
+
+(fix) NoUnused.Variables: Top-level variable `header` is not used
+
+124| header : Shared.Model -> Element Msg
+125| header shared =
+     ^^^^^^
+126|     column
+
+You should either use this value somewhere, or remove it at the location I
+pointed at.
+
+─────────────────────────────────────────────────── src/Pages/Settings.elm:584:1
+
+(fix) NoUnused.Variables: Top-level variable `deviceWidth` is not used
+
+583| deviceWidth : Int
+584| deviceWidth =
+     ^^^^^^^^^^^
+585|     480
+
+You should either use this value somewhere, or remove it at the location I
+pointed at.
+
+src/Pages/Settings.elm  ↑
+====o======================================================================o====
+↓  src/Shared.elm
+
+
+-- ELM-REVIEW ERROR --------------------------------------- src/Shared.elm:41:18
+
+NoUnused.Parameters: Parameter `route` is not used
+
+40| init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
+41| init flagsResult route =
+                     ^^^^^
+42|     case flagsResult of
+
+You should either use this parameter somewhere, or remove it at the location I
+pointed at.
+
+──────────────────────────────────────────────────────────── src/Shared.elm:60:8
+
+NoUnused.Parameters: Parameter `route` is not used
+
+59| update : Route () -> Msg -> Model -> ( Model, Effect Msg )
+60| update route msg model =
+           ^^^^^
+61|     case msg of
+
+You should either use this parameter somewhere, or remove it at the location I
+pointed at.
+
+─────────────────────────────────────────────────────────── src/Shared.elm:72:17
+
+NoUnused.Parameters: Parameter `model` is not used
+
+71| subscriptions : Route () -> Model -> Sub Msg
+72| subscriptions _ model =
+                    ^^^^^
+73|     Ports.onWindowResize WindowResized
+
+You should either use this parameter somewhere, or remove it at the location I
+pointed at.
+
+src/Shared.elm  ↑
+====o======================================================================o====
+↓  src/Shared/Model.elm
+
+
+-- ELM-REVIEW ERROR ---------------------------------- src/Shared/Model.elm:1:30
+
+(fix) NoExposingEverything: Module exposes everything implicitly "(..)"
+
+1| module Shared.Model exposing (..)
+                                ^^^^
+
+Modules should have hidden implementation details with an explicit API so that
+the module is used in a proper and controlled way. The users of this module
+should not have to know about what is inside a module it is using, and they
+shouldn't need to access its internal details. Therefore, the API should be
+explicitly defined and ideally as small as possible.
+
+src/Shared/Model.elm  ↑
+====o======================================================================o====
+↓  src/UI/Container.elm
+
+
+-- ELM-REVIEW ERROR --------------------------------- src/UI/Container.elm:49:13
+
+(fix) Simplify: Appending a singleton list to the beginning is the same as using
+(::) with the value inside
+
+48|          ]
+49|             ++ content
+                ^^
+50|         )
+
+You can replace this (++) operation by using (::) with the value inside the left
+singleton list on the right list.
+
+src/UI/Container.elm  ↑
+====o======================================================================o====
+↓  src/UI/Device.elm
+
+
+-- ELM-REVIEW ERROR ------------------------------------- src/UI/Device.elm:37:1
+
+NoMissingTypeAnnotation: Missing type annotation for `breakpoints`
+
+37| breakpoints =
+    ^^^^^^^^^^^
+38|     { phone = 428 -- iPhone Pro Max logical width
+
+Type annotations help you understand what happens in the code, and it will help
+the compiler give better error messages.
+
+src/UI/Device.elm  ↑
+====o======================================================================o====
+↓  src/UI/Form.elm
+
+
+-- ELM-REVIEW ERROR --------------------------------------- src/UI/Form.elm:65:1
+
+(fix) NoUnused.Variables: Top-level variable `buttonColumn` is not used
+
+64| buttonColumn : List (Element msg) -> Element msg
+65| buttonColumn =
+    ^^^^^^^^^^^^
+66|     column
+
+You should either use this value somewhere, or remove it at the location I
+pointed at.
+
+src/UI/Form.elm  ↑
+====o======================================================================o====
+↓  src/UI/Page.elm
+
+
+-- ELM-REVIEW ERROR -------------------------------------- src/UI/Page.elm:14:24
+
+(fix) NoUnused.Variables: Module alias `Container` is not used
+
+13| import Element.Font as Font
+14| import UI.Container as Container
+                           ^^^^^^^^^
+15| import UI.Device as Device exposing (Device)
+
+You should either use this value somewhere, or remove it at the location I
+pointed at.
+
+─────────────────────────────────────────────────────────── src/UI/Page.elm:26:7
+
+(fix) NoUnused.CustomTypeConstructors: Type constructor `Full` is not used.
+
+25|     = Standard Nav.Route -- Standard layout with header, nav, and content
+26|     | Full -- Full-width layout without nav
+          ^^^^
+27|     | Custom (Device -> Element msg -> List (Element msg) -> Element msg) -- Custom layout function
+
+This type constructor is never used. It might be handled everywhere it might
+appear, but there is no location where this value actually gets created.
+
+─────────────────────────────────────────────────────────── src/UI/Page.elm:27:7
+
+(fix) NoUnused.CustomTypeConstructors: Type constructor `Custom` is not used.
+
+26|     | Full -- Full-width layout without nav
+27|     | Custom (Device -> Element msg -> List (Element msg) -> Element msg) -- Custom layout function
+          ^^^^^^
+
+This type constructor is never used. It might be handled everywhere it might
+appear, but there is no location where this value actually gets created.
+
+─────────────────────────────────────────────────────────── src/UI/Page.elm:35:7
+
+(fix) NoUnused.CustomTypeConstructors: Type constructor `Tiny` is not used.
+
+34| type TextSize
+35|     = Tiny -- 12px base
+          ^^^^
+36|     | Small -- 14px base
+
+This type constructor is never used. It might be handled everywhere it might
+appear, but there is no location where this value actually gets created.
+
+─────────────────────────────────────────────────────────── src/UI/Page.elm:39:7
+
+(fix) NoUnused.CustomTypeConstructors: Type constructor `Title` is not used.
+
+38|     | Large -- 20px base
+39|     | Title -- 24px base
+          ^^^^^
+40|     | Header -- 32px base
+
+This type constructor is never used. It might be handled everywhere it might
+appear, but there is no location where this value actually gets created.
+
+────────────────────────────────────────────────────────── src/UI/Page.elm:184:5
+
+(fix) NoSimpleLetBody: The referenced value should be inlined.
+
+183|     in
+184|     calculatedSize
+         ^^^^^^^^^^^^^^
+
+The name of the value is redundant with the surrounding expression.
+
+If you believe that the expression needs a name because it is too complex,
+consider splitting the expression up more or extracting it to a new function.
+
+src/UI/Page.elm  ↑
+====o======================================================================o====
+↓  src/UI/Style.elm
+
+
+-- ELM-REVIEW ERROR -------------------------------------- src/UI/Style.elm:20:1
+
+NoMissingTypeAnnotation: Missing type annotation for `colors`
+
+20| colors =
+    ^^^^^^
+21|     { primary = rgb255 0 123 255
+
+Type annotations help you understand what happens in the code, and it will help
+the compiler give better error messages.
+
+Errors marked with (fix) can be fixed automatically using `elm-review --fix`.
+
+I found 27 errors in 10 files.

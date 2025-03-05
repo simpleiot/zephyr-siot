@@ -1,6 +1,6 @@
 module UI.Style exposing
-    ( colors
-    , button
+    ( button
+    , colors
     , error
     , h2
     , link
@@ -12,7 +12,11 @@ import Element.Border as Border
 import Element.Font as Font
 import Html.Attributes as Attr
 
+
+
 -- COLORS
+
+
 colors =
     { primary = rgb255 0 123 255
     , secondary = rgb255 108 117 125
@@ -32,6 +36,7 @@ colors =
     , ltgray = rgb255 211 211 211
     }
 
+
 fonts : { sans : List Font.Font }
 fonts =
     { sans =
@@ -42,6 +47,7 @@ fonts =
         , Font.serif
         ]
     }
+
 
 link : List (Attribute msg)
 link =
@@ -55,6 +61,7 @@ link =
         [ alpha 0.6
         ]
     ]
+
 
 button : Color -> List (Attribute msg)
 button color =
@@ -76,6 +83,7 @@ button color =
         ]
     ]
 
+
 error : List (Attribute msg)
 error =
     [ paddingXY 16 8
@@ -88,12 +96,14 @@ error =
     , width fill
     ]
 
+
 h2 : List (Attribute msg)
 h2 =
     [ Font.family fonts.sans
     , Font.semiBold
     , Font.size 24
     ]
+
 
 transition :
     { property : String

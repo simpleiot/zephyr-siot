@@ -18,9 +18,9 @@ import Shared
 import Time
 import UI.Device as Device exposing (Device)
 import UI.Nav as Nav
+import UI.Page as PageUI
 import UI.Style as Style
 import View exposing (View)
-import UI.Page as PageUI
 
 
 page : Shared.Model -> Route () -> Page Model Msg
@@ -123,13 +123,14 @@ header device =
             case device.class of
                 Device.Phone ->
                     90
-                
+
                 Device.Tablet ->
                     if device.orientation == Device.Portrait then
                         120
+
                     else
                         140
-                
+
                 Device.Desktop ->
                     160
 
@@ -156,12 +157,12 @@ header device =
                 { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
                 , description = "Z-MR"
                 }
-            , paragraph 
+            , paragraph
                 [ Font.size headerFontSize
                 , Font.bold
                 , Font.color Style.colors.jet
                 , width fill
-                ] 
+                ]
                 [ text "Live View" ]
             ]
         ]
@@ -199,31 +200,31 @@ deviceContent device model =
         contentLayout =
             case device.class of
                 Device.Phone ->
-                    column 
+                    column
                         [ spacing (Device.responsiveSpacing device 16)
                         , width fill
                         , centerX
                         ]
-                
+
                 Device.Tablet ->
-                    column 
+                    column
                         [ spacing (Device.responsiveSpacing device 24)
                         , width fill
                         , centerX
                         ]
-                
+
                 Device.Desktop ->
-                    column 
+                    column
                         [ spacing (Device.responsiveSpacing device 24)
                         , width (fill |> maximum Device.breakpoints.maxContentWidth)
                         , centerX
                         ]
 
         cardWrapper content =
-            el 
+            el
                 [ width fill
                 , alignTop
-                ] 
+                ]
                 content
     in
     case model.points of
@@ -258,7 +259,7 @@ statusCard device points =
     let
         spacingValue =
             Device.responsiveSpacing device 16
-            
+
         fontSize =
             Device.responsiveFontSize device 14
     in
@@ -282,23 +283,36 @@ statusRow device point =
     let
         fontSize =
             Device.responsiveFontSize device 14
-            
+
         label =
             case point.typ of
-                "board" -> "Board"
-                "bootCount" -> "Boot Count"
-                "metricSysCPUPercent" -> "CPU Usage"
-                "uptime" -> "Uptime"
-                "temperature" -> "Temperature"
-                _ -> point.typ
-                
+                "board" ->
+                    "Board"
+
+                "bootCount" ->
+                    "Boot Count"
+
+                "metricSysCPUPercent" ->
+                    "CPU Usage"
+
+                "uptime" ->
+                    "Uptime"
+
+                "temperature" ->
+                    "Temperature"
+
+                _ ->
+                    point.typ
+
         value =
             case point.typ of
-                "metricSysCPUPercent" -> 
+                "metricSysCPUPercent" ->
                     Round.round 2 (Point.getFloat [ point ] point.typ point.key) ++ "%"
-                "uptime" -> 
+
+                "uptime" ->
                     Point.getText [ point ] point.typ point.key ++ "s"
-                _ -> 
+
+                _ ->
                     Point.getText [ point ] point.typ point.key
     in
     row
@@ -306,15 +320,15 @@ statusRow device point =
         , width fill
         , Font.size fontSize
         ]
-        [ el 
+        [ el
             [ width (fillPortion 1)
-            , Font.color Style.colors.gray 
-            ] 
+            , Font.color Style.colors.gray
+            ]
             (text label)
-        , el 
+        , el
             [ width (fillPortion 2)
             , Font.color Style.colors.jet
-            ] 
+            ]
             (text value)
         ]
 
@@ -559,6 +573,7 @@ responsiveSpacing : Int -> Int -> Int
 responsiveSpacing windowWidth base =
     if windowWidth <= 428 then
         base // 2
+
     else
         base
 
@@ -567,10 +582,15 @@ responsiveFontSize : Int -> Int -> Int
 responsiveFontSize windowWidth base =
     if windowWidth <= 428 then
         base * 4 // 5
+
     else
         base
 
 
 deviceWidth : Int
 deviceWidth =
-    480  -- Default to mobile breakpoint for now. We'll need to pass actual window dimensions from the app level.
+    480
+
+
+
+-- Default to mobile breakpoint for now. We'll need to pass actual window dimensions from the app level.

@@ -14,13 +14,14 @@ import Http
 import Page exposing (Page)
 import Route exposing (Route)
 import Shared
+import UI.Device
 import UI.Form as Form
 import UI.Nav as Nav
+import UI.Page as PageUI
 import UI.Sanitize as Sanitize
 import UI.Style as Style
-import UI.Device
 import View exposing (View)
-import UI.Page as PageUI
+
 
 page : Shared.Model -> Route () -> Page Model Msg
 page shared _ =
@@ -135,18 +136,27 @@ header shared =
             , spacing (responsiveSpacing shared.windowWidth 16)
             ]
             [ image
-                [ width (fill |> maximum (if shared.windowWidth <= 768 then 140 else 180))
+                [ width
+                    (fill
+                        |> maximum
+                            (if shared.windowWidth <= 768 then
+                                140
+
+                             else
+                                180
+                            )
+                    )
                 , alignLeft
                 ]
                 { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
                 , description = "Z-MR"
                 }
-            , paragraph 
+            , paragraph
                 [ Font.size (responsiveFontSize shared.windowWidth 32)
                 , Font.bold
                 , Font.color Style.colors.jet
                 , width fill
-                ] 
+                ]
                 [ text "Settings" ]
             ]
         ]
@@ -168,7 +178,13 @@ card : Shared.Model -> List (Element Msg) -> Element Msg
 card shared content =
     column
         [ spacing (responsiveSpacing shared.windowWidth 16)
-        , padding (if shared.windowWidth <= 768 then 16 else responsiveSpacing shared.windowWidth 24)
+        , padding
+            (if shared.windowWidth <= 768 then
+                16
+
+             else
+                responsiveSpacing shared.windowWidth 24
+            )
         , width fill
         , height fill
         , Background.color Style.colors.white
@@ -226,7 +242,13 @@ settingsCard shared points edit =
 
         inputStyle =
             [ width fill
-            , padding (if shared.windowWidth <= 768 then 10 else responsiveSpacing shared.windowWidth 12)
+            , padding
+                (if shared.windowWidth <= 768 then
+                    10
+
+                 else
+                    responsiveSpacing shared.windowWidth 12
+                )
             , Border.width 1
             , Border.color Style.colors.gray
             , Border.rounded 8
@@ -237,7 +259,7 @@ settingsCard shared points edit =
     in
     card shared
         [ h1 shared "Settings"
-        , column 
+        , column
             [ spacing (responsiveSpacing shared.windowWidth 24)
             , Form.onEnterEsc (ApiPostPoints points) DiscardEdits
             , width fill
@@ -255,11 +277,13 @@ settingsCard shared points edit =
             , viewIf edit <|
                 (if shared.windowWidth <= 768 then
                     column
-                else
-                    wrappedRow)
-                [ spacing (responsiveSpacing shared.windowWidth 16)
-                , width fill 
-                ]
+
+                 else
+                    wrappedRow
+                )
+                    [ spacing (responsiveSpacing shared.windowWidth 16)
+                    , width fill
+                    ]
                     [ Input.button
                         [ padding (responsiveSpacing shared.windowWidth 12)
                         , Border.rounded 8
@@ -326,12 +350,13 @@ fanSettings shared points =
                 _ ->
                     "Fan 2 Speed"
     in
-    column 
+    column
         [ spacing (responsiveSpacing shared.windowWidth 24)
         , alignLeft
         , width fill
         ]
-        [ inputOption shared points
+        [ inputOption shared
+            points
             "0"
             ZPoint.typeFanMode
             "Fan mode"
@@ -341,12 +366,12 @@ fanSettings shared points =
             , ( ZPoint.valueTemp, "Temperature" )
             ]
         , viewIf (mode /= ZPoint.valueOff) <|
-            wrappedRow [ spacing 10, width fill, alignLeft ] 
+            wrappedRow [ spacing 10, width fill, alignLeft ]
                 [ inputFloat shared points "0" ZPoint.typeFanSetSpeed setting1Desc
                 , el [ Font.size (UI.Device.responsiveFontSize device 14) ] (text speedUnits)
                 ]
         , viewIf (mode /= ZPoint.valueOff) <|
-            wrappedRow [ spacing 10, width fill, alignLeft ] 
+            wrappedRow [ spacing 10, width fill, alignLeft ]
                 [ inputFloat shared points "1" ZPoint.typeFanSetSpeed setting2Desc
                 , el [ Font.size (UI.Device.responsiveFontSize device 14) ] (text speedUnits)
                 ]
@@ -366,6 +391,7 @@ inputText shared pts key typ lbl placeholder styles =
                 ]
             <|
                 text lbl
+
           else
             none
         , Input.text
@@ -394,6 +420,7 @@ inputCheckbox shared pts key typ lbl styles =
                         v =
                             if d then
                                 "1"
+
                             else
                                 "0"
                     in
@@ -409,6 +436,7 @@ inputCheckbox shared pts key typ lbl styles =
                 ]
             <|
                 text lbl
+
           else
             none
         ]
@@ -450,6 +478,7 @@ inputFloat shared pts key typ lbl =
                 ]
             <|
                 text lbl
+
           else
             none
         , Input.text
@@ -465,8 +494,10 @@ inputFloat shared pts key typ lbl =
                         v =
                             if d == "" then
                                 blankMajicValue
+
                             else if d == "-" then
                                 "-"
+
                             else
                                 Sanitize.float d
                     in
@@ -492,6 +523,7 @@ inputOption shared pts key typ lbl options =
                 ]
             <|
                 text (lbl ++ ":")
+
           else
             none
         , Input.radio
@@ -534,6 +566,7 @@ responsiveSpacing : Int -> Int -> Int
 responsiveSpacing windowWidth base =
     if windowWidth <= 480 then
         base // 2
+
     else
         base
 
@@ -542,10 +575,15 @@ responsiveFontSize : Int -> Int -> Int
 responsiveFontSize windowWidth base =
     if windowWidth <= 480 then
         base * 4 // 5
+
     else
         base
 
 
 deviceWidth : Int
 deviceWidth =
-    480  -- Default to mobile breakpoint for now. We'll need to pass actual window dimensions from the app level.
+    480
+
+
+
+-- Default to mobile breakpoint for now. We'll need to pass actual window dimensions from the app level.

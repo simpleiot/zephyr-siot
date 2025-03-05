@@ -9,6 +9,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Html.Attributes as Attr
 import Http
+import Page exposing (Page)
 import Route exposing (Route)
 import Shared
 import Time
@@ -18,7 +19,6 @@ import UI.Nav as Nav
 import UI.Page as PageUI
 import UI.Style as Style
 import View exposing (View)
-import Page exposing (Page)
 
 
 page : Shared.Model -> Route () -> Page Model Msg
@@ -129,19 +129,21 @@ view model =
 
 deviceContent : Device -> Model -> Element Msg
 deviceContent device model =
-    Container.contentCard device "System Events"
-        [ column 
+    Container.contentCard device
+        "System Events"
+        [ column
             [ spacing (Device.responsiveSpacing device 8)
             , width fill
             , height fill
             , scrollbarY
-            , paddingEach 
+            , paddingEach
                 { top = 0
-                , right = Device.responsiveSpacing device 8  -- Room for scrollbar
+                , right = Device.responsiveSpacing device 8 -- Room for scrollbar
                 , bottom = Device.responsiveSpacing device 8
                 , left = 0
                 }
-            ] <|
+            ]
+          <|
             List.map (eventRow device) model.events
         ]
 
@@ -151,27 +153,41 @@ eventRow device event =
     let
         { red, green, blue } =
             toRgb (severityColor event.severity)
-            
+
         isPhone =
             device.class == Device.Phone
-            
+
         spacingValue =
-            Device.responsiveSpacing device (if isPhone then 4 else 8)
-            
+            Device.responsiveSpacing device
+                (if isPhone then
+                    4
+
+                 else
+                    8
+                )
+
         metadataItem content color =
             PageUI.text device PageUI.Small content
                 |> el [ Font.color color ]
-                
+
         separator =
             PageUI.text device PageUI.Small "•"
-                |> el 
+                |> el
                     [ Font.color Style.colors.gray
                     , paddingXY 4 0
                     ]
     in
     column
         [ spacing spacingValue
-        , padding (Device.responsiveSpacing device (if isPhone then 8 else 12))
+        , padding
+            (Device.responsiveSpacing device
+                (if isPhone then
+                    8
+
+                 else
+                    12
+                )
+            )
         , width fill
         , Border.rounded 8
         , Background.color (rgba red green blue 0.1)
@@ -188,7 +204,8 @@ eventRow device event =
             , separator
             , metadataItem (severityToString event.severity) (severityColor event.severity)
             ]
-        , PageUI.paragraph device PageUI.Small
+        , PageUI.paragraph device
+            PageUI.Small
             [ Font.color Style.colors.jet
             , width fill
             , paddingEach { top = 4, right = 0, bottom = 0, left = 0 }
@@ -234,4 +251,3 @@ transition { property, duration } =
 pointFetch : Effect Msg
 pointFetch =
     Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
-

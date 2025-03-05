@@ -39,7 +39,8 @@ view currentRoute =
 navLink : Route -> Route -> String -> String -> Element msg
 navLink currentRoute route label url =
     let
-        isActive = currentRoute == route
+        isActive =
+            currentRoute == route
     in
     link
         ([ padding 12

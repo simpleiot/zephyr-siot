@@ -60,6 +60,7 @@ buttonRow =
         , spacing 16
         ]
 
+
 buttonColumn : List (Element msg) -> Element msg
 buttonColumn =
     column
@@ -69,6 +70,7 @@ buttonColumn =
         , padding 16
         , spacing 16
         ]
+
 
 button :
     { color : Color
