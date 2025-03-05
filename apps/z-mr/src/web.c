@@ -60,14 +60,12 @@ struct http_resource_detail_static index_html_gz_resource_detail = {
 HTTP_RESOURCE_DEFINE(index_html_gz_resource, siot_http_service, "/",
 		     &index_html_gz_resource_detail);
 
-HTTP_RESOURCE_DEFINE(live_resource, siot_http_service, "/live",
-		     &index_html_gz_resource_detail);
+HTTP_RESOURCE_DEFINE(live_resource, siot_http_service, "/live", &index_html_gz_resource_detail);
 
 HTTP_RESOURCE_DEFINE(settings_resource, siot_http_service, "/settings",
 		     &index_html_gz_resource_detail);
 
-HTTP_RESOURCE_DEFINE(events_resource, siot_http_service, "/events",
-		     &index_html_gz_resource_detail);
+HTTP_RESOURCE_DEFINE(events_resource, siot_http_service, "/events", &index_html_gz_resource_detail);
 
 struct http_resource_detail_static index_js_gz_resource_detail = {
 	.common =
