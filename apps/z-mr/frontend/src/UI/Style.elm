@@ -1,6 +1,6 @@
 module UI.Style exposing
-    ( button
-    , colors
+    ( colors
+    , button
     , error
     , h2
     , link
@@ -12,50 +12,25 @@ import Element.Border as Border
 import Element.Font as Font
 import Html.Attributes as Attr
 
-
-colors :
-    { white : Color
-    , jet : Color
-    , coral : Color
-    , black : Color
-    , ltgray : Color
-    , gray : Color
-    , darkgray : Color
-    , pale : Color
-    , red : Color
-    , orange : Color
-    , yellow : Color
-    , green : Color
-    , darkgreen : Color
-    , blue : Color
-    , ltblue : Color
-    , ledgreen : Color
-    , ledblue : Color
-    , ledred : Color
-    , none : Color
-    }
+-- COLORS
 colors =
-    { white = rgb 1 1 1
-    , jet = rgb255 40 40 40
-    , coral = rgb255 204 75 75
-    , black = rgb 0 0 0
-    , ltgray = rgb 0.9 0.9 0.9
-    , gray = rgb 0.5 0.5 0.5
-    , darkgray = rgb 0.8 0.8 0.8
-    , pale = rgba 0.97 0.97 0.97 0.9
-    , red = rgb255 204 85 68
-    , orange = rgb255 255 165 0
-    , yellow = rgb 1 1 0.7
-    , green = rgba 0.7 1 0.7 0.9
-    , darkgreen = rgb255 4 106 56
-    , blue = rgb255 50 100 150
-    , ltblue = rgb255 135 206 250
-    , ledgreen = rgb255 50 255 50
-    , ledblue = rgb255 50 50 255
-    , ledred = rgb255 255 50 50
-    , none = rgba 0 0 0 0
+    { primary = rgb255 0 123 255
+    , secondary = rgb255 108 117 125
+    , success = rgb255 40 167 69
+    , danger = rgb255 220 53 69
+    , warning = rgb255 255 193 7
+    , info = rgb255 23 162 184
+    , light = rgb255 248 249 250
+    , dark = rgb255 52 58 64
+    , white = rgb255 255 255 255
+    , pale = rgb255 245 245 245
+    , gray = rgb255 108 117 125
+    , jet = rgb255 50 50 50
+    , ledred = rgb255 255 0 0
+    , ledgreen = rgb255 0 255 0
+    , ledblue = rgb255 0 0 255
+    , ltgray = rgb255 211 211 211
     }
-
 
 fonts : { sans : List Font.Font }
 fonts =
@@ -68,11 +43,10 @@ fonts =
         ]
     }
 
-
 link : List (Attribute msg)
 link =
     [ Font.underline
-    , Font.color colors.blue
+    , Font.color colors.primary
     , transition
         { property = "opacity"
         , duration = 150
@@ -81,7 +55,6 @@ link =
         [ alpha 0.6
         ]
     ]
-
 
 button : Color -> List (Attribute msg)
 button color =
@@ -103,19 +76,17 @@ button color =
         ]
     ]
 
-
 error : List (Attribute msg)
 error =
     [ paddingXY 16 8
     , Font.size 14
-    , Font.color colors.white
+    , Font.color colors.danger
     , Font.bold
-    , Background.color colors.coral
+    , Background.color colors.pale
     , Border.width 2
     , Border.rounded 4
     , width fill
     ]
-
 
 h2 : List (Attribute msg)
 h2 =
@@ -123,7 +94,6 @@ h2 =
     , Font.semiBold
     , Font.size 24
     ]
-
 
 transition :
     { property : String

@@ -13,13 +13,16 @@ import Json.Decode
 import Ports
 import Route exposing (Route)
 import Shared.Model
-import Shared.Msg exposing (Msg(..))
+import Shared.Msg as SharedMsg exposing (Msg(..))
 
 
 type alias Flags =
     { width : Int
     , height : Int
     }
+
+
+type alias Msg = SharedMsg.Msg
 
 
 decoder : Json.Decode.Decoder Flags

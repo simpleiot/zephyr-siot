@@ -9,19 +9,22 @@ import Element.Border as Border
 import Element.Font as Font
 import Html.Attributes as Attr
 import Http
-import Page exposing (Page)
 import Route exposing (Route)
 import Shared
 import Time
+import UI.Container as Container
+import UI.Device as Device exposing (Device)
 import UI.Nav as Nav
+import UI.Page as PageUI
 import UI.Style as Style
 import View exposing (View)
+import Page exposing (Page)
 
 
 page : Shared.Model -> Route () -> Page Model Msg
-page _ _ =
+page shared _ =
     Page.new
-        { init = init
+        { init = init shared
         , update = update
         , subscriptions = subscriptions
         , view = view
@@ -49,12 +52,16 @@ type EventSeverity
 type alias Model =
     { points : Api.Data (List Point)
     , events : List Event
+    , device : Device
     }
 
 
-init : () -> ( Model, Effect Msg )
-init () =
-    ( Model Api.Loading mockEvents
+init : Shared.Model -> () -> ( Model, Effect Msg )
+init shared () =
+    ( { points = Api.Loading
+      , events = mockEvents
+      , device = Device.classifyDevice shared.windowWidth shared.windowHeight
+      }
     , pointFetch
     )
 
@@ -109,119 +116,84 @@ subscriptions _ =
 
 view : Model -> View Msg
 view model =
-    { title = "Z-MR Events"
-    , attributes = []
-    , element =
-        column
-            [ spacing 32
-            , padding 40
-            , width (fill |> maximum 1280)
+    PageUI.view
+        { title = "Z-MR Events"
+        , device = model.device
+        , layout = PageUI.Standard Nav.Events
+        , header = PageUI.header model.device "Events"
+        , content =
+            [ deviceContent model.device model
+            ]
+        }
+
+
+deviceContent : Device -> Model -> Element Msg
+deviceContent device model =
+    Container.contentCard device "System Events"
+        [ column 
+            [ spacing (Device.responsiveSpacing device 8)
+            , width fill
             , height fill
-            , centerX
-            , Background.color Style.colors.pale
-            ]
-            [ header
-            , Nav.view Nav.Events
-            , eventsContent model
-            ]
-    }
-
-
-header : Element Msg
-header =
-    row
-        [ spacing 32
-        , padding 24
-        , width fill
-        , Background.color Style.colors.white
-        , Border.rounded 12
-        , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
-        ]
-        [ image
-            [ width (px 180)
-            , alignLeft
-            ]
-            { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
-            , description = "Z-MR"
-            }
-        , el [ Font.size 32, Font.bold, Font.color Style.colors.jet ] <| text "Events"
+            , scrollbarY
+            , paddingEach 
+                { top = 0
+                , right = Device.responsiveSpacing device 8  -- Room for scrollbar
+                , bottom = Device.responsiveSpacing device 8
+                , left = 0
+                }
+            ] <|
+            List.map (eventRow device) model.events
         ]
 
 
-h1 : String -> Element Msg
-h1 txt =
-    el
-        [ Font.size 24
-        , Font.semiBold
-        , Font.color Style.colors.jet
-        , paddingEach { top = 16, right = 0, bottom = 8, left = 0 }
-        ]
-    <|
-        text txt
-
-
-card : List (Element Msg) -> Element Msg
-card content =
-    column
-        [ spacing 16
-        , padding 24
-        , width fill
-        , height fill
-        , Background.color Style.colors.white
-        , Border.rounded 12
-        , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
-        ]
-        content
-
-
-eventsContent : Model -> Element Msg
-eventsContent model =
-    card
-        [ h1 "System Events"
-        , column [ spacing 8, width fill ] <|
-            List.map eventRow model.events
-        ]
-
-
-eventRow : Event -> Element Msg
-eventRow event =
+eventRow : Device -> Event -> Element Msg
+eventRow device event =
     let
         { red, green, blue } =
             toRgb (severityColor event.severity)
+            
+        isPhone =
+            device.class == Device.Phone
+            
+        spacingValue =
+            Device.responsiveSpacing device (if isPhone then 4 else 8)
+            
+        metadataItem content color =
+            PageUI.text device PageUI.Small content
+                |> el [ Font.color color ]
+                
+        separator =
+            PageUI.text device PageUI.Small "•"
+                |> el 
+                    [ Font.color Style.colors.gray
+                    , paddingXY 4 0
+                    ]
     in
-    row
-        [ spacing 100
-        , padding 16
+    column
+        [ spacing spacingValue
+        , padding (Device.responsiveSpacing device (if isPhone then 8 else 12))
         , width fill
         , Border.rounded 8
         , Background.color (rgba red green blue 0.1)
         , mouseOver [ Background.color (rgba red green blue 0.15) ]
         , transition { property = "background-color", duration = 150 }
         ]
-        [ el
-            [ width (px 180)
-            , Font.color Style.colors.gray
-            ]
-          <|
-            text event.timestamp
-        , el
-            [ width (px 120)
-            , Font.color (severityColor event.severity)
-            , Font.bold
-            ]
-          <|
-            text (severityToString event.severity)
-        , el
-            [ width (px 120)
-            , Font.color Style.colors.gray
-            ]
-          <|
-            text event.type_
-        , paragraph
-            [ Font.color Style.colors.jet
+        [ wrappedRow
+            [ spacing spacingValue
             , width fill
             ]
-            [ text event.message ]
+            [ metadataItem event.timestamp Style.colors.gray
+            , separator
+            , metadataItem event.type_ Style.colors.gray
+            , separator
+            , metadataItem (severityToString event.severity) (severityColor event.severity)
+            ]
+        , PageUI.paragraph device PageUI.Small
+            [ Font.color Style.colors.jet
+            , width fill
+            , paddingEach { top = 4, right = 0, bottom = 0, left = 0 }
+            ]
+            [ Element.text event.message ]
         ]
 
 
@@ -229,13 +201,13 @@ severityColor : EventSeverity -> Color
 severityColor severity =
     case severity of
         Info ->
-            Style.colors.blue
+            Style.colors.info
 
         Warning ->
-            Style.colors.orange
+            Style.colors.warning
 
         Error ->
-            Style.colors.red
+            Style.colors.danger
 
 
 severityToString : EventSeverity -> String
@@ -263,13 +235,3 @@ pointFetch : Effect Msg
 pointFetch =
     Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
 
-
-
--- FIXME: elm-review is flagging this, please uncomment if needed or delete
--- colorComponents : Color -> ( Float, Float, Float )
--- colorComponents color =
---     let
---         { red, green, blue } =
---             toRgb color
---     in
---     ( red, green, blue )
