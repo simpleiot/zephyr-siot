@@ -46,10 +46,7 @@ type alias Model =
 init : () -> ( Model, Effect Msg )
 init () =
     ( Model Api.Loading False
-    , Effect.batch <|
-        [ Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
-        , pointFetch
-        ]
+    , Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
     )
 
 

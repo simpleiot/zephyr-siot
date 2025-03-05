@@ -173,6 +173,42 @@ ZBUS_CHAN_ADD_OBS(point_chan, web_sub, 3);
 
 void web_thread(void *arg1, void *arg2, void *arg3)
 {
+	// Initialize points with current network settings
+	struct net_if *iface = net_if_get_default();
+	if (iface) {
+		char ip_addr[NET_IPV4_ADDR_LEN];
+		char netmask[NET_IPV4_ADDR_LEN];
+		char gateway[NET_IPV4_ADDR_LEN];
+		
+		// Get IP address
+		struct net_if_ipv4 *ipv4 = iface->config.ip.ipv4;
+		if (ipv4) {
+			net_addr_ntop(AF_INET, &ipv4->unicast[0].address.in_addr, ip_addr, sizeof(ip_addr));
+			net_addr_ntop(AF_INET, &ipv4->netmask, netmask, sizeof(netmask));
+			net_addr_ntop(AF_INET, &ipv4->gw, gateway, sizeof(gateway));
+			
+			// Initialize points with current network settings
+			k_mutex_lock(&web_points_lock, K_FOREVER);
+			
+			point p_addr = {0};
+			point_set_type_key(&p_addr, POINT_TYPE_ADDRESS, "0");
+			point_put_string(&p_addr, ip_addr);
+			points_merge(web_points, ARRAY_SIZE(web_points), &p_addr);
+			
+			point p_netmask = {0};
+			point_set_type_key(&p_netmask, POINT_TYPE_NETMASK, "0");
+			point_put_string(&p_netmask, netmask);
+			points_merge(web_points, ARRAY_SIZE(web_points), &p_netmask);
+			
+			point p_gateway = {0};
+			point_set_type_key(&p_gateway, POINT_TYPE_GATEWAY, "0");
+			point_put_string(&p_gateway, gateway);
+			points_merge(web_points, ARRAY_SIZE(web_points), &p_gateway);
+			
+			k_mutex_unlock(&web_points_lock);
+		}
+	}
+
 	LOG_INF("siot web thread");
 	http_server_start();
 

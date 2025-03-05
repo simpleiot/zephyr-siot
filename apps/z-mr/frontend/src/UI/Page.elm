@@ -15,7 +15,6 @@ import UI.Device as Device exposing (Device)
 import UI.Style as Style
 import UI.Nav as Nav
 import UI.Container as Container
-import Debug
 
 -- Layout options for different page types
 type Layout msg
@@ -45,16 +44,6 @@ view :
        , element : Element msg
        }
 view config =
-    let
-        _ =
-            Debug.log "Page view" 
-                { title = config.title
-                , deviceClass = Debug.toString config.device.class
-                , orientation = Debug.toString config.device.orientation
-                , width = config.device.width
-                , height = config.device.height
-                }
-    in
     { title = config.title
     , attributes = []
     , element =
@@ -141,17 +130,6 @@ textSizeToPixels device size =
                 
         calculatedSize =
             Device.responsiveFontSize device baseSize
-            
-        _ =
-            Debug.log "Text size calculation" 
-                { deviceClass = Debug.toString device.class
-                , orientation = Debug.toString device.orientation
-                , width = device.width
-                , height = device.height
-                , textSize = Debug.toString size
-                , baseSize = baseSize
-                , calculatedSize = calculatedSize
-                }
     in
     calculatedSize
 

@@ -5,7 +5,6 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import UI.Style as Style
-import Debug
 
 
 type Route
@@ -41,12 +40,6 @@ navLink : Route -> Route -> String -> String -> Element msg
 navLink currentRoute route label url =
     let
         isActive = currentRoute == route
-        _ = Debug.log "Nav route comparison" 
-            { current = Debug.toString currentRoute
-            , target = Debug.toString route
-            , isActive = isActive
-            , label = label
-            }
     in
     link
         ([ padding 12

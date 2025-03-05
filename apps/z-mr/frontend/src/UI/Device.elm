@@ -8,8 +8,6 @@ module UI.Device exposing
     , responsiveSpacing
     )
 
-import Debug
-
 -- DEVICE CLASSIFICATION
 type DeviceClass
     = Phone
@@ -55,76 +53,40 @@ classifyDevice width height =
                 Tablet
             else
                 Desktop
-                
-        device =
-            { class = deviceClass
-            , orientation = orientation
-            , width = width
-            , height = height
-            }
-            
-        _ =
-            Debug.log "Device classification" 
-                { width = width
-                , height = height
-                , aspectRatio = aspectRatio
-                , deviceClass = Debug.toString deviceClass
-                , orientation = Debug.toString orientation
-                }
     in
-    device
+    { class = deviceClass
+    , orientation = orientation
+    , width = width
+    , height = height
+    }
 
 -- RESPONSIVE UTILITIES
 responsiveSpacing : Device -> Int -> Int
 responsiveSpacing device base =
-    let
-        calculated =
-            case device.class of
-                Phone ->
-                    base // 2
-                
-                Tablet ->
-                    if device.orientation == Portrait then
-                        base * 3 // 4
-                    else
-                        base
-                
-                Desktop ->
-                    base
-                    
-        _ =
-            Debug.log "Responsive spacing" 
-                { deviceClass = Debug.toString device.class
-                , orientation = Debug.toString device.orientation
-                , base = base
-                , calculated = calculated
-                }
-    in
-    calculated
+    case device.class of
+        Phone ->
+            base // 2
+        
+        Tablet ->
+            if device.orientation == Portrait then
+                base * 3 // 4
+            else
+                base
+        
+        Desktop ->
+            base
 
 responsiveFontSize : Device -> Int -> Int
 responsiveFontSize device base =
-    let
-        calculated =
-            case device.class of
-                Phone ->
-                    base * 4 // 5
-                
-                Tablet ->
-                    if device.orientation == Portrait then
-                        base * 9 // 10
-                    else
-                        base
-                
-                Desktop ->
-                    base
-                    
-        _ =
-            Debug.log "Responsive font size" 
-                { deviceClass = Debug.toString device.class
-                , orientation = Debug.toString device.orientation
-                , base = base
-                , calculated = calculated
-                }
-    in
-    calculated 
+    case device.class of
+        Phone ->
+            base * 4 // 5
+        
+        Tablet ->
+            if device.orientation == Portrait then
+                base * 9 // 10
+            else
+                base
+        
+        Desktop ->
+            base 
