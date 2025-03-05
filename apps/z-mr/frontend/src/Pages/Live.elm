@@ -2,6 +2,7 @@ module Pages.Live exposing (Model, Msg, page)
 
 import Api
 import Api.Point as Point exposing (Point)
+import Api.ZPoint as ZPoint
 import Effect exposing (Effect)
 import Element exposing (..)
 import Element.Background as Background
@@ -236,6 +237,11 @@ statusCard points =
             , { name = "CPU Usage", value = Round.round 2 (Point.getFloat points Point.typeMetricSysCPUPercent "0") ++ "%" }
             , { name = "Uptime", value = Point.getText points Point.typeUptime "0" ++ "s" }
             , { name = "Temperature", value = Round.round 2 (Point.getFloat points Point.typeTemperature "0") ++ " °C" }
+            , { name = "Fan 1 speed", value = formatNumber (Point.getInt points ZPoint.typeFanSpeed "0") ++ " RPM" }
+            , { name = "Fan 2 speed", value = formatNumber (Point.getInt points ZPoint.typeFanSpeed "1") ++ " RPM" }
+            , { name = "Fan 1 status", value = Point.getText points ZPoint.typeFanStatus "0" }
+            , { name = "Fan 2 status", value = Point.getText points ZPoint.typeFanStatus "1" }
+            , { name = "User switch", value = formatOnOff (Point.getInt points ZPoint.typeSwitch "0") }
             ]
     in
     card
@@ -422,3 +428,36 @@ transition { property, duration } =
 pointFetch : Effect Msg
 pointFetch =
     Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
+
+
+formatOnOff : Int -> String
+formatOnOff number =
+    case number of
+        1 ->
+            "On"
+
+        _ ->
+            "Off"
+
+
+formatNumber : Int -> String
+formatNumber number =
+    let
+        numberString =
+            String.fromInt (abs number)
+
+        reversedDigits =
+            String.toList numberString |> List.reverse
+
+        groupedDigits =
+            List.Extra.greedyGroupsOf 3 reversedDigits
+                |> List.map String.fromList
+                |> List.map String.reverse
+                |> List.reverse
+                |> String.join ","
+    in
+    if number < 0 then
+        "-" ++ groupedDigits
+
+    else
+        groupedDigits

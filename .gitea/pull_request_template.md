@@ -2,6 +2,7 @@
 
 Please verify this PR includes the following if relevant:
 
+- [ ] merge main: `git fetch && git merge origin/main`
 - [ ] format code: `z_format`
 - [ ] zephyr tests pass: `z_test`
 - [ ] builds with no errors or warnings: `z_mr_build`

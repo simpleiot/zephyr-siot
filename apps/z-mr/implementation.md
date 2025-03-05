@@ -47,22 +47,22 @@ instead of HTTP requests (Ethernet). The BT connection will be able to display
 everything the web connection will, with the exception of delivering the inital
 page.
 
-- get Bluetooth working on Z-MR under Zephyr and responding to some request
-  - add ble thread
-- implement a web-bt javascript module in the Z-MR web UI to connect with the
-  Z-MR
-  - may need to embed this module in the image, similar to index.html and
-    index.js
-- implement an ELM UI to display discovered devices and select one. This will
-  communicate with JS code over ports.
-- research if we can stream points over a single UUID using BLE, or if we will
-  need a separate UUID for every point.
-- frontend: create a Elm port to receive points and update local state
-- cache points in ble thread and send to web UI on BT connection. Points are
-  sent to Elm through port.
-- create another Elm port to send any modified points to the BLE JS code. If
-  there is a connection active, these points get written over BLE.
-- only start BLE after button press and shut off after 15m
+1. get Bluetooth working on Z-MR under Zephyr and responding to some request
+   - add ble thread
+1. implement a web-bt javascript module in the Z-MR web UI to connect with the
+   Z-MR
+   - may need to embed this module in the image, similar to index.html and
+     index.js
+1. implement an ELM UI to display discovered devices and select one. This will
+   communicate with JS code over ports.
+1. research if we can stream points over a single UUID using BLE, or if we will
+   need a separate UUID for every point.
+1. frontend: create a Elm port to receive points and update local state
+1. cache points in ble thread and send to web UI on BT connection. Points are
+   sent to Elm through port.
+1. create another Elm port to send any modified points to the BLE JS code. If
+   there is a connection active, these points get written over BLE.
+1. only start BLE after button press and shut off after 15m
 
 ## Serial
 
@@ -70,36 +70,59 @@ Goal is the same as the Bluetooth -- the web UI will display the same
 information as Ethernet connection. We will leverage the existing terminal and
 parse terminal activity to read and set points.
 
-- add command to dump points to serial terminal (we may have a command to
-  enable/disable this so it is not noisy during development)
-- add a terminal command to send points
-- create JS code in Z-MR web UI to open a serial port and read the terminal data
-- create an ELM UI to configure the serial connection and communicate over ports
-  to the JS code.
-- once connection is made, the serial code will listen to the same Elm ports as
-  BT to receive and send points.
-- BONUS: display raw terminal traffic in ELM web UI (perhaps a diagnostic page)
-- BONUS^2: accept terminal commands in ELM web UI terminal display
+1. add command to dump points to serial terminal (we may have a command to
+   enable/disable this so it is not noisy during development)
+1. add a terminal command to send points
+1. create JS code in Z-MR web UI to open a serial port and read the terminal
+   data
+1. create an ELM UI to configure the serial connection and communicate over
+   ports to the JS code.
+1. once connection is made, the serial code will listen to the same Elm ports as
+   BT to receive and send points.
+1. BONUS: display raw terminal traffic in ELM web UI (perhaps a diagnostic page)
+1. BONUS^2: accept terminal commands in ELM web UI terminal display
 
 ## PWA
 
-- figure out and document setup for development (requires HTTPS)
-- create manifest.json and embed in image
-- add service worker if necessary
-- create a way to host this web page outside of the Z-MR for instances where a
-  Z-MR is not connected yet.
+1. figure out and document setup for development (requires HTTPS)
+1. create manifest.json and embed in image
+1. add service worker if necessary
+1. create a way to host this web page outside of the Z-MR for instances where a
+   Z-MR is not connected yet.
 
 ## zSync
 
 zSync is a connection with an upstream zIQ device. Communication is using the
 SIOT data structures that are already in place on the zIQ.
 
-- research connection protocols -- can we use MQTT?
-- add MQTT on the Z-MR
-- enable MQTT on the Z-IQ (NATS comes with a built-in MQTT server, but we have
-  not used it yet).
-- create a Z-MR client in Z-IQ -- perhaps use the same Web UI as the Z-MR if
-  possible.
-- use mDNS to enable Z-MR to discover Z-IQ instances.
-- create Z-MR ELM UI to select which Z-IQ instance to connect to
-- use MQTT to sync points bi-directionally between Z-MR and Z-IQ.
+1. research connection protocols -- can we use MQTT?
+1. add MQTT on the Z-MR
+1. enable MQTT on the Z-IQ (NATS comes with a built-in MQTT server, but we have
+   not used it yet).
+1. create a Z-MR client in Z-IQ -- perhaps use the same Web UI as the Z-MR if
+   possible.
+1. use mDNS to enable Z-MR to discover Z-IQ instances.
+1. create Z-MR ELM UI to select which Z-IQ instance to connect to
+1. use MQTT to sync points bi-directionally between Z-MR and Z-IQ.
+
+## Z-MR Local History Storage
+
+We will store a short number of events on the Z-MR so we can display recent
+events on the local web UI. We will use the NVS storage to store this data as
+points.
+
+1. get time working on Z-MR
+1. ensure all points that are stored in history have point time field populated
+1. define a point type for ATS event in `zpoint.h`
+1. allocate a range of nvs IDs for history data (say X slots from 501 to 501 +
+   X)
+1. these slots will form a circular buffer
+1. allocate a NVS entry for the current head of the history buffer
+1. create a NVS api to specify points that will be stored in history
+1. when NVS thread sees a history point, it stores it in the circular buffer
+   - adds one to current head, and wraps when at the end of history buffer
+1. create an API to get points from history
+1. update web.c to add a history REST endpoint that will return all history
+   points
+1. update web.c to populate time in JSON points as RFC3339
+1. add UI code to display points on Events tab
