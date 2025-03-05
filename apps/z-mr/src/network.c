@@ -9,7 +9,7 @@
 #include <zephyr/net/dhcpv4.h>
 #include <zephyr/net/socket.h>
 #include <zephyr/net/sntp.h>
-
+#include <zephyr/sys/reboot.h>
 
 #define STACKSIZE 1024
 #define PRIORITY 1
@@ -26,6 +26,8 @@ ZBUS_MSG_SUBSCRIBER_DEFINE(network_sub);
 ZBUS_CHAN_ADD_OBS(point_chan, network_sub, 3);
 
 static struct net_mgmt_event_callback dhcp_cb;
+
+static int boot_count = 0;
 
 static void dhcp_handler(struct net_mgmt_event_callback *cb,
                          uint32_t mgmt_event,
@@ -149,51 +151,85 @@ void configure_ntp_static(void) {
 
 }
 
-// this configures our static IP
-void configure_static_ip(void) {
-
+int configure_static_ip(void) {
     struct net_if *iface = net_if_get_default();
-    struct in_addr address;
-    struct in_addr netmask;
-    struct in_addr gateway;
+    struct in_addr address, netmask, gateway;
 
     LOG_DBG("Configuring static IP");
 
     net_dhcpv4_stop(iface);
-
-    k_sleep(K_MSEC(1000));
-
     remove_all_ipv4_addresses(iface);
 
     LOG_DBG("Removed IP");
-
-    k_sleep(K_MSEC(1000));
-
     LOG_DBG("One last confirmation of value: %s", buffer.static_ip_address);
 
     if (net_addr_pton(AF_INET, buffer.static_ip_address, &address) < 0) {
         LOG_ERR("Invalid address: %s", buffer.static_ip_address);
-        return;
+        return -EINVAL;
     }
     if (net_addr_pton(AF_INET, buffer.static_ip_netmask, &netmask) < 0) {
         LOG_ERR("Invalid netmask: %s", buffer.static_ip_netmask);
-        return;
+        return -EINVAL;
     }
+
+    net_if_ipv4_addr_add(iface, &address, NET_ADDR_MANUAL, 0);
+    net_if_ipv4_set_netmask_by_addr(iface, &address, &netmask);
 
     if (strlen(buffer.static_ip_gateway) > 0) {
         if (net_addr_pton(AF_INET, buffer.static_ip_gateway, &gateway) < 0) {
             LOG_ERR("Invalid gateway: %s", buffer.static_ip_gateway);
-        } else {
-            net_if_ipv4_set_gw(iface, &gateway);
+            return -EINVAL;
         }
+        net_if_ipv4_set_gw(iface, &gateway);
     }
 
-    net_if_down(iface);
-    net_if_up(iface);
+    LOG_DBG("Static IP configured successfully");
 
-    LOG_DBG("INTERFACE UP");
-
+    return 0;
 }
+
+int configure_static_ip_restart(void) {
+    struct net_if *iface = net_if_get_default();
+    struct in_addr address, netmask, gateway;
+
+    LOG_DBG("Configuring static IP");
+
+    net_dhcpv4_stop(iface);
+    remove_all_ipv4_addresses(iface);
+
+    LOG_DBG("Removed IP");
+    LOG_DBG("One last confirmation of value: %s", buffer.static_ip_address);
+
+    if (net_addr_pton(AF_INET, buffer.static_ip_address, &address) < 0) {
+        LOG_ERR("Invalid address: %s", buffer.static_ip_address);
+        return -EINVAL;
+    }
+    if (net_addr_pton(AF_INET, buffer.static_ip_netmask, &netmask) < 0) {
+        LOG_ERR("Invalid netmask: %s", buffer.static_ip_netmask);
+        return -EINVAL;
+    }
+
+    net_if_ipv4_addr_add(iface, &address, NET_ADDR_MANUAL, 0);
+    net_if_ipv4_set_netmask(iface, &netmask);
+
+    if (strlen(buffer.static_ip_gateway) > 0) {
+        if (net_addr_pton(AF_INET, buffer.static_ip_gateway, &gateway) < 0) {
+            LOG_ERR("Invalid gateway: %s", buffer.static_ip_gateway);
+            return -EINVAL;
+        }
+        net_if_ipv4_set_gw(iface, &gateway);
+    }
+
+    LOG_DBG("Static IP configured successfully");
+    LOG_DBG("Restarting");
+
+    k_sleep(K_MSEC(2000));
+
+    sys_reboot(SYS_REBOOT_COLD);
+    
+    return 0;
+}
+
 
 // this just sets DHCP (back) up
 void configure_dhcp(void) {
@@ -232,7 +268,18 @@ static int network_init_start() {
         strcmp(buffer.static_ip_address, "") != 0 &&
         strcmp(buffer.static_ip_netmask, "") != 0) {
 
-        configure_static_ip();
+        if (boot_count == 0) {
+
+            configure_static_ip();
+            boot_count++;
+
+        } else {
+
+            configure_static_ip_restart();
+
+        }
+
+        
         // configure_ntp_static();
 
     } else {
