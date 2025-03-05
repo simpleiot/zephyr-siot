@@ -36,4 +36,9 @@ typedef enum {
 	ATS_ERROR,
 } ats_chan_state;
 
+#define POINT_TYPE_IPN      "ipn"
+#define POINT_TYPE_ID       "id"
+#define POINT_TYPE_MFG_DATE "mfgDate"
+#define POINT_TYPE_VERSION  "version"
+
 #endif // __ZPOINT_H_
