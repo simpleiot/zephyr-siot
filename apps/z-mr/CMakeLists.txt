@@ -21,6 +21,7 @@ target_sources(app PRIVATE
 	src/snmp.c
 	# src/ble.c
 	snmp/z-mr.mib.c
+	src/eeprom.c
 )
 
 set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)
