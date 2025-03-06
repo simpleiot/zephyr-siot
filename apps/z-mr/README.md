@@ -51,6 +51,11 @@ NVS thread to listen for this point type and store it in flash any time it sees
 it. On boot, it will also read these points from flash and send them on the
 points channel to configure the system with the saved settings.
 
+## EEPROM
+
+Every PCB contains an EEPROM that stores factory data. See
+[general spec](https://gitea.zonit.com/Zonit-Dev/product/src/branch/master/eeprom-format.md).
+
 ## Web UI Frontend
 
 The web UI for the project is a single-page application (SPA) written in Elm

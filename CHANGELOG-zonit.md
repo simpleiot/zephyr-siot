@@ -23,3 +23,4 @@ and this project adheres to
   - See `apps/z-mr/snmp/snmp_test.sh`
   - See `apps/z-mr/snmp/z-mr.mib.[ch]`
 - Enable LLMNR responder in Zephyr. It saves looking up IP-addresses.
+- store IPN, ID, HW Version, and MFG Date in EEPROM
