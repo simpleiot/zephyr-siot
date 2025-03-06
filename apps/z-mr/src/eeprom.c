@@ -19,11 +19,6 @@
 
 #define EEPROM_STRING_LEN 30
 
-#define EEPROM_IPN_OFFSET      0
-#define EEPROM_VERSION_OFFSET  (EEPROM_IPN_OFFSET + EEPROM_STRING_LEN)
-#define EEPROM_ID_OFFSET       (EEPROM_VERSION_OFFSET + sizeof(uint32_t))
-#define EEPROM_MFG_DATE_OFFSET (EEPROM_ID_OFFSET + EEPROM_STRING_LEN)
-
 #define STACKSIZE 1024
 #define PRIORITY  7
 
@@ -39,7 +34,7 @@ struct eeprom_point {
 };
 
 const point_def point_def_ipn = {POINT_TYPE_IPN, POINT_DATA_TYPE_STRING};
-const point_def point_def_version = {POINT_TYPE_VERSION, POINT_DATA_TYPE_INT};
+const point_def point_def_version = {POINT_TYPE_VERSION_HW, POINT_DATA_TYPE_INT};
 const point_def point_def_id = {POINT_TYPE_ID, POINT_DATA_TYPE_STRING};
 const point_def point_def_mfg_date = {POINT_TYPE_MFG_DATE, POINT_DATA_TYPE_STRING};
 
@@ -154,6 +149,33 @@ void eeprom_send_points(const struct device *dev)
 	}
 }
 
+int eeprom_handle_point(const struct device *dev, point *p)
+{
+	size_t max;
+	for (int i = 0; i < ARRAY_SIZE(eeprom_points); i++) {
+		if (strcmp(p->type, eeprom_points[i].point_def->type) == 0) {
+			LOG_DBG_POINT("Writing point to eeprom", p);
+			LOG_DBG("CLIFF: Offset: %i", eeprom_points[i].offset);
+			switch (eeprom_points[i].point_def->data_type) {
+			case POINT_DATA_TYPE_STRING:
+				max = MIN(sizeof(p->data), EEPROM_STRING_LEN);
+				return eeprom_write_string(dev, eeprom_points[i].offset, p->data,
+							   max);
+			case POINT_DATA_TYPE_INT:
+				return eeprom_write_uint32(dev, eeprom_points[i].offset,
+							   *(uint32_t *)p->data);
+			default:
+				LOG_ERR("eeprom write, unhandled data type %s: %i",
+					eeprom_points[i].point_def->type,
+					eeprom_points[i].point_def->data_type);
+				return -1;
+			}
+		}
+	}
+
+	return 0;
+}
+
 void eeprom_thread(void *arg1, void *arg2, void *arg3)
 {
 	const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(m24512));
@@ -179,38 +201,11 @@ void eeprom_thread(void *arg1, void *arg2, void *arg3)
 		LOG_DBG("Error adding observer: %i", ret);
 	}
 
-	size_t max_eeprom_write = MIN(sizeof(p.data), EEPROM_STRING_LEN);
-
 	while (!zbus_sub_wait_msg(&eeprom_sub, &chan, &p, K_FOREVER)) {
 		if (chan == &point_chan) {
-			if (strcmp(p.type, POINT_TYPE_IPN) == 0) {
-				int rc = eeprom_write_string(dev, EEPROM_IPN_OFFSET, p.data,
-							     max_eeprom_write);
-
-				if (rc != 0) {
-					LOG_ERR("Error writing IPN to eeprom: %i", rc);
-				}
-			} else if (strcmp(p.type, POINT_TYPE_ID) == 0) {
-				int rc = eeprom_write_string(dev, EEPROM_IPN_OFFSET, p.data,
-							     max_eeprom_write);
-
-				if (rc != 0) {
-					LOG_ERR("Error writing id to eeprom: %i", rc);
-				}
-			} else if (strcmp(p.type, POINT_TYPE_MFG_DATE) == 0) {
-				int rc = eeprom_write_string(dev, EEPROM_MFG_DATE_OFFSET, p.data,
-							     max_eeprom_write);
-
-				if (rc != 0) {
-					LOG_ERR("Error writing mfg date to eeprom: %i", rc);
-				}
-			} else if (strcmp(p.type, POINT_TYPE_VERSION) == 0) {
-				int rc = eeprom_write_uint32(dev, EEPROM_VERSION_OFFSET,
-							     point_get_int(&p));
-
-				if (rc != 0) {
-					LOG_ERR("Error writing mfg date to eeprom: %i", rc);
-				}
+			int rc = eeprom_handle_point(dev, &p);
+			if (rc != 0) {
+				LOG_ERR("eeprom write error %s: %i", p.type, rc);
 			}
 		}
 	}
