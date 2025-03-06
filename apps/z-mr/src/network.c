@@ -265,6 +265,9 @@ void configure_dhcp_restart(void)
 
 	net_dhcpv4_start(iface);
 
+	k_sleep(K_MSEC(2000));
+
+
 	sys_reboot(SYS_REBOOT_COLD);
 
 
