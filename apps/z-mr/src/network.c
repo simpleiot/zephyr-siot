@@ -209,7 +209,7 @@ int configure_static_ip_restart(void)
 	}
 
 	net_if_ipv4_addr_add(iface, &address, NET_ADDR_MANUAL, 0);
-	net_if_ipv4_set_netmask(iface, &netmask);
+	net_if_ipv4_set_netmask_by_addr(iface, &address, &netmask);
 
 	if (strlen(buffer.static_ip_gateway) > 0) {
 		if (net_addr_pton(AF_INET, buffer.static_ip_gateway, &gateway) < 0) {
@@ -249,6 +249,31 @@ void configure_dhcp(void)
 	LOG_DBG("interface started");
 }
 
+void configure_dhcp_restart(void)
+{
+
+	LOG_DBG("Configuring DHCP");
+
+	struct net_if *iface = net_if_get_default();
+
+	net_mgmt_init_event_callback(&dhcp_cb, dhcp_handler, NET_EVENT_IPV4_ADDR_ADD);
+	net_mgmt_add_event_callback(&dhcp_cb);
+
+	remove_all_ipv4_addresses(iface);
+
+	net_if_up(iface);
+
+	net_dhcpv4_start(iface);
+
+	k_sleep(K_MSEC(2000));
+
+
+	sys_reboot(SYS_REBOOT_COLD);
+
+
+	LOG_DBG("interface started");
+}
+
 // this is run every time we receive a new point, but only runs if we have non-null values in buffer
 // the value of this is if someone clicks staticIP, but does not enter gateway, address,
 // or netmask values, this will not turn off DHCP, and thus will change nothing.
@@ -279,7 +304,16 @@ static int network_init_start()
 
 	} else {
 
-		configure_dhcp();
+		if (boot_count == 0) {
+
+			configure_dhcp();
+			boot_count++;
+
+		} else {
+
+			configure_dhcp_restart();
+		}
+
 	}
 
 	return 0;
