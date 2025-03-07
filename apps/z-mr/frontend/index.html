@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Z-MR</title>
+    <style>
+        :root {
+            /* Prevent iOS text size adjustment */
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            font-family: 'IBM Plex Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        #app {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS */
+        }
+
+        /* Prevent text selection on interactive elements */
+        button, a {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* Improve touch targets on mobile */
+        @media (max-width: 428px) {
+            button, a, input, select {
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
+
+        /* Prevent rubber-band scrolling on iOS */
+        .elm-element {
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: touch;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    <script src=`dist/index.js?v=${Date.now()}`></script>
+    <script>
+        // Force reload on visibility change (helps with Safari)
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                location.reload(true);
+            }
+        });
+
+        // Initialize the Elm app with logical pixels (accounting for device pixel ratio)
+        const app = Elm.Main.init({
+            node: document.getElementById('app'),
+            flags: {
+                width: Math.round(window.innerWidth / window.devicePixelRatio),
+                height: Math.round(window.innerHeight / window.devicePixelRatio)
+            }
+        });
+
+        // Handle window resize events with logical pixels and debouncing
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                const width = Math.round(window.innerWidth / window.devicePixelRatio);
+                const height = Math.round(window.innerHeight / window.devicePixelRatio);
+                console.log('Resize event:', { width, height, ratio: window.devicePixelRatio });
+                app.ports.onWindowResize.send({ width, height });
+            }, 250); // Debounce resize events
+        });
+
+        // Handle orientation changes explicitly
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                const width = Math.round(window.innerWidth / window.devicePixelRatio);
+                const height = Math.round(window.innerHeight / window.devicePixelRatio);
+                app.ports.onWindowResize.send({ width, height });
+            }, 100); // Small delay to ensure dimensions are updated
+        });
+
+        // Prevent unwanted touch behaviors
+        document.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.elm-element')) return;
+            e.preventDefault();
+        }, { passive: false });
+    </script>
+</body>
+</html> 

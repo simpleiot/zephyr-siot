@@ -2,13 +2,11 @@ module Pages.Live exposing (Model, Msg, page)
 
 import Api
 import Api.Point as Point exposing (Point)
-import Api.ZPoint as ZPoint
 import Effect exposing (Effect)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import Html.Attributes as Attr
 import Http
 import List.Extra
 import Page exposing (Page)
@@ -16,18 +14,20 @@ import Round
 import Route exposing (Route)
 import Shared
 import Time
+import UI.Device as Device exposing (Device)
 import UI.Nav as Nav
+import UI.Page as PageUI
 import UI.Style as Style
 import View exposing (View)
 
 
 page : Shared.Model -> Route () -> Page Model Msg
-page _ _ =
+page shared _ =
     Page.new
         { init = init
         , update = update
         , subscriptions = subscriptions
-        , view = view
+        , view = view shared
         }
 
 
@@ -97,66 +97,42 @@ subscriptions _ =
 -- VIEW
 
 
-view : Model -> View Msg
-view model =
-    { title = "Z-MR Live View"
-    , attributes = []
-    , element =
-        column
-            [ spacing 32
-            , padding 40
-            , width (fill |> maximum 1280)
-            , height fill
-            , centerX
-            , Background.color Style.colors.pale
+view : Shared.Model -> Model -> View Msg
+view shared model =
+    let
+        device =
+            Device.classifyDevice shared.windowWidth shared.windowHeight
+    in
+    PageUI.view
+        { title = "Z-MR Live View"
+        , device = device
+        , layout = PageUI.Standard Nav.Live
+        , header = PageUI.header device "Live View"
+        , content =
+            [ deviceContent device model
             ]
-            [ header
-            , Nav.view Nav.Live
-            , deviceContent model
-            ]
-    }
+        }
 
 
-header : Element Msg
-header =
-    row
-        [ spacing 32
-        , padding 24
-        , width fill
-        , Background.color Style.colors.white
-        , Border.rounded 12
-        , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
-        ]
-        [ image
-            [ width (px 180)
-            , alignLeft
-            ]
-            { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
-            , description = "Z-MR"
-            }
-        , el [ Font.size 32, Font.bold, Font.color Style.colors.jet ] <| text "Live View"
-        ]
-
-
-h1 : String -> Element Msg
-h1 txt =
-    el
-        [ Font.size 24
+h1 : Device -> String -> Element Msg
+h1 device txt =
+    paragraph
+        [ Font.size (Device.responsiveFontSize device 24)
         , Font.semiBold
         , Font.color Style.colors.jet
         , paddingEach { top = 16, right = 0, bottom = 8, left = 0 }
+        , width fill
         ]
     <|
-        text txt
+        [ text txt ]
 
 
-card : List (Element Msg) -> Element Msg
-card content =
+card : Device -> List (Element Msg) -> Element Msg
+card device content =
     column
-        [ spacing 16
-        , padding 24
+        [ spacing (Device.responsiveSpacing device 16)
+        , padding (Device.responsiveSpacing device 24)
         , width fill
-        , height fill
         , Background.color Style.colors.white
         , Border.rounded 12
         , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
@@ -164,8 +140,39 @@ card content =
         content
 
 
-deviceContent : Model -> Element Msg
-deviceContent model =
+deviceContent : Device -> Model -> Element Msg
+deviceContent device model =
+    let
+        contentLayout =
+            case device.class of
+                Device.Phone ->
+                    column
+                        [ spacing (Device.responsiveSpacing device 16)
+                        , width fill
+                        , centerX
+                        ]
+
+                Device.Tablet ->
+                    column
+                        [ spacing (Device.responsiveSpacing device 24)
+                        , width fill
+                        , centerX
+                        ]
+
+                Device.Desktop ->
+                    column
+                        [ spacing (Device.responsiveSpacing device 24)
+                        , width (fill |> maximum Device.breakpoints.maxContentWidth)
+                        , centerX
+                        ]
+
+        cardWrapper content =
+            el
+                [ width fill
+                , alignTop
+                ]
+                content
+    in
     case model.points of
         Api.Loading ->
             let
@@ -177,77 +184,86 @@ deviceContent model =
                     , Point Point.typeTemperature "0" Point.dataTypeFloat "35.2"
                     ]
             in
-            row [ spacing 24, width fill ]
-                [ el [ width (fillPortion 3) ] <| statusCard mockPoints
-                , el [ width (fillPortion 2) ] <| atsStateCard mockPoints model.blink
+            contentLayout
+                [ cardWrapper (statusCard device mockPoints)
+                , cardWrapper (atsStateCard device mockPoints model.blink)
                 ]
 
         Api.Success points ->
-            row [ spacing 24, width fill ]
-                [ el [ width (fillPortion 3) ] <| statusCard points
-                , el [ width (fillPortion 2) ] <| atsStateCard points model.blink
+            contentLayout
+                [ cardWrapper (statusCard device points)
+                , cardWrapper (atsStateCard device points model.blink)
                 ]
 
         Api.Failure httpError ->
-            card
-                [ el
-                    [ Font.color Style.colors.red
-                    , Font.size 16
-                    , padding 16
-                    , width fill
-                    , Border.rounded 8
-                    , Background.color (rgba 1 0 0 0.1)
-                    ]
-                  <|
-                    text <|
-                        "Lost connection: "
-                            ++ Api.toUserFriendlyMessage httpError
-                ]
+            contentLayout
+                [ cardWrapper (errorCard device httpError) ]
 
 
-statusCard : List Point -> Element Msg
-statusCard points =
+statusCard : Device -> List Point -> Element Msg
+statusCard device points =
     let
-        metricRow name value =
+        fontSize =
+            Device.responsiveFontSize device 14
+
+        metrics =
+            [ { type_ = "board", key = "0", label = "Board", formatter = \p -> Point.getText p "board" "0" }
+            , { type_ = "bootCount", key = "0", label = "Boot Count", formatter = \p -> Point.getText p "bootCount" "0" }
+            , { type_ = "metricSysCPUPercent", key = "0", label = "CPU Usage", formatter = \p -> Round.round 2 (Point.getFloat p "metricSysCPUPercent" "0") ++ "%" }
+            , { type_ = "uptime", key = "0", label = "Uptime", formatter = \p -> Point.getText p "uptime" "0" ++ "s" }
+            , { type_ = "temperature", key = "0", label = "Temperature", formatter = \p -> Round.round 2 (Point.getFloat p "temperature" "0") ++ " °C" }
+            , { type_ = "fanSpeed", key = "0", label = "Fan 1 speed", formatter = \p -> formatNumber (Point.getInt p "fanSpeed" "0") ++ " RPM" }
+            , { type_ = "fanSpeed", key = "1", label = "Fan 2 speed", formatter = \p -> formatNumber (Point.getInt p "fanSpeed" "1") ++ " RPM" }
+            , { type_ = "fanStatus", key = "0", label = "Fan 1 status", formatter = \p -> Point.getText p "fanStatus" "0" }
+            , { type_ = "fanStatus", key = "1", label = "Fan 2 status", formatter = \p -> Point.getText p "fanStatus" "1" }
+            , { type_ = "switch", key = "0", label = "User switch", formatter = \p -> formatOnOff (Point.getInt p "switch" "0") }
+            ]
+
+        statusRow metric =
             row
-                [ spacing 16
-                , padding 16
+                [ spacing (Device.responsiveSpacing device 16)
                 , width fill
-                , Border.rounded 8
-                , mouseOver [ Background.color Style.colors.pale ]
-                , transition { property = "background-color", duration = 150 }
+                , Font.size fontSize
                 ]
                 [ el
-                    [ Font.color Style.colors.gray
-                    , width (px 120)
+                    [ width (fillPortion 1)
+                    , Font.color Style.colors.gray
                     ]
-                  <|
-                    text name
+                    (text metric.label)
                 , el
-                    [ Font.semiBold
+                    [ width (fillPortion 2)
                     , Font.color Style.colors.jet
                     ]
-                  <|
-                    text value
+                    (text (metric.formatter points))
                 ]
-
-        data =
-            [ { name = "Board", value = Point.getText points Point.typeBoard "0" }
-            , { name = "Boot count", value = Point.getText points Point.typeBootCount "0" }
-            , { name = "CPU Usage", value = Round.round 2 (Point.getFloat points Point.typeMetricSysCPUPercent "0") ++ "%" }
-            , { name = "Uptime", value = Point.getText points Point.typeUptime "0" ++ "s" }
-            , { name = "Temperature", value = Round.round 2 (Point.getFloat points Point.typeTemperature "0") ++ " °C" }
-            , { name = "Fan 1 speed", value = formatNumber (Point.getInt points ZPoint.typeFanSpeed "0") ++ " RPM" }
-            , { name = "Fan 2 speed", value = formatNumber (Point.getInt points ZPoint.typeFanSpeed "1") ++ " RPM" }
-            , { name = "Fan 1 status", value = Point.getText points ZPoint.typeFanStatus "0" }
-            , { name = "Fan 2 status", value = Point.getText points ZPoint.typeFanStatus "1" }
-            , { name = "User switch", value = formatOnOff (Point.getInt points ZPoint.typeSwitch "0") }
-            ]
     in
-    card
-        [ h1 "System Status"
-        , column [ spacing 4, width fill ] <|
-            List.map (\d -> metricRow d.name d.value) data
+    column
+        [ spacing (Device.responsiveSpacing device 8)
+        , width fill
+        ]
+        (List.map statusRow metrics)
+
+
+errorCard : Device -> Http.Error -> Element Msg
+errorCard device httpError =
+    column
+        [ spacing (Device.responsiveSpacing device 16)
+        , padding (Device.responsiveSpacing device 24)
+        , width fill
+        , height fill
+        , Background.color Style.colors.white
+        , Border.rounded 12
+        , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
+        ]
+        [ el
+            [ Font.color Style.colors.danger
+            , Font.size (Device.responsiveFontSize device 16)
+            , padding (Device.responsiveSpacing device 16)
+            , width fill
+            , Border.rounded 8
+            , Background.color (rgba 1 0 0 0.1)
+            ]
+            (PageUI.paragraph device PageUI.Body [] [ text ("Lost connection: " ++ Api.toUserFriendlyMessage httpError) ])
         ]
 
 
@@ -307,8 +323,8 @@ atsStateToLed side blink state =
             circleLtGray
 
 
-atsStateCard : List Point -> Bool -> Element Msg
-atsStateCard pts blink =
+atsStateCard : Device -> List Point -> Bool -> Element Msg
+atsStateCard device pts blink =
     let
         sideA =
             List.map
@@ -331,32 +347,33 @@ atsStateCard pts blink =
 
         cell content =
             el
-                [ paddingXY 8 12
+                [ paddingXY (Device.responsiveSpacing device 4) (Device.responsiveSpacing device 8)
                 , centerX
                 , centerY
                 , Font.center
+                , Font.size (Device.responsiveFontSize device 14)
                 ]
                 content
 
         headerCell content =
             el
-                [ paddingXY 8 12
+                [ paddingXY (Device.responsiveSpacing device 4) (Device.responsiveSpacing device 8)
                 , centerX
                 , centerY
                 , Font.center
                 , Font.semiBold
                 , Font.color Style.colors.gray
+                , Font.size (Device.responsiveFontSize device 14)
                 ]
                 content
     in
-    card
-        [ h1 "ATS Status"
-        , column [ height fill, width fill, spacing 0 ] <|
+    card device
+        [ h1 device "ATS Status"
+        , column [ width fill, spacing 0 ] <|
             [ table
-                [ spacing 12
-                , padding 16
+                [ spacing (Device.responsiveSpacing device 8)
+                , padding (Device.responsiveSpacing device 4)
                 , width fill
-                , height fill
                 , Background.color Style.colors.pale
                 , Border.rounded 8
                 ]
@@ -417,14 +434,6 @@ circle color =
         Element.none
 
 
-transition : { property : String, duration : Int } -> Attribute msg
-transition { property, duration } =
-    Element.htmlAttribute
-        (Attr.style "transition"
-            (property ++ " " ++ String.fromInt duration ++ "ms ease-in-out")
-        )
-
-
 pointFetch : Effect Msg
 pointFetch =
     Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
@@ -461,3 +470,7 @@ formatNumber number =
 
     else
         groupedDigits
+
+
+
+-- Default to mobile breakpoint for now. We'll need to pass actual window dimensions from the app level.
