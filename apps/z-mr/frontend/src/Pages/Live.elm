@@ -278,59 +278,49 @@ statusCard device points =
         ]
 
 
-statusRow : Device -> Point -> Element Msg
-statusRow device point =
+statusCard : Device -> List Point -> Element Msg
+statusCard device points =
     let
         fontSize =
             Device.responsiveFontSize device 14
-
-        label =
-            case point.typ of
-                "board" ->
-                    "Board"
-
-                "bootCount" ->
-                    "Boot Count"
-
-                "metricSysCPUPercent" ->
-                    "CPU Usage"
-
-                "uptime" ->
-                    "Uptime"
-
-                "temperature" ->
-                    "Temperature"
-
-                _ ->
-                    point.typ
-
-        value =
-            case point.typ of
-                "metricSysCPUPercent" ->
-                    Round.round 2 (Point.getFloat [ point ] point.typ point.key) ++ "%"
-
-                "uptime" ->
-                    Point.getText [ point ] point.typ point.key ++ "s"
-
-                _ ->
-                    Point.getText [ point ] point.typ point.key
+            
+        metrics =
+            [ { type_ = "board", key = "0", label = "Board", formatter = \p -> Point.getText p "board" "0" }
+            , { type_ = "bootCount", key = "0", label = "Boot Count", formatter = \p -> Point.getText p "bootCount" "0" }
+            , { type_ = "metricSysCPUPercent", key = "0", label = "CPU Usage", formatter = \p -> Round.round 2 (Point.getFloat p "metricSysCPUPercent" "0") ++ "%" }
+            , { type_ = "uptime", key = "0", label = "Uptime", formatter = \p -> Point.getText p "uptime" "0" ++ "s" }
+            , { type_ = "temperature", key = "0", label = "Temperature", formatter = \p -> Round.round 2 (Point.getFloat p "temperature" "0") ++ " °C" }
+            , { type_ = "fanSpeed", key = "0", label = "Fan 1 speed", formatter = \p -> formatNumber (Point.getInt p "fanSpeed" "0") ++ " RPM" }
+            , { type_ = "fanSpeed", key = "1", label = "Fan 2 speed", formatter = \p -> formatNumber (Point.getInt p "fanSpeed" "1") ++ " RPM" }
+            , { type_ = "fanStatus", key = "0", label = "Fan 1 status", formatter = \p -> Point.getText p "fanStatus" "0" }
+            , { type_ = "fanStatus", key = "1", label = "Fan 2 status", formatter = \p -> Point.getText p "fanStatus" "1" }
+            , { type_ = "switch", key = "0", label = "User switch", formatter = \p -> formatOnOff (Point.getInt p "switch" "0") }
+            ]
+            
+        statusRow metric =
+            row
+                [ spacing (Device.responsiveSpacing device 16)
+                , width fill
+                , Font.size fontSize
+                ]
+                [ el
+                    [ width (fillPortion 1)
+                    , Font.color Style.colors.gray
+                    ]
+                    (text metric.label)
+                , el
+                    [ width (fillPortion 2)
+                    , Font.color Style.colors.jet
+                    ]
+                    (text (metric.formatter points))
+                ]
     in
-    row
-        [ spacing (Device.responsiveSpacing device 16)
-        , width fill
-        , Font.size fontSize
-        ]
-        [ el
-            [ width (fillPortion 1)
-            , Font.color Style.colors.gray
-            ]
-            (text label)
-        , el
-            [ width (fillPortion 2)
-            , Font.color Style.colors.jet
-            ]
-            (text value)
-        ]
+    column 
+        [ spacing (Device.responsiveSpacing device 8)
+        , width fill 
+        ] 
+        (List.map statusRow metrics)
+
 
 
 errorCard : Device -> Http.Error -> Element Msg
