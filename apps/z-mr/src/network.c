@@ -74,6 +74,10 @@ struct ntpInfo {
 	char ntp_server_address[20];
 };
 
+static char used_ntp_server[20];
+struct sntp_time timestamp;
+
+
 static struct ntpInfo ntp_servers[NTP_SERVER_BUFFER_LENGTH];
 
 void remove_all_ipv4_addresses(struct net_if *iface)
@@ -128,9 +132,6 @@ void broadcast_new_ip(const char *new_ip)
 
 void configure_ntp_static(void)
 {
-
-	struct sntp_time timestamp;
-
 	int i;
 
 	for (i = 0; i < NTP_SERVER_BUFFER_LENGTH; i++) {
@@ -138,6 +139,7 @@ void configure_ntp_static(void)
 		int rc = sntp_simple(ntp_servers[i].ntp_server_address, NTP_TIMEOUT, &timestamp);
 		if (rc == 0) {
 
+			used_ntp_server = ntp_servers[i].ntp_server_address;
 			LOG_DBG("NTP Config Successful!");
 			return;
 
@@ -183,6 +185,8 @@ int configure_static_ip(bool network_started)
 	}
 
 	LOG_DBG("Static IP configured successfully");
+
+	configure_ntp_static();
 
 	if (network_started) {
 		sys_reboot(SYS_REBOOT_COLD);
@@ -255,6 +259,7 @@ void network_thread(void *arg1, void *arg2, void *arg3)
 	const struct zbus_channel *chan;
 
 	int status_tick = 0;
+	int sntp_tick = 0;
 	bool network_started = false;
 
 	while (!zbus_sub_wait_msg(&network_sub, &chan, &p, K_FOREVER)) {
@@ -298,10 +303,15 @@ void network_thread(void *arg1, void *arg2, void *arg3)
 			}
 		} else if (chan == &ticker_chan) {
 			status_tick++;
+			sntp_tick++;
 			if (status_tick >= 10) {
 				network_init_start(network_started);
 				network_started = true;
 				status_tick = 0;
+			}
+			if (sntp_tick >= 7200) {
+				int rc = sntp_simple(used_ntp_server, NTP_TIMEOUT, &timestamp);
+				sntp_tick=0;
 			}
 
 
