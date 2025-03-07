@@ -13,15 +13,15 @@ zephyr_include_directories(
 target_sources(app PRIVATE 
 	src/main.c
 	src/network.c 
-	src/led.c
-	src/w1.c
+	# src/led.c
+	# src/w1.c
 	src/web.c
-	src/dc.c
-	src/fan.c
-	src/ats.c
-	src/snmp.c
+	# src/dc.c
+	# src/fan.c
+	# src/ats.c
+	# src/snmp.c
 	# src/ble.c
-	snmp/z-mr.mib.c
+	# snmp/z-mr.mib.c
 )
 
 set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)

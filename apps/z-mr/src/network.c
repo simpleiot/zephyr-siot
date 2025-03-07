@@ -71,14 +71,14 @@ struct networkInfo {
 static struct networkInfo buffer = {0, "", "", ""};
 
 struct ntpInfo {
-	char ntp_server_address[20];
+	char ntp_server_address[40];
 };
 
-static char used_ntp_server[20];
 struct sntp_time timestamp;
 
 
 static struct ntpInfo ntp_servers[NTP_SERVER_BUFFER_LENGTH];
+static struct ntpInfo usedServer[1];
 
 void remove_all_ipv4_addresses(struct net_if *iface)
 {
@@ -136,12 +136,14 @@ void configure_ntp_static(void)
 
 	for (i = 0; i < NTP_SERVER_BUFFER_LENGTH; i++) {
 
-		int rc = sntp_simple(ntp_servers[i].ntp_server_address, NTP_TIMEOUT, &timestamp);
-		if (rc == 0) {
+		if (ntp_servers[i].ntp_server_address[0] != '\0' && usedServer[0].ntp_server_address[0] != '\0') {
 
-			used_ntp_server = ntp_servers[i].ntp_server_address;
-			LOG_DBG("NTP Config Successful!");
-			return;
+			int rc = sntp_simple(ntp_servers[i].ntp_server_address, NTP_TIMEOUT, &timestamp);
+			if (rc == 0) {
+				strncpy(usedServer[0].ntp_server_address, ntp_servers[i].ntp_server_address, sizeof(usedServer[0].ntp_server_address) - 1);
+				LOG_DBG("NTP Config Successful!");
+				return;
+			}
 
 		} else {
 
@@ -186,7 +188,7 @@ int configure_static_ip(bool network_started)
 
 	LOG_DBG("Static IP configured successfully");
 
-	configure_ntp_static();
+	// configure_ntp_static();
 
 	if (network_started) {
 		sys_reboot(SYS_REBOOT_COLD);
@@ -206,11 +208,14 @@ void configure_dhcp(bool network_started)
 	net_mgmt_init_event_callback(&dhcp_cb, dhcp_handler, NET_EVENT_IPV4_ADDR_ADD);
 	net_mgmt_add_event_callback(&dhcp_cb);
 
+	net_if_down(iface);
+
 	remove_all_ipv4_addresses(iface);
+
+	net_dhcpv4_start(iface);
 
 	net_if_up(iface);
 
-	net_dhcpv4_start(iface);
 
 	LOG_DBG("interface started");
 
@@ -232,11 +237,9 @@ static int network_init_start(bool network_started)
 	if (buffer.static_ip_state == 1 && strcmp(buffer.static_ip_address, "") != 0 &&
 	    strcmp(buffer.static_ip_netmask, "") != 0) {
 
-		configure_static_ip(network_started)
+		configure_static_ip(network_started);
 
 	} else {
-
-		if (boot_count == 0) {
 
 		configure_dhcp(network_started);
 	}
@@ -298,19 +301,19 @@ void network_thread(void *arg1, void *arg2, void *arg3)
 					sizeof(ntp_servers[server_priority]
 								.ntp_server_address) -
 						1);
-				configure_ntp_static();
+				// configure_ntp_static();
 				status_tick = 0;
+				sntp_tick = 0;
 			}
 		} else if (chan == &ticker_chan) {
 			status_tick++;
 			sntp_tick++;
-			if (status_tick >= 10) {
+			if (status_tick == 10) {
 				network_init_start(network_started);
 				network_started = true;
-				status_tick = 0;
 			}
 			if (sntp_tick >= 7200) {
-				int rc = sntp_simple(used_ntp_server, NTP_TIMEOUT, &timestamp);
+				sntp_simple(usedServer[0].ntp_server_address, NTP_TIMEOUT, &timestamp);
 				sntp_tick=0;
 			}
 
