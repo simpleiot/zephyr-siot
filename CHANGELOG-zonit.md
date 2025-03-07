@@ -18,3 +18,4 @@ and this project adheres to
   - UI to display fan speed/state and settings
   - initial tuning for 35mm fans with 0.25mH/3.25ohm inductor
 - Fixed crash when 1-wire sensor is not attached.
+- Improve UI rendering on mobile devices
