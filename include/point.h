@@ -49,6 +49,7 @@ typedef struct {
 #define POINT_TYPE_TEMPERATURE            "temp"
 #define POINT_TYPE_BOARD                  "board"
 #define POINT_TYPE_BOOT_COUNT             "bootCount"
+#define POINT_TYPE_NTP                    "ntpIP"
 
 typedef struct {
 	char *type;
@@ -65,6 +66,7 @@ extern const point_def point_def_uptime;
 extern const point_def point_def_temperature;
 extern const point_def point_def_board;
 extern const point_def point_def_boot_count;
+extern const point_def point_def_ntp;
 
 void point_set_type(point *p, const char *t);
 void point_set_key(point *p, const char *k);
