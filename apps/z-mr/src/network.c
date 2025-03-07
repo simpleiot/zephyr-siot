@@ -20,14 +20,15 @@
 // debug levels
 LOG_MODULE_REGISTER(z_network, LOG_LEVEL_DBG);
 
-// sets up point channel subscription
-ZBUS_CHAN_DECLARE(point_chan);
+ZBUS_CHAN_DECLARE(point_chan); // sets up point channel subscription
+ZBUS_CHAN_DECLARE(ticker_chan); // this will be used for our timer
+
+
 ZBUS_MSG_SUBSCRIBER_DEFINE(network_sub);
 ZBUS_CHAN_ADD_OBS(point_chan, network_sub, 3);
+ZBUS_CHAN_ADD_OBS(ticker_chan, network_sub, 4);
 
 static struct net_mgmt_event_callback dhcp_cb;
-
-static int boot_count = 0;
 
 static void dhcp_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event,
 			 struct net_if *iface)
@@ -148,7 +149,7 @@ void configure_ntp_static(void)
 	}
 }
 
-int configure_static_ip(void)
+int configure_static_ip(bool network_started)
 {
 	struct net_if *iface = net_if_get_default();
 	struct in_addr address, netmask, gateway;
@@ -183,54 +184,15 @@ int configure_static_ip(void)
 
 	LOG_DBG("Static IP configured successfully");
 
-	return 0;
-}
-
-int configure_static_ip_restart(void)
-{
-	struct net_if *iface = net_if_get_default();
-	struct in_addr address, netmask, gateway;
-
-	LOG_DBG("Configuring static IP");
-
-	net_dhcpv4_stop(iface);
-	remove_all_ipv4_addresses(iface);
-
-	LOG_DBG("Removed IP");
-	LOG_DBG("One last confirmation of value: %s", buffer.static_ip_address);
-
-	if (net_addr_pton(AF_INET, buffer.static_ip_address, &address) < 0) {
-		LOG_ERR("Invalid address: %s", buffer.static_ip_address);
-		return -EINVAL;
+	if (network_started) {
+		sys_reboot(SYS_REBOOT_COLD);
 	}
-	if (net_addr_pton(AF_INET, buffer.static_ip_netmask, &netmask) < 0) {
-		LOG_ERR("Invalid netmask: %s", buffer.static_ip_netmask);
-		return -EINVAL;
-	}
-
-	net_if_ipv4_addr_add(iface, &address, NET_ADDR_MANUAL, 0);
-	net_if_ipv4_set_netmask(iface, &netmask);
-
-	if (strlen(buffer.static_ip_gateway) > 0) {
-		if (net_addr_pton(AF_INET, buffer.static_ip_gateway, &gateway) < 0) {
-			LOG_ERR("Invalid gateway: %s", buffer.static_ip_gateway);
-			return -EINVAL;
-		}
-		net_if_ipv4_set_gw(iface, &gateway);
-	}
-
-	LOG_DBG("Static IP configured successfully");
-	LOG_DBG("Restarting");
-
-	k_sleep(K_MSEC(2000));
-
-	sys_reboot(SYS_REBOOT_COLD);
 
 	return 0;
 }
 
 // this just sets DHCP (back) up
-void configure_dhcp(void)
+void configure_dhcp(bool network_started)
 {
 
 	LOG_DBG("Configuring DHCP");
@@ -247,14 +209,15 @@ void configure_dhcp(void)
 	net_dhcpv4_start(iface);
 
 	LOG_DBG("interface started");
+
+	if (network_started) {
+		sys_reboot(SYS_REBOOT_COLD);
+	}
 }
 
-// this is run every time we receive a new point, but only runs if we have non-null values in buffer
-// the value of this is if someone clicks staticIP, but does not enter gateway, address,
-// or netmask values, this will not turn off DHCP, and thus will change nothing.
-// this prevents the interface from going down prematurely
-// TODO: Account for bad configurations, give a revert option somehow (how?)
-static int network_init_start()
+// this will run once we have stopped receiving that batch of points
+// TODO: How do we revert bad configs?
+static int network_init_start(bool network_started)
 {
 
 	LOG_DBG("Buffer static IP state: %d", buffer.static_ip_state);
@@ -265,21 +228,11 @@ static int network_init_start()
 	if (buffer.static_ip_state == 1 && strcmp(buffer.static_ip_address, "") != 0 &&
 	    strcmp(buffer.static_ip_netmask, "") != 0) {
 
-		if (boot_count == 0) {
-
-			configure_static_ip();
-			boot_count++;
-
-		} else {
-
-			configure_static_ip_restart();
-		}
-
-		// configure_ntp_static();
+		configure_static_ip(network_started)
 
 	} else {
 
-		configure_dhcp();
+		configure_dhcp(network_started);
 	}
 
 	return 0;
@@ -299,46 +252,57 @@ void network_thread(void *arg1, void *arg2, void *arg3)
 
 	const struct zbus_channel *chan;
 
+	int status_tick = 0;
+	bool network_started = false;
+
 	while (!zbus_sub_wait_msg(&network_sub, &chan, &p, K_FOREVER)) {
 		if (chan == &point_chan) {
-			if (chan == &point_chan) {
-				if (strcmp(p.type, POINT_TYPE_STATICIP) == 0) {
-					LOG_DBG("StaticIP state received");
-					// change to static IP boolean received
-					int ip_state = point_get_int(&p);
-					buffer.static_ip_state = ip_state;
-					network_init_start();
-				} else if (strcmp(p.type, POINT_TYPE_ADDRESS) == 0) {
-					// change to static IP address received
-					LOG_DBG("StaticIP address received");
-					strncpy(buffer.static_ip_address, p.data,
-						sizeof(buffer.static_ip_address) - 1);
-					network_init_start();
-				} else if (strcmp(p.type, POINT_TYPE_NETMASK) == 0) {
-					LOG_DBG("StaticIP netmask received");
-					// change to static IP netmask received
-					strncpy(buffer.static_ip_netmask, p.data,
-						sizeof(buffer.static_ip_netmask) - 1);
-					network_init_start();
-				} else if (strcmp(p.type, POINT_TYPE_GATEWAY) == 0) {
-					LOG_DBG("StaticIP gateway received");
-					// change to static IP gateway received
-					strncpy(buffer.static_ip_gateway, p.data,
-						sizeof(buffer.static_ip_gateway) - 1);
-					network_init_start();
-				} else if (strcmp(p.type, POINT_TYPE_NTP) == 0) {
-					LOG_DBG("NTP Point Received");
-					// check what key the NTP server is, as this will tell us
-					// what network we should configure.
-					int server_priority = atoi(p.key);
-					strncpy(ntp_servers[server_priority].ntp_server_address,
-						p.data,
-						sizeof(ntp_servers[server_priority]
-							       .ntp_server_address) -
-							1);
-					configure_ntp_static();
-				}
+			if (strcmp(p.type, POINT_TYPE_STATICIP) == 0) {
+				LOG_DBG("StaticIP state received");
+				// change to static IP boolean received
+				int ip_state = point_get_int(&p);
+				buffer.static_ip_state = ip_state;
+				status_tick = 0;
+			} else if (strcmp(p.type, POINT_TYPE_ADDRESS) == 0) {
+				// change to static IP address received
+				LOG_DBG("StaticIP address received");
+				strncpy(buffer.static_ip_address, p.data,
+					sizeof(buffer.static_ip_address) - 1);
+				status_tick = 0;
+			} else if (strcmp(p.type, POINT_TYPE_NETMASK) == 0) {
+				LOG_DBG("StaticIP netmask received");
+				// change to static IP netmask received
+				strncpy(buffer.static_ip_netmask, p.data,
+					sizeof(buffer.static_ip_netmask) - 1);
+				status_tick = 0;
+			} else if (strcmp(p.type, POINT_TYPE_GATEWAY) == 0) {
+				LOG_DBG("StaticIP gateway received");
+				// change to static IP gateway received
+				strncpy(buffer.static_ip_gateway, p.data,
+					sizeof(buffer.static_ip_gateway) - 1);
+				status_tick = 0;
+			} else if (strcmp(p.type, POINT_TYPE_NTP) == 0) {
+				LOG_DBG("NTP Point Received");
+				// check what key the NTP server is, as this will tell us
+				// what network we should configure.
+				int server_priority = atoi(p.key);
+				strncpy(ntp_servers[server_priority].ntp_server_address,
+					p.data,
+					sizeof(ntp_servers[server_priority]
+								.ntp_server_address) -
+						1);
+				configure_ntp_static();
+				status_tick = 0;
 			}
+		} else if (chan == &ticker_chan) {
+			status_tick++;
+			if (status_tick >= 10) {
+				network_init_start(network_started);
+				network_started = true;
+				status_tick = 0;
+			}
+
+
 		}
 	}
 }
