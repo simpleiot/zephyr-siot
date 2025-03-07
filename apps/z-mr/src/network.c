@@ -232,6 +232,8 @@ static int network_init_start(bool network_started)
 
 	} else {
 
+		if (boot_count == 0) {
+
 		configure_dhcp(network_started);
 	}
 

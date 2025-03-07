@@ -9,5 +9,7 @@ Please verify this PR includes the following if relevant:
 - [ ] runs on target hardware and web UI works
 - [ ] `CHANGELOG-zonit.md` entry created/updated
 - [ ] Documentation updated
+- [ ] Description of how feature was tested (include/update tests, scripts, etc.
+      if applicable)
 
 Thanks!
