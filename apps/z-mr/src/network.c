@@ -20,9 +20,8 @@
 // debug levels
 LOG_MODULE_REGISTER(z_network, LOG_LEVEL_DBG);
 
-ZBUS_CHAN_DECLARE(point_chan); // sets up point channel subscription
+ZBUS_CHAN_DECLARE(point_chan);  // sets up point channel subscription
 ZBUS_CHAN_DECLARE(ticker_chan); // this will be used for our timer
-
 
 ZBUS_MSG_SUBSCRIBER_DEFINE(network_sub);
 ZBUS_CHAN_ADD_OBS(point_chan, network_sub, 3);
@@ -75,7 +74,6 @@ struct ntpInfo {
 };
 
 struct sntp_time timestamp;
-
 
 static struct ntpInfo ntp_servers[NTP_SERVER_BUFFER_LENGTH];
 static struct ntpInfo usedServer[1];
@@ -136,11 +134,15 @@ void configure_ntp_static(void)
 
 	for (i = 0; i < NTP_SERVER_BUFFER_LENGTH; i++) {
 
-		if (ntp_servers[i].ntp_server_address[0] != '\0' && usedServer[0].ntp_server_address[0] != '\0') {
+		if (ntp_servers[i].ntp_server_address[0] != '\0' &&
+		    usedServer[0].ntp_server_address[0] != '\0') {
 
-			int rc = sntp_simple(ntp_servers[i].ntp_server_address, NTP_TIMEOUT, &timestamp);
+			int rc = sntp_simple(ntp_servers[i].ntp_server_address, NTP_TIMEOUT,
+					     &timestamp);
 			if (rc == 0) {
-				strncpy(usedServer[0].ntp_server_address, ntp_servers[i].ntp_server_address, sizeof(usedServer[0].ntp_server_address) - 1);
+				strncpy(usedServer[0].ntp_server_address,
+					ntp_servers[i].ntp_server_address,
+					sizeof(usedServer[0].ntp_server_address) - 1);
 				LOG_DBG("NTP Config Successful!");
 				return;
 			}
@@ -215,7 +217,6 @@ void configure_dhcp(bool network_started)
 	net_dhcpv4_start(iface);
 
 	net_if_up(iface);
-
 
 	LOG_DBG("interface started");
 
@@ -296,10 +297,8 @@ void network_thread(void *arg1, void *arg2, void *arg3)
 				// check what key the NTP server is, as this will tell us
 				// what network we should configure.
 				int server_priority = atoi(p.key);
-				strncpy(ntp_servers[server_priority].ntp_server_address,
-					p.data,
-					sizeof(ntp_servers[server_priority]
-								.ntp_server_address) -
+				strncpy(ntp_servers[server_priority].ntp_server_address, p.data,
+					sizeof(ntp_servers[server_priority].ntp_server_address) -
 						1);
 				// configure_ntp_static();
 				status_tick = 0;
@@ -319,12 +318,12 @@ void network_thread(void *arg1, void *arg2, void *arg3)
 				// incrementing
 				status_tick++;
 			}
+
 			if (sntp_tick >= 7200) {
-				sntp_simple(usedServer[0].ntp_server_address, NTP_TIMEOUT, &timestamp);
-				sntp_tick=0;
+				sntp_simple(usedServer[0].ntp_server_address, NTP_TIMEOUT,
+					    &timestamp);
+				sntp_tick = 0;
 			}
-
-
 		}
 	}
 }
