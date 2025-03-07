@@ -2,13 +2,11 @@ module Pages.Live exposing (Model, Msg, page)
 
 import Api
 import Api.Point as Point exposing (Point)
-import Api.ZPoint as ZPoint
 import Effect exposing (Effect)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import Html.Attributes as Attr
 import Http
 import List.Extra
 import Page exposing (Page)
@@ -114,58 +112,6 @@ view shared model =
             [ deviceContent device model
             ]
         }
-
-
-header : Device -> Element Msg
-header device =
-    let
-        logoSize =
-            case device.class of
-                Device.Phone ->
-                    90
-
-                Device.Tablet ->
-                    if device.orientation == Device.Portrait then
-                        120
-
-                    else
-                        140
-
-                Device.Desktop ->
-                    160
-
-        headerFontSize =
-            Device.responsiveFontSize device 32
-    in
-    column
-        [ spacing (Device.responsiveSpacing device 16)
-        , padding (Device.responsiveSpacing device 24)
-        , width fill
-        , clipX
-        , Background.color Style.colors.white
-        , Border.rounded 12
-        , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
-        ]
-        [ row
-            [ width fill
-            , spacing (Device.responsiveSpacing device 16)
-            ]
-            [ image
-                [ width (px logoSize)
-                , alignLeft
-                ]
-                { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
-                , description = "Z-MR"
-                }
-            , paragraph
-                [ Font.size headerFontSize
-                , Font.bold
-                , Font.color Style.colors.jet
-                , width fill
-                ]
-                [ text "Live View" ]
-            ]
-        ]
 
 
 h1 : Device -> String -> Element Msg
@@ -488,14 +434,6 @@ circle color =
         Element.none
 
 
-transition : { property : String, duration : Int } -> Attribute msg
-transition { property, duration } =
-    Element.htmlAttribute
-        (Attr.style "transition"
-            (property ++ " " ++ String.fromInt duration ++ "ms ease-in-out")
-        )
-
-
 pointFetch : Effect Msg
 pointFetch =
     Effect.sendCmd <| Point.fetch { onResponse = ApiRespPointList }
@@ -532,29 +470,6 @@ formatNumber number =
 
     else
         groupedDigits
-
-
-responsiveSpacing : Int -> Int -> Int
-responsiveSpacing windowWidth base =
-    if windowWidth <= 428 then
-        base // 2
-
-    else
-        base
-
-
-responsiveFontSize : Int -> Int -> Int
-responsiveFontSize windowWidth base =
-    if windowWidth <= 428 then
-        base * 4 // 5
-
-    else
-        base
-
-
-deviceWidth : Int
-deviceWidth =
-    480
 
 
 

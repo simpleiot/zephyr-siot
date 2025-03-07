@@ -166,7 +166,7 @@ navButton device route label description =
         { url = routeToUrl route
         , label =
             column
-                [ spacing (round (toFloat (Device.responsiveSpacing device 12)))
+                [ spacing (Device.responsiveSpacing device 12)
                 , padding (Device.responsiveSpacing device 24)
                 , width fill
                 , height buttonHeight

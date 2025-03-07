@@ -11,7 +11,6 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import UI.Container as Container
 import UI.Device as Device exposing (Device)
 import UI.Nav as Nav
 import UI.Style as Style
@@ -22,9 +21,7 @@ import UI.Style as Style
 
 
 type Layout msg
-    = Standard Nav.Route -- Standard layout with header, nav, and content
-    | Full -- Full-width layout without nav
-    | Custom (Device -> Element msg -> List (Element msg) -> Element msg) -- Custom layout function
+    = Standard Nav.Route -- Custom layout function
 
 
 
@@ -32,11 +29,9 @@ type Layout msg
 
 
 type TextSize
-    = Tiny -- 12px base
-    | Small -- 14px base
+    = Small -- 14px base
     | Body -- 16px base
-    | Large -- 20px base
-    | Title -- 24px base
+    | Large -- 24px base
     | Header -- 32px base
 
 
@@ -63,12 +58,6 @@ view config =
         case config.layout of
             Standard route ->
                 standardLayout config.device route config.header config.content
-
-            Full ->
-                fullLayout config.device config.header config.content
-
-            Custom layoutFn ->
-                layoutFn config.device config.header config.content
     }
 
 
@@ -91,21 +80,6 @@ standardLayout device currentRoute header_ content =
 
 
 -- Full-width layout without nav
-
-
-fullLayout : Device -> Element msg -> List (Element msg) -> Element msg
-fullLayout device header_ content =
-    column
-        [ spacing (Device.responsiveSpacing device 32)
-        , padding (Device.responsiveSpacing device 40)
-        , width fill
-        , height fill
-        , Background.color Style.colors.pale
-        ]
-        (header_ :: content)
-
-
-
 -- Standard page header with logo and title
 
 
@@ -160,9 +134,6 @@ textSizeToPixels device size =
     let
         baseSize =
             case size of
-                Tiny ->
-                    12
-
                 Small ->
                     14
 
@@ -172,16 +143,10 @@ textSizeToPixels device size =
                 Large ->
                     20
 
-                Title ->
-                    24
-
                 Header ->
                     32
-
-        calculatedSize =
-            Device.responsiveFontSize device baseSize
     in
-    calculatedSize
+    Device.responsiveFontSize device baseSize
 
 
 

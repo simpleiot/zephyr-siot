@@ -121,47 +121,6 @@ view shared model =
         }
 
 
-header : Shared.Model -> Element Msg
-header shared =
-    column
-        [ spacing (responsiveSpacing shared.windowWidth 16)
-        , padding (responsiveSpacing shared.windowWidth 24)
-        , width fill
-        , Background.color Style.colors.white
-        , Border.rounded 12
-        , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
-        ]
-        [ row
-            [ width fill
-            , spacing (responsiveSpacing shared.windowWidth 16)
-            ]
-            [ image
-                [ width
-                    (fill
-                        |> maximum
-                            (if shared.windowWidth <= 768 then
-                                140
-
-                             else
-                                180
-                            )
-                    )
-                , alignLeft
-                ]
-                { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
-                , description = "Z-MR"
-                }
-            , paragraph
-                [ Font.size (responsiveFontSize shared.windowWidth 32)
-                , Font.bold
-                , Font.color Style.colors.jet
-                , width fill
-                ]
-                [ text "Settings" ]
-            ]
-        ]
-
-
 h1 : Shared.Model -> String -> Element Msg
 h1 shared txt =
     paragraph
@@ -578,11 +537,6 @@ responsiveFontSize windowWidth base =
 
     else
         base
-
-
-deviceWidth : Int
-deviceWidth =
-    480
 
 
 

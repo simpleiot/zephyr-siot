@@ -1,4 +1,4 @@
-module Shared.Model exposing (..)
+module Shared.Model exposing (Model, init)
 
 
 type alias Model =

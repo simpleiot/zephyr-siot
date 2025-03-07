@@ -38,13 +38,12 @@ contentCard : Device -> String -> List (Element msg) -> Element msg
 contentCard device title content =
     card device
         []
-        ([ paragraph
+        (paragraph
             [ Font.size (Device.responsiveFontSize device 24)
             , Font.semiBold
             , Font.color Style.colors.jet
             , paddingEach { top = 0, right = 0, bottom = Device.responsiveSpacing device 16, left = 0 }
             ]
             [ text title ]
-         ]
-            ++ content
+            :: content
         )
