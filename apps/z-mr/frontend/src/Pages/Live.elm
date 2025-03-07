@@ -257,33 +257,9 @@ deviceContent device model =
 statusCard : Device -> List Point -> Element Msg
 statusCard device points =
     let
-        spacingValue =
-            Device.responsiveSpacing device 16
-
         fontSize =
             Device.responsiveFontSize device 14
-    in
-    column
-        [ spacing (Device.responsiveSpacing device 16)
-        , padding (Device.responsiveSpacing device 24)
-        , width fill
-        , height fill
-        , Background.color Style.colors.white
-        , Border.rounded 12
-        , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
-        ]
-        [ h1 device "System Status"
-        , column [ spacing spacingValue, width fill ] <|
-            List.map (statusRow device) points
-        ]
 
-
-statusCard : Device -> List Point -> Element Msg
-statusCard device points =
-    let
-        fontSize =
-            Device.responsiveFontSize device 14
-            
         metrics =
             [ { type_ = "board", key = "0", label = "Board", formatter = \p -> Point.getText p "board" "0" }
             , { type_ = "bootCount", key = "0", label = "Boot Count", formatter = \p -> Point.getText p "bootCount" "0" }
@@ -296,7 +272,7 @@ statusCard device points =
             , { type_ = "fanStatus", key = "1", label = "Fan 2 status", formatter = \p -> Point.getText p "fanStatus" "1" }
             , { type_ = "switch", key = "0", label = "User switch", formatter = \p -> formatOnOff (Point.getInt p "switch" "0") }
             ]
-            
+
         statusRow metric =
             row
                 [ spacing (Device.responsiveSpacing device 16)
@@ -315,12 +291,11 @@ statusCard device points =
                     (text (metric.formatter points))
                 ]
     in
-    column 
+    column
         [ spacing (Device.responsiveSpacing device 8)
-        , width fill 
-        ] 
+        , width fill
+        ]
         (List.map statusRow metrics)
-
 
 
 errorCard : Device -> Http.Error -> Element Msg

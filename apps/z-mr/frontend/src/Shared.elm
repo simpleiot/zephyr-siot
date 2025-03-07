@@ -36,9 +36,6 @@ decoder =
 type alias Model =
     Shared.Model.Model
 
-type alias Msg =
-    Shared.Msg.Msg
-
 
 init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
 init flagsResult route =
