@@ -159,7 +159,9 @@ deviceContent model =
                 ]
 
         Api.Failure httpError ->
-            text <| "Lost connection: " ++ Api.toUserFriendlyMessage httpError
+            el [ width fill ] <|
+                paragraph (Style.error ++ [ width fill ]) <|
+                    [ text <| "Lost connection: " ++ Api.toUserFriendlyMessage httpError ]
 
 
 statusTable : List Point -> Element Msg

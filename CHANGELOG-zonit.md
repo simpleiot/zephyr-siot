@@ -18,9 +18,11 @@ and this project adheres to
   - UI to display fan speed/state and settings
   - initial tuning for 35mm fans with 0.25mH/3.25ohm inductor
 - Fixed crash when 1-wire sensor is not attached.
+- Improve UI rendering on mobile devices
 - Added a ATS-MIB which allows to answer getRequest, and a first integration
   test
   - See `apps/z-mr/snmp/snmp_test.sh`
   - See `apps/z-mr/snmp/z-mr.mib.[ch]`
 - Enable LLMNR responder in Zephyr. It saves looking up IP-addresses.
 - Added static IP, fixed URI loading
+- store IPN, ID, HW Version, and MFG Date in EEPROM

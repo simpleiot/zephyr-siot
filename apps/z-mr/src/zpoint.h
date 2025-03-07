@@ -29,11 +29,10 @@
 #define POINT_VALUE_SPIN_FAIL  "spinFail"
 #define POINT_VALUE_DRIVE_FAIL "driveFail"
 
-typedef enum {
-	ATS_OFF,
-	ATS_ON,
-	ATS_ACTIVE,
-	ATS_ERROR,
-} ats_chan_state;
+#define POINT_TYPE_IPN        "ipn"
+#define POINT_TYPE_ID         "id"
+#define POINT_TYPE_MFG_DATE   "mfgDate"
+#define POINT_TYPE_VERSION_HW "versionHW"
+#define POINT_TYPE_VERSION_FW "versionFW"
 
 #endif // __ZPOINT_H_
