@@ -27,6 +27,13 @@ typedef struct {
 #define BON 2
 #define ONB 3
 
+typedef enum {
+	ATS_OFF,
+	ATS_ON,
+	ATS_ACTIVE,
+	ATS_ERROR,
+} ats_chan_state;
+
 ats_chan_state z_ats_get_state_a(ats *a);
 ats_chan_state z_ats_get_state_b(ats *a);
 
