@@ -70,7 +70,7 @@ subscriptions _ =
 
 
 view : Shared.Model -> Model -> View Msg
-view shared model =
+view shared _ =
     let
         device =
             Device.classifyDevice shared.windowWidth shared.windowHeight

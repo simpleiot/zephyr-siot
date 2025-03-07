@@ -34,6 +34,12 @@ type alias Device =
 -- BREAKPOINTS (in logical pixels)
 
 
+breakpoints :
+    { phone : Int
+    , tablet : Int
+    , desktop : Int
+    , maxContentWidth : Int
+    }
 breakpoints =
     { phone = 428 -- iPhone Pro Max logical width
     , tablet = 768 -- iPad Mini logical width

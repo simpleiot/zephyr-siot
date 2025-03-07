@@ -38,7 +38,7 @@ type alias Model =
 
 
 init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
-init flagsResult route =
+init flagsResult _ =
     case flagsResult of
         Ok flags ->
             ( { windowWidth = flags.width
@@ -57,7 +57,7 @@ init flagsResult route =
 
 
 update : Route () -> Msg -> Model -> ( Model, Effect Msg )
-update route msg model =
+update _ msg model =
     case msg of
         WindowResized dimensions ->
             ( { model
@@ -69,5 +69,5 @@ update route msg model =
 
 
 subscriptions : Route () -> Model -> Sub Msg
-subscriptions _ model =
+subscriptions _ _ =
     Ports.onWindowResize WindowResized

@@ -17,6 +17,25 @@ import Html.Attributes as Attr
 -- COLORS
 
 
+colors :
+    { primary : Color
+    , secondary : Color
+    , success : Color
+    , danger : Color
+    , warning : Color
+    , info : Color
+    , light : Color
+    , dark : Color
+    , white : Color
+    , pale : Color
+    , gray : Color
+    , jet : Color
+    , ledred : Color
+    , ledgreen : Color
+    , ledblue : Color
+    , ltgray : Color
+    , none : Color
+    }
 colors =
     { primary = rgb255 0 123 255
     , secondary = rgb255 108 117 125
@@ -34,6 +53,7 @@ colors =
     , ledgreen = rgb255 0 255 0
     , ledblue = rgb255 0 0 255
     , ltgray = rgb255 211 211 211
+    , none = rgba 0 0 0 0
     }
 
 
