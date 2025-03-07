@@ -1,51 +1,87 @@
-ATSMIB DEFINITIONS ::= BEGIN
+ZONIT-ATS2-MIB DEFINITIONS ::= BEGIN
 
 IMPORTS
-    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, Integer32
-        FROM SNMPv2-SMI
-    OBJECT-GROUP, NOTIFICATION-GROUP
-        FROM SNMPv2-CONF;
+	OBJECT-TYPE, NOTIFICATION-TYPE, MODULE-IDENTITY, 
+	Counter32
+		FROM SNMPv2-SMI
+	TEXTUAL-CONVENTION, DisplayString
+		FROM SNMPv2-TC
+	sts
+		FROM ZONIT-OIDS;
 
-atsModule MODULE-IDENTITY
-    LAST-UPDATED "202502070000Z"
-    ORGANIZATION "Your Organization Name"
-    CONTACT-INFO "Your Contact Information"
-    DESCRIPTION
-        "MIB module for ATS state monitoring and traps"
-    ::= { enterprises yourEnterpriseNumber }
+ats2 MODULE-IDENTITY
+	LAST-UPDATED "202502261200Z"
+	ORGANIZATION 
+		"Zonit Structured Solutions LLC"
+	CONTACT-INFO 
+		"zonit.com"
+	DESCRIPTION 
+		"The MIB module for Zonit ATS (Automatic Transfer Switch)."
 
-atsState OBJECT-TYPE
-    SYNTAX      INTEGER {
-                    sideA(1),
-                    sideB(2)
-                }
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The current state of the ATS. 
-         1 indicates Side A is active, 
-         2 indicates Side B is active."
-    ::= { atsModule 1 }
+	REVISION "201407311200Z"
+	DESCRIPTION 
+		"Initial release."
+::= { sts 2 }
 
-atsStateChange NOTIFICATION-TYPE
-    OBJECTS     { atsState }
-    STATUS      current
-    DESCRIPTION
-        "This trap is sent when the ATS state changes."
-    ::= { atsModule 2 }
 
-atsStateGroup OBJECT-GROUP
-    OBJECTS     { atsState }
-    STATUS      current
-    DESCRIPTION
-        "A collection of objects providing ATS state information."
-    ::= { atsModule 3 }
+-- ZonitSTS-MIB { iso(1) org(3) dod(6) internet(1) private(4) enterprises(1) becsystems(62530) ats2(2) }
 
-atsNotificationGroup NOTIFICATION-GROUP
-    NOTIFICATIONS { atsStateChange }
-    STATUS      current
-    DESCRIPTION
-        "The notifications for the ATS MIB."
-    ::= { atsModule 4 }
+-- ats2Ident			OBJECT IDENTIFIER ::=  { ats2 1 }
+ats2Measure			OBJECT IDENTIFIER ::=  { ats2 2 }
+-- ats2Status			OBJECT IDENTIFIER ::=  { ats2 3 }
+-- ats2Config			OBJECT IDENTIFIER ::=  { ats2 4 }
+-- ats2Environment OBJECT IDENTIFIER ::= {ats2 5}
+ats2Traps			OBJECT IDENTIFIER ::=  { ats2 10 }
+
+-- Textual Conventions
+UnixTimeStamp ::= TEXTUAL-CONVENTION
+  DISPLAY-HINT      "dddddddddd"
+	STATUS     current
+	DESCRIPTION 
+		"Unix time stamp.  Measured in seconds since January 1, 1970."
+	SYNTAX  Counter32
+
+--
+-- Polling group
+-- OID = "1.3.6.1.4.1.62530.2.2.4"
+ats2OperationMode OBJECT-TYPE
+	SYNTAX		INTEGER {
+		initialization(1),
+		diagnosis(2),
+		off(3),
+		source1(4),
+		source2(5),
+		safe(6),
+		fault(7)
+	}
+	MAX-ACCESS		read-only
+	STATUS		current
+	DESCRIPTION
+		"The operation mode."
+	::= { ats2Measure 4 }
+
+--
+-- Traps group
+
+-- OID = "1.3.6.1.4.1.62530.2.10.4"
+ats2TrapOutputNotPowered NOTIFICATION-TYPE
+	STATUS     current
+	DESCRIPTION
+	"The ATS does not powers the load."
+	::= { ats2Traps 4 }
+
+-- OID = "1.3.6.1.4.1.62530.2.10.15"
+ats2TrapOutputPoweredBySource1 NOTIFICATION-TYPE
+	STATUS     current
+	DESCRIPTION
+	"Source 1 powers the output."
+	::= { ats2Traps 15 }
+
+-- OID = -- "1.3.6.1.4.1.62530.2.10.16"
+ats2TrapOutputPoweredBySource2 NOTIFICATION-TYPE
+	STATUS     current
+	DESCRIPTION
+	"Source 2 powers the output."
+	::= { ats2Traps 16 }
 
 END
