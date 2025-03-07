@@ -62,6 +62,8 @@ static void eeprom_points_init_offset()
 		default:
 			LOG_ERR("EEPROM invalid data type: %i",
 				eeprom_points[i - 1].point_def->data_type);
+			// eeprom_points is static table, so we panic here to make sure
+			// it is complete and working before we deploy
 			k_panic();
 		}
 		eeprom_points[i].offset = eeprom_points[i - 1].offset + size;
