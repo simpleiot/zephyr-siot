@@ -306,11 +306,18 @@ void network_thread(void *arg1, void *arg2, void *arg3)
 				sntp_tick = 0;
 			}
 		} else if (chan == &ticker_chan) {
-			status_tick++;
+			if (status_tick <= 10) {
+				status_tick++;
+			}
+
 			sntp_tick++;
+
 			if (status_tick == 10) {
 				network_init_start(network_started);
 				network_started = true;
+				// increment to status_tick to 11, which causes it to stop
+				// incrementing
+				status_tick++;
 			}
 			if (sntp_tick >= 7200) {
 				sntp_simple(usedServer[0].ntp_server_address, NTP_TIMEOUT, &timestamp);
