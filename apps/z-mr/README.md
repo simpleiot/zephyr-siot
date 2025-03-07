@@ -3,6 +3,7 @@
 - [Product documentation](https://gitea.zonit.com/Zonit-Dev/product/src/branch/master/z-mr)
 - [Implementation notes](implementation.md)
 - [Manufacturing test plan](https://gitea.zonit.com/Zonit-Dev/product/src/branch/master/z-mr/z-mr-mfg-test.md)
+- [GPIO Mapping](z-mr_gpio-mapping.ods)
 
 This application is meant to run on the ESP32-POE board from Olimex.
 
@@ -49,6 +50,11 @@ flash, then add it to the table in `nvs_pts` table in `main.c`. This causes the
 NVS thread to listen for this point type and store it in flash any time it sees
 it. On boot, it will also read these points from flash and send them on the
 points channel to configure the system with the saved settings.
+
+## EEPROM
+
+Every PCB contains an EEPROM that stores factory data. See
+[general spec](https://gitea.zonit.com/Zonit-Dev/product/src/branch/master/eeprom-format.md).
 
 ## Web UI Frontend
 
