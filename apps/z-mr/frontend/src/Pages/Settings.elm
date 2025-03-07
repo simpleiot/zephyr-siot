@@ -14,8 +14,10 @@ import Http
 import Page exposing (Page)
 import Route exposing (Route)
 import Shared
+import UI.Device
 import UI.Form as Form
 import UI.Nav as Nav
+import UI.Page as PageUI
 import UI.Sanitize as Sanitize
 import UI.Style as Style
 import View exposing (View)
@@ -110,62 +112,79 @@ subscriptions _ =
 
 view : Shared.Model -> Model -> View Msg
 view shared model =
-    { title = "Z-MR Settings"
-    , attributes = []
-    , element =
-        column
-            [ spacing (responsiveSpacing shared.windowWidth 32)
-            , padding (responsiveSpacing shared.windowWidth 40)
-            , width (fill |> maximum 1280)
-            , height fill
-            , centerX
-            , Background.color Style.colors.pale
-            ]
-            [ header shared
-            , Nav.view Nav.Settings
-            , deviceContent shared model
-            ]
-    }
+    PageUI.view
+        { title = "Z-MR Settings"
+        , device = UI.Device.classifyDevice shared.windowWidth shared.windowHeight
+        , layout = PageUI.Standard Nav.Settings
+        , header = PageUI.header (UI.Device.classifyDevice shared.windowWidth shared.windowHeight) "Settings"
+        , content = [ deviceContent shared model ]
+        }
 
 
 header : Shared.Model -> Element Msg
 header shared =
     column
-        [ spacing 16
+        [ spacing (responsiveSpacing shared.windowWidth 16)
         , padding (responsiveSpacing shared.windowWidth 24)
         , width fill
         , Background.color Style.colors.white
         , Border.rounded 12
         , Border.shadow { offset = ( 0, 2 ), size = 0, blur = 8, color = rgba 0 0 0 0.1 }
         ]
-        [ image
-            [ width (fill |> maximum 180)
-            , alignLeft
+        [ row
+            [ width fill
+            , spacing (responsiveSpacing shared.windowWidth 16)
             ]
-            { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
-            , description = "Z-MR"
-            }
-        , el [ Font.size (responsiveFontSize shared.windowWidth 32), Font.bold, Font.color Style.colors.jet ] <| text "Settings"
+            [ image
+                [ width
+                    (fill
+                        |> maximum
+                            (if shared.windowWidth <= 768 then
+                                140
+
+                             else
+                                180
+                            )
+                    )
+                , alignLeft
+                ]
+                { src = "https://zonit.com/wp-content/uploads/2023/10/zonit-primary-rgb-300.png"
+                , description = "Z-MR"
+                }
+            , paragraph
+                [ Font.size (responsiveFontSize shared.windowWidth 32)
+                , Font.bold
+                , Font.color Style.colors.jet
+                , width fill
+                ]
+                [ text "Settings" ]
+            ]
         ]
 
 
 h1 : Shared.Model -> String -> Element Msg
 h1 shared txt =
-    el
+    paragraph
         [ Font.size (responsiveFontSize shared.windowWidth 24)
         , Font.semiBold
         , Font.color Style.colors.jet
         , paddingEach { top = 16, right = 0, bottom = 8, left = 0 }
+        , width fill
         ]
-    <|
-        text txt
+        [ text txt ]
 
 
 card : Shared.Model -> List (Element Msg) -> Element Msg
 card shared content =
     column
         [ spacing (responsiveSpacing shared.windowWidth 16)
-        , padding (responsiveSpacing shared.windowWidth 24)
+        , padding
+            (if shared.windowWidth <= 768 then
+                16
+
+             else
+                responsiveSpacing shared.windowWidth 24
+            )
         , width fill
         , height fill
         , Background.color Style.colors.white
@@ -201,7 +220,7 @@ deviceContent shared model =
         Api.Failure httpError ->
             card shared
                 [ el
-                    [ Font.color Style.colors.red
+                    [ Font.color Style.colors.danger
                     , Font.size (responsiveFontSize shared.windowWidth 16)
                     , padding (responsiveSpacing shared.windowWidth 16)
                     , width fill
@@ -223,35 +242,54 @@ settingsCard shared points edit =
 
         inputStyle =
             [ width fill
-            , padding (responsiveSpacing shared.windowWidth 12)
+            , padding
+                (if shared.windowWidth <= 768 then
+                    10
+
+                 else
+                    responsiveSpacing shared.windowWidth 12
+                )
             , Border.width 1
-            , Border.color Style.colors.ltgray
+            , Border.color Style.colors.gray
             , Border.rounded 8
-            , focused [ Border.color Style.colors.blue ]
+            , focused [ Border.color Style.colors.primary ]
             , transition { property = "border-color", duration = 150 }
+            , Font.size (responsiveFontSize shared.windowWidth 14)
             ]
     in
     card shared
         [ h1 shared "Settings"
-        , column [ spacing (responsiveSpacing shared.windowWidth 24), Form.onEnterEsc (ApiPostPoints points) DiscardEdits ]
+        , column
+            [ spacing (responsiveSpacing shared.windowWidth 24)
+            , Form.onEnterEsc (ApiPostPoints points) DiscardEdits
+            , width fill
+            ]
             [ inputText shared points "0" Point.typeDescription "Description" "desc" inputStyle
             , inputText shared points "0" "snmpServer" "SNMP Server" "IP address" inputStyle
             , fanSettings shared points
             , inputCheckbox shared points "0" Point.typeStaticIP "Static IP" []
             , viewIf staticIP <|
-                column [ spacing (responsiveSpacing shared.windowWidth 16) ]
+                column [ spacing (responsiveSpacing shared.windowWidth 16), width fill ]
                     [ inputText shared points "0" Point.typeAddress "IP Addr" "ex: 10.0.0.23" inputStyle
                     , inputText shared points "0" Point.typeNetmask "Netmask" "ex: 255.255.255.0" inputStyle
                     , inputText shared points "0" Point.typeGateway "Gateway" "ex: 10.0.0.1" inputStyle
                     ]
             , viewIf edit <|
-                wrappedRow [ spacing (responsiveSpacing shared.windowWidth 16), width fill ]
+                (if shared.windowWidth <= 768 then
+                    column
+
+                 else
+                    wrappedRow
+                )
+                    [ spacing (responsiveSpacing shared.windowWidth 16)
+                    , width fill
+                    ]
                     [ Input.button
                         [ padding (responsiveSpacing shared.windowWidth 12)
                         , Border.rounded 8
-                        , Background.color Style.colors.blue
+                        , Background.color Style.colors.primary
                         , Font.color Style.colors.white
-                        , mouseOver [ Background.color Style.colors.ltblue ]
+                        , mouseOver [ Background.color Style.colors.light ]
                         , transition { property = "background-color", duration = 150 }
                         ]
                         { onPress = Just (ApiPostPoints points)
@@ -260,9 +298,9 @@ settingsCard shared points edit =
                     , Input.button
                         [ padding (responsiveSpacing shared.windowWidth 12)
                         , Border.rounded 8
-                        , Background.color Style.colors.ltgray
+                        , Background.color Style.colors.gray
                         , Font.color Style.colors.jet
-                        , mouseOver [ Background.color Style.colors.darkgray ]
+                        , mouseOver [ Background.color Style.colors.dark ]
                         , transition { property = "background-color", duration = 150 }
                         ]
                         { onPress = Just DiscardEdits
@@ -276,6 +314,9 @@ settingsCard shared points edit =
 fanSettings : Shared.Model -> List Point -> Element Msg
 fanSettings shared points =
     let
+        device =
+            UI.Device.classifyDevice shared.windowWidth shared.windowHeight
+
         mode =
             Point.getText points ZPoint.typeFanMode "0"
 
@@ -309,8 +350,13 @@ fanSettings shared points =
                 _ ->
                     "Fan 2 Speed"
     in
-    column [ spacing (responsiveSpacing shared.windowWidth 24) ]
-        [ inputOption shared points
+    column
+        [ spacing (responsiveSpacing shared.windowWidth 24)
+        , alignLeft
+        , width fill
+        ]
+        [ inputOption shared
+            points
             "0"
             ZPoint.typeFanMode
             "Fan mode"
@@ -320,9 +366,15 @@ fanSettings shared points =
             , ( ZPoint.valueTemp, "Temperature" )
             ]
         , viewIf (mode /= ZPoint.valueOff) <|
-            wrappedRow [ spacing 10, width fill ] [ inputFloat shared points "0" ZPoint.typeFanSetSpeed setting1Desc, text speedUnits ]
+            wrappedRow [ spacing 10, width fill, alignLeft ]
+                [ inputFloat shared points "0" ZPoint.typeFanSetSpeed setting1Desc
+                , el [ Font.size (UI.Device.responsiveFontSize device 14) ] (text speedUnits)
+                ]
         , viewIf (mode /= ZPoint.valueOff) <|
-            wrappedRow [ spacing 10, width fill ] [ inputFloat shared points "1" ZPoint.typeFanSetSpeed setting2Desc, text speedUnits ]
+            wrappedRow [ spacing 10, width fill, alignLeft ]
+                [ inputFloat shared points "1" ZPoint.typeFanSetSpeed setting2Desc
+                , el [ Font.size (UI.Device.responsiveFontSize device 14) ] (text speedUnits)
+                ]
         ]
 
 
@@ -339,6 +391,7 @@ inputText shared pts key typ lbl placeholder styles =
                 ]
             <|
                 text lbl
+
           else
             none
         , Input.text
@@ -367,6 +420,7 @@ inputCheckbox shared pts key typ lbl styles =
                         v =
                             if d then
                                 "1"
+
                             else
                                 "0"
                     in
@@ -382,6 +436,7 @@ inputCheckbox shared pts key typ lbl styles =
                 ]
             <|
                 text lbl
+
           else
             none
         ]
@@ -423,13 +478,14 @@ inputFloat shared pts key typ lbl =
                 ]
             <|
                 text lbl
+
           else
             none
         , Input.text
             [ width (fill |> maximum 120)
             , padding (responsiveSpacing shared.windowWidth 12)
             , Border.width 1
-            , Border.color Style.colors.ltgray
+            , Border.color Style.colors.gray
             , Border.rounded 8
             ]
             { onChange =
@@ -438,8 +494,10 @@ inputFloat shared pts key typ lbl =
                         v =
                             if d == "" then
                                 blankMajicValue
+
                             else if d == "-" then
                                 "-"
+
                             else
                                 Sanitize.float d
                     in
@@ -453,29 +511,38 @@ inputFloat shared pts key typ lbl =
 
 inputOption : Shared.Model -> List Point -> String -> String -> String -> List ( String, String ) -> Element Msg
 inputOption shared pts key typ lbl options =
-    let
-        labelWidth =
-            200
-    in
-    Input.radio
-        [ spacing 6 ]
-        { onChange =
-            \sel ->
-                EditPoint [ Point typ key Point.dataTypeString sel ]
-        , label =
-            Input.labelLeft [ padding (responsiveSpacing shared.windowWidth 12), width (px labelWidth) ] <|
-                el [ alignRight ] <|
-                    text <|
-                        lbl
-                            ++ ":"
-        , selected = Just <| Point.getText pts typ key
-        , options =
-            List.map
-                (\opt ->
-                    Input.option (Tuple.first opt) (text (Tuple.second opt))
-                )
-                options
-        }
+    column
+        [ spacing 8
+        , alignLeft
+        , width fill
+        ]
+        [ if lbl /= "" then
+            el
+                [ Font.color Style.colors.gray
+                , Font.size (responsiveFontSize shared.windowWidth 14)
+                ]
+            <|
+                text (lbl ++ ":")
+
+          else
+            none
+        , Input.radio
+            [ spacing 6
+            , alignLeft
+            ]
+            { onChange =
+                \sel ->
+                    EditPoint [ Point typ key Point.dataTypeString sel ]
+            , label = Input.labelHidden lbl
+            , selected = Just <| Point.getText pts typ key
+            , options =
+                List.map
+                    (\opt ->
+                        Input.option (Tuple.first opt) (text (Tuple.second opt))
+                    )
+                    options
+            }
+        ]
 
 
 viewIf : Bool -> Element msg -> Element msg
@@ -499,6 +566,7 @@ responsiveSpacing : Int -> Int -> Int
 responsiveSpacing windowWidth base =
     if windowWidth <= 480 then
         base // 2
+
     else
         base
 
@@ -507,10 +575,15 @@ responsiveFontSize : Int -> Int -> Int
 responsiveFontSize windowWidth base =
     if windowWidth <= 480 then
         base * 4 // 5
+
     else
         base
 
 
 deviceWidth : Int
 deviceWidth =
-    480  -- Default to mobile breakpoint for now. We'll need to pass actual window dimensions from the app level.
+    480
+
+
+
+-- Default to mobile breakpoint for now. We'll need to pass actual window dimensions from the app level.

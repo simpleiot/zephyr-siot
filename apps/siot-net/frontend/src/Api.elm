@@ -30,7 +30,7 @@ toUserFriendlyMessage httpError =
                 "Item not found"
 
             else
-                "API returned an error code"
+                "The server returned an error (code " ++ String.fromInt code ++ "). Please try again or contact support if the issue persists."
 
         Http.BadBody _ ->
             -- Our JSON decoder didn't match what the API sent

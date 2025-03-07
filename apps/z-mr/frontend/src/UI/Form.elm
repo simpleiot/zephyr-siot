@@ -61,6 +61,17 @@ buttonRow =
         ]
 
 
+buttonColumn : List (Element msg) -> Element msg
+buttonColumn =
+    column
+        [ Font.size 16
+        , Font.bold
+        , width fill
+        , padding 16
+        , spacing 16
+        ]
+
+
 button :
     { color : Color
     , onPress : msg
