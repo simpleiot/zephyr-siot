@@ -265,6 +265,7 @@ void network_thread(void *arg1, void *arg2, void *arg3)
 	int status_tick = 0;
 	int sntp_tick = 0;
 	bool network_started = false;
+	bool network_changed = false;
 
 	while (!zbus_sub_wait_msg(&network_sub, &chan, &p, K_FOREVER)) {
 		if (chan == &point_chan) {
@@ -274,24 +275,28 @@ void network_thread(void *arg1, void *arg2, void *arg3)
 				int ip_state = point_get_int(&p);
 				buffer.static_ip_state = ip_state;
 				status_tick = 0;
+				network_changed = true;
 			} else if (strcmp(p.type, POINT_TYPE_ADDRESS) == 0) {
 				// change to static IP address received
 				LOG_DBG("StaticIP address received");
 				strncpy(buffer.static_ip_address, p.data,
 					sizeof(buffer.static_ip_address) - 1);
 				status_tick = 0;
+				network_changed = true;
 			} else if (strcmp(p.type, POINT_TYPE_NETMASK) == 0) {
 				LOG_DBG("StaticIP netmask received");
 				// change to static IP netmask received
 				strncpy(buffer.static_ip_netmask, p.data,
 					sizeof(buffer.static_ip_netmask) - 1);
 				status_tick = 0;
+				network_changed = true;
 			} else if (strcmp(p.type, POINT_TYPE_GATEWAY) == 0) {
 				LOG_DBG("StaticIP gateway received");
 				// change to static IP gateway received
 				strncpy(buffer.static_ip_gateway, p.data,
 					sizeof(buffer.static_ip_gateway) - 1);
 				status_tick = 0;
+				network_changed = true;
 			} else if (strcmp(p.type, POINT_TYPE_NTP) == 0) {
 				LOG_DBG("NTP Point Received");
 				// check what key the NTP server is, as this will tell us
@@ -305,18 +310,17 @@ void network_thread(void *arg1, void *arg2, void *arg3)
 				sntp_tick = 0;
 			}
 		} else if (chan == &ticker_chan) {
-			if (status_tick <= 10) {
+			if (network_changed) {
 				status_tick++;
 			}
 
 			sntp_tick++;
 
-			if (status_tick == 10) {
+			if (status_tick >= 10) {
 				network_init_start(network_started);
 				network_started = true;
-				// increment to status_tick to 11, which causes it to stop
-				// incrementing
-				status_tick++;
+				network_changed = false;
+				status_tick = 0;
 			}
 
 			if (sntp_tick >= 7200) {
