@@ -49,6 +49,7 @@ typedef struct {
 #define POINT_TYPE_TEMPERATURE            "temp"
 #define POINT_TYPE_BOARD                  "board"
 #define POINT_TYPE_BOOT_COUNT             "bootCount"
+#define POINT_TYPE_VERSION_FW             "versionFW"
 
 typedef struct {
 	char *type;
