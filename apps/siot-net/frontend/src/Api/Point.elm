@@ -19,6 +19,7 @@ module Api.Point exposing
     , typeNetmask
     , typeStaticIP
     , typeUptime
+    , typeVersionFW
     , updatePoints
     )
 
@@ -236,3 +237,8 @@ typeBootCount =
 typeUptime : String
 typeUptime =
     "uptime"
+
+
+typeVersionFW : String
+typeVersionFW =
+    "versionFW"
