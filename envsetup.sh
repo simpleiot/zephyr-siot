@@ -271,6 +271,6 @@ siot_tag_version() {
 
 	siot_git_check || return 1
 
-	git tag "$app-v$version"
+	git tag "$app_v$version"
 	git push --tags
 }
