@@ -194,3 +194,83 @@ siot_format_check() {
 	find . -type d -name 'build' -prune -o \( -name '*.h' -o -name '*.c' \) -print0 | xargs -0 clang-format -verbose --dry-run -Werror || return 1
 	prettier --check "**/*.md" || return 1
 }
+
+siot_extract_version() {
+	local file_path="$1"
+	local version=""
+
+	while IFS='=' read -r key value; do
+		# Trim leading/trailing whitespace from key and value
+		key=$(echo "$key" | xargs)
+		value=$(echo "$value" | xargs)
+
+		# Skip empty lines or comments
+		[[ -z "$key" || "$key" =~ ^# ]] && continue
+
+		case "$key" in
+		VERSION_MAJOR) version+="${value}" ;;
+		VERSION_MINOR) version+=".${value}" ;;
+		PATCHLEVEL) version+=".${value}" ;;
+		EXTRAVERSION)
+			if [[ -n "$value" ]]; then
+				echo "Error: EXTRAVERSION must be blank if present" >&2
+				return 1
+			fi
+			;;
+		esac
+	done <"$file_path"
+
+	if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+		echo "version: $version"
+		echo "Error: Missing required version components" >&2
+		return 1
+	fi
+
+	echo "$version"
+	return 0
+}
+
+# the following function checks that we are on the main branch, no local
+# changes, and all changes have been pushed
+siot_git_check() {
+	# Check if we're on the main branch
+	current_branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+	if [ "$current_branch" != "main" ]; then
+		echo "Error: Not on main branch (currently on '$current_branch')"
+		return 1
+	fi
+
+	# Check for uncommitted changes
+	if ! git diff --quiet || ! git diff --cached --quiet; then
+		echo "Error: Uncommitted changes detected"
+		return 1
+	fi
+
+	# Update remote references
+	git fetch --quiet
+
+	# Check if local main is ahead of remote
+	local_commit=$(git rev-parse main)
+	remote_commit=$(git rev-parse origin/main)
+
+	if [ "$local_commit" != "$remote_commit" ]; then
+		echo "Error: Local main branch has unpushed commits"
+		return 1
+	fi
+
+	echo "All clear: No changes, everything pushed, on main branch"
+	return 0
+}
+
+siot_tag_version() {
+	local app="$1"
+	local version_file="$app/VERSION"
+	local version
+
+	version=$(siot_extract_version "$version_file") || return 1
+
+	siot_git_check || return 1
+
+	git tag "v$version"
+	git push --tags
+}
