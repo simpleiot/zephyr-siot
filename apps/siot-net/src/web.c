@@ -32,7 +32,7 @@ static point web_points[40] = {};
 static uint8_t recv_buffer[2048];
 
 static uint16_t http_service_port = 80;
-HTTP_SERVICE_DEFINE(siot_http_service, "0.0.0.0", &http_service_port, 1, 10, NULL);
+HTTP_SERVICE_DEFINE(siot_http_service, "0.0.0.0", &http_service_port, 1, 10, NULL, NULL);
 
 static uint8_t index_html_gz[] = {
 #include "index.html.gz.inc"
