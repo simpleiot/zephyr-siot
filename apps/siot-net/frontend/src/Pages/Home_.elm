@@ -170,6 +170,7 @@ statusTable points =
 
         data =
             [ { name = "Board", value = Point.getText points Point.typeBoard "0" }
+            , { name = "FW Version", value = Point.getText points Point.typeVersionFW "0" }
             , { name = "Boot count", value = Point.getText points Point.typeBootCount "0" }
             , { name = "CPU Usage", value = Round.round 2 (Point.getFloat points Point.typeMetricSysCPUPercent "0") ++ "%" }
             , { name = "Uptime", value = Point.getText points Point.typeUptime "0" ++ "s" }
