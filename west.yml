@@ -13,7 +13,7 @@ manifest:
   projects:
     - name: zephyr
       remote: zephyr-cbrake
-      revision: cbrake/iwasz/initialize_ref_clk_in_mdio_esp32
+      revision: v4.1.0-cb0
       import: 
         name-allowlist:
           - hal_espressif
