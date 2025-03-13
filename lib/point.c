@@ -189,7 +189,7 @@ struct point_js {
 	struct json_obj_token d; // data
 };
 
-#define POINT_JS_ARRAY_MAX 40
+#define POINT_JS_ARRAY_MAX 47
 
 struct point_js_array {
 	struct point_js points[POINT_JS_ARRAY_MAX];
