@@ -9,6 +9,7 @@ and this project adheres to
 ## [unlreased]
 
 - upgrade to Zephyr v4.1.0
+- add West Debug Tools
 
 ## [0.0.1] - 2025-03-11
 

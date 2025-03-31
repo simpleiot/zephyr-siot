@@ -62,3 +62,24 @@ CONFIG_THREAD_STACK_INFO=y
 CONFIG_STACK_CANARIES=y
 CONFIG_STACK_SENTINEL=y
 ```
+
+## Debugging Crashes
+
+The [`west-debug-tools`](https://github.com/hasheddan/west-debug-tools) are
+integrated and can be used like:
+
+```
+(py) [cbrake@quark siot]$ west dbt addr2src 0x400fc9f1
+Reading symbols from /scratch/simpleiot/zephyr-siot/siot/build/zephyr/zephyr.elf...
+0x400fc9f1 is in uart_esp32_irq_rx_ready (/scratch/simpleiot/zephyr-siot/modules/hal/espressif/zephyr/esp32/../../components/hal/esp32/include/hal/uart_ll.h:295).
+290
+291	    // When using DPort to read fifo, fifo_cnt is not credible, we need to calculate the real cnt based on the fifo read and write pointer.
+292	    // When using AHB to read FIFO, we can use fifo_cnt to indicate the data length in fifo.
+293	    if (rx_status.wr_addr > rx_status.rd_addr) {
+294	        len = rx_status.wr_addr - rx_status.rd_addr;
+295	    } else if (rx_status.wr_addr < rx_status.rd_addr) {
+296	        len = (rx_status.wr_addr + 128) - rx_status.rd_addr;
+297	    } else {
+298	        len = fifo_cnt > 0 ? 128 : 0;
+299	    }
+```
