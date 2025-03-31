@@ -42,3 +42,23 @@ Highly recommend the [tio](https://github.com/tio/tio) tool.
 - **[siot-serial](apps/siot-serial)**: Start of generic serial connected SIOT
   app
 - **[siggen](apps/siggen)**: Signal generator app that uses DAC output.
+
+## Memory management
+
+Getting all the memory knobs tuned correctly in Zephyr can be a challenge.
+Generally, the advice is to make sure stacks never go above 70% used
+(`kernel thread stacks`).
+
+The following config options can also be enabled to help track down memory
+issues:
+
+```
+# Stack debugging information
+# TODO: may want to remove for production
+CONFIG_ASSERT=y
+CONFIG_ASSERT_VERBOSE=y
+CONFIG_THREAD_NAME=y
+CONFIG_THREAD_STACK_INFO=y
+CONFIG_STACK_CANARIES=y
+CONFIG_STACK_SENTINEL=y
+```

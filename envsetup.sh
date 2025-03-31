@@ -265,13 +265,13 @@ siot_git_check() {
 
 siot_tag_version() {
 	local app="$1"
-	local version_file="$app/VERSION"
+	local version_file="apps/$app/VERSION"
 	local version
 
 	version=$(siot_extract_version "$version_file") || return 1
 
 	siot_git_check || return 1
 
-	git tag "v$version"
+	git tag "${app}_v${version}"
 	git push --tags
 }
