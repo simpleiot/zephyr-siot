@@ -171,7 +171,9 @@ siot_flash_esp() {
 	west flash --esp-device="$PORT"
 }
 
-siot_flash_esp_cliff() {
+# The Olimex devices use the CH341 USB serial port adapater which does not have a unique
+# ID, so all devices show up at the following address
+siot_flash_olimex_esp32_poe() {
 	siot_flash_esp /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
 }
 
