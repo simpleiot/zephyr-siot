@@ -156,6 +156,11 @@ siot_build_esp32_wrover() {
 	west build -b esp32_devkitc_wrover/esp32/procpu "${APP}"
 }
 
+siot_build_nrf9151_feather() {
+	APP=$1
+	west build -b circuitdojo_feather_nrf9151/nrf9151/ns "${APP}"
+}
+
 # following can be used for STM32 targets + Jlink
 siot_flash() {
 	west flash
