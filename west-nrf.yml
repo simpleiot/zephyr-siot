@@ -7,5 +7,9 @@ manifest:
       url: https://github.com/circuitdojo/nrf9160-feather-examples-and-drivers
       revision: v2.7.x
       import: true
+    - name: west-debug-tools
+      revision: main
+      url: https://github.com/hasheddan/west-debug-tools
+      west-commands: west-commands.yml
   self:
     path: siot
