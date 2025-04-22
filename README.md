@@ -10,7 +10,10 @@ that sets up to build the SIOT Zephyr application.
   [Getting Started Guide](https://docs.zephyrproject.org/latest/develop/getting_started/index.html#)
 - `mkdir zephyr-siot`
 - `cd zephyr-siot`
-- `west init -m https://github.com/simpleiot/zephyr-siot.git`
+- Choose mainline Zephyr or nRF SDK
+  - **mainline**: `west init -m https://github.com/simpleiot/zephyr-siot.git`
+  - **nRF**:
+    `west init -m https://github.com/simpleiot/zephyr-siot.git --mf west-nrf.yml`
 - `west update`
 - `cd siot`
 - `. envsetup.sh` (notice leading `.`)
@@ -24,7 +27,7 @@ that sets up to build the SIOT Zephyr application.
 
 ## Flashing
 
-- `siot_flash (STM32)`
+- `siot_flash (STM32, nRF)`
 - `siot_flash_esp <serial port>` (serial port is required for ESP targets)
 
 ## Open serial console
