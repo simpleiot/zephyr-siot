@@ -6,5 +6,6 @@ manifest:
     - name: nfed
       url: https://github.com/circuitdojo/nrf9160-feather-examples-and-drivers
       revision: v2.7.x
+      import: true
   self:
     path: siot
