@@ -1,0 +1,10 @@
+manifest:
+  remotes:
+    - name: simpleiot
+      url-base: https://github.com/simpleiot
+  projects:
+    - name: nrf-feather
+      url: https://github.com/circuitdojo/nrf9160-feather-examples-and-drivers
+      revision: v2.7.x
+  self:
+    path: siot
