@@ -45,6 +45,8 @@ Highly recommend the [tio](https://github.com/tio/tio) tool.
 - **[siot-serial](apps/siot-serial)**: Start of generic serial connected SIOT
   app
 - **[siggen](apps/siggen)**: Signal generator app that uses DAC output.
+- **[siot-nrf](apps/siot-nrf)**: An application that runs on the Nordic nRF9151
+  Feather module.
 
 ## Memory management
 
