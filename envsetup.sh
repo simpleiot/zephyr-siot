@@ -161,6 +161,11 @@ siot_build_nrf9151_feather() {
 	west build -b circuitdojo_feather_nrf9151/nrf9151/ns "${APP}" --sysbuild
 }
 
+siot_build_rpi_pico2() {
+	APP=$1
+	west build -b rpi_pico2 "${APP}"
+}
+
 # following can be used for STM32 targets + Jlink
 siot_flash() {
 	west flash
