@@ -13,11 +13,12 @@ manifest:
   projects:
     - name: zephyr
       remote: zephyr-cbrake
-      revision: v4.1.0-cb0
+      revision: v4.1.0-cb3
       import: 
         name-allowlist:
           - hal_espressif
           - hal_stm32
+          - hal_rpi_pico
           - cmsis
           - mbedtls
           - picolibc

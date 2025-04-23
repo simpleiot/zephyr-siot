@@ -161,6 +161,13 @@ siot_build_nrf9151_feather() {
 	west build -b circuitdojo_feather_nrf9151/nrf9151/ns "${APP}" --sysbuild
 }
 
+# Hold bootsel during poweron to put MCU in uf2 mode, then use
+# siot_flash_uf2
+siot_build_rpi_pico2() {
+	APP=$1
+	west build -b rpi_pico2/rp2350a/m33 "${APP}"
+}
+
 # following can be used for STM32 targets + Jlink
 siot_flash() {
 	west flash
@@ -178,6 +185,10 @@ siot_flash_esp() {
 
 siot_flash_nrf() {
 	west flash --runner pyocd
+}
+
+siot_flash_uf2() {
+	west flash --runner uf2
 }
 
 # The Olimex devices use the CH341 USB serial port adapater which does not have a unique
