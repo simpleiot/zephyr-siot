@@ -158,7 +158,7 @@ siot_build_esp32_wrover() {
 
 siot_build_nrf9151_feather() {
 	APP=$1
-	west build -b circuitdojo_feather_nrf9151/nrf9151/ns "${APP}"
+	west build -b circuitdojo_feather_nrf9151/nrf9151/ns "${APP}" --sysbuild
 }
 
 # following can be used for STM32 targets + Jlink
@@ -176,7 +176,13 @@ siot_flash_esp() {
 	west flash --esp-device="$PORT"
 }
 
-siot_flash_esp_cliff() {
+siot_flash_nrf() {
+	west flash --runner pyocd
+}
+
+# The Olimex devices use the CH341 USB serial port adapater which does not have a unique
+# ID, so all devices show up at the following address
+siot_flash_olimex_esp32_poe() {
 	siot_flash_esp /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
 }
 
