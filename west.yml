@@ -18,6 +18,7 @@ manifest:
         name-allowlist:
           - hal_espressif
           - hal_stm32
+          - hal_rpi_pico
           - cmsis
           - mbedtls
           - picolibc
