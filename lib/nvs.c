@@ -168,7 +168,8 @@ void nvs_store_thread(void *arg1, void *arg2, void *arg3)
 {
 	// we dynamically add the observer after we send the NVS state
 	// this allows the points to be sent before we start storing them
-	int ret = zbus_chan_add_obs(&point_chan, &state_sub, K_SECONDS(5));
+	static struct zbus_observer_node obs_node;
+	int ret = zbus_chan_add_obs(&point_chan, &state_sub, &obs_node, K_SECONDS(5));
 	if (ret != 0) {
 		LOG_DBG("Error adding observer: %i", ret);
 	}
