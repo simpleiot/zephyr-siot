@@ -13,7 +13,7 @@ manifest:
   projects:
     - name: zephyr
       remote: zephyr-cbrake
-      revision: v4.1.0-cb3
+      revision: v4.1.0-cb4
       import: 
         name-allowlist:
           - hal_espressif
