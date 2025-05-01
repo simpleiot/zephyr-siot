@@ -3,7 +3,7 @@
 This library contains general purpose code that may be useful to a number of
 different projects.
 
- ## Application architecture
+## Application architecture
 
 The application is constructed of a number of threads that mostly read or write
 points to a single
@@ -18,13 +18,13 @@ data is used.
 
 A point is a struct with the following fields:
 
-| Field       | Type      | Description                                                  |
-| ----------- | --------- | ------------------------------------------------------------ |
-| `time`      | `uint64`  | nanoseconds since Unix epoch                                 |
-| `type`      | `char[]`  | Point type                                                   |
+| Field       | Type      | Description                                                                |
+| ----------- | --------- | -------------------------------------------------------------------------- |
+| `time`      | `uint64`  | nanoseconds since Unix epoch                                               |
+| `type`      | `char[]`  | Point type                                                                 |
 | `key`       | `char[]`  | Point key -- can be used for index to create arrays, or key to create maps |
-| `data_type` | `uint8`   | Encoding of data field (currently float, int, or string)     |
-| `data`      | `uint8[]` | Data payload for point                                       |
+| `data_type` | `uint8`   | Encoding of data field (currently float, int, or string)                   |
+| `data`      | `uint8[]` | Data payload for point                                                     |
 
 ## Storing settings in flash
 
@@ -40,12 +40,12 @@ points channel to configure the system with the saved settings.
 
 The following points are published by this library.
 
-| Point type  | Description                                                  |
-| ----------- | ------------------------------------------------------------ |
-| `board`     | contents of `CONFIG_BOARD_TARGET`                            |
+| Point type  | Description                                                                                                          |
+| ----------- | -------------------------------------------------------------------------------------------------------------------- |
+| `board`     | contents of `CONFIG_BOARD_TARGET`                                                                                    |
 | `versionFW` | `0.1.0` or `0.1.0-dev+3` (format depends if `EXTRAVERSION` is set to `dev` in the `VERSION` file of the application) |
 
 ## Ticker channel
 
-A message is sent to the zbus `ticker_chan` every 500ms which can be used for timing purposes.
-
+A message is sent to the zbus `ticker_chan` every 500ms which can be used for
+timing purposes.

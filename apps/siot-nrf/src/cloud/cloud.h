@@ -7,9 +7,8 @@
 #ifndef _CLOUD_H
 #define _CLOUD_H
 
-struct device_data
-{
-    bool do_something;
+struct device_data {
+	bool do_something;
 };
 
 /**
