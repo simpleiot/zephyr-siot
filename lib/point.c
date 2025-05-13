@@ -255,21 +255,21 @@ int point_js_to_point(struct point_js *p_js, point *p)
 	strncpy(p->type, p_js->t, sizeof(p->type));
 	strncpy(p->key, p_js->k, sizeof(p->key));
 
-	if (strcmp(p_js->dt, POINT_DATA_TYPE_FLOAT_S) == 0) {
+	if (strncmp(p_js->dt, POINT_DATA_TYPE_FLOAT_S, 3) == 0) {
 		p->data_type = POINT_DATA_TYPE_FLOAT;
 		// null terminate string so we can scan it
 		int cnt = MIN(p_js->d.length, sizeof(buf) - 1);
 		memcpy(buf, p_js->d.start, cnt);
 		buf[cnt] = 0;
 		*(float *)p->data = atof(buf);
-	} else if (strcmp(p_js->dt, POINT_DATA_TYPE_INT_S) == 0) {
+	} else if (strncmp(p_js->dt, POINT_DATA_TYPE_INT_S, 3) == 0) {
 		p->data_type = POINT_DATA_TYPE_INT;
 		// null terminate string so we can scan it
 		int cnt = MIN(p_js->d.length, sizeof(buf) - 1);
 		memcpy(buf, p_js->d.start, cnt);
 		buf[cnt] = 0;
 		*(int *)p->data = atoi(buf);
-	} else if (strcmp(p_js->dt, POINT_DATA_TYPE_STRING_S) == 0) {
+	} else if (strncmp(p_js->dt, POINT_DATA_TYPE_STRING_S, 3) == 0) {
 		p->data_type = POINT_DATA_TYPE_STRING;
 		int cnt = MIN(p_js->d.length, sizeof(p->data) - 1);
 		memcpy(p->data, p_js->d.start, cnt);
@@ -287,7 +287,7 @@ int point_js_to_point(struct point_js *p_js, point *p)
 // all of the point_js fields MUST be filled in or the encoder will crash
 int point_json_encode(point *p, char *buf, size_t len)
 {
-	struct point_js p_js;
+	struct point_js p_js = {};
 
 	char data_buf[20];
 
@@ -304,7 +304,7 @@ int point_json_encode(point *p, char *buf, size_t len)
 
 int point_json_decode(char *json, size_t json_len, point *p)
 {
-	struct point_js p_js;
+	struct point_js p_js = {};
 	int ret = json_obj_parse(json, json_len, point_js_descr, ARRAY_SIZE(point_js_descr), &p_js);
 	if (ret < 0) {
 		return ret;
