@@ -140,3 +140,7 @@
 	phy-connection-type = "rmii";
 	ref-clk-output-gpios = <&gpio0 0 0>;
 };
+
+&psram0 {
+  size = <DT_SIZE_M(8)>;
+};
