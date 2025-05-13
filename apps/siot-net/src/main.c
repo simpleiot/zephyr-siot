@@ -39,6 +39,12 @@ int main(void)
 {
 	LOG_INF("SIOT MCU: %s %s", CONFIG_BOARD_TARGET, APP_VERSION_EXTENDED_STRING);
 
+	// Fix GPIO0 value so WROVER clock out works
+	if (strcmp(CONFIG_BOARD_TARGET, "esp32_poe_wrover/esp32/procpu") == 0) {
+		LOG_DBG("Fix up GPIO0 on wrover");
+		(*(volatile uint32_t *)0x3FF49044) = 0x1900;
+	}
+
 	nvs_init(nvs_pts, ARRAY_SIZE(nvs_pts));
 
 	// In your initialization code:
