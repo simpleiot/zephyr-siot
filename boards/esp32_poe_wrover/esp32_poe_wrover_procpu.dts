@@ -84,11 +84,35 @@
 };
 
 &spi2 {
+	status = "disabled";
 	#address-cells = <1>;
 	#size-cells = <0>;
 	status = "okay";
 	pinctrl-0 = <&spim2_default>;
 	pinctrl-names = "default";
+};
+
+// Native SD controller (SDMMC) configuration
+// Note: GPIO14 (CLK) and GPIO15 (CMD) conflict with SPI2 configuration above.
+// Disable SPI2 if you need to use the SD controller.
+&sdhc {
+	status = "okay";
+};
+
+&sdhc0 {
+	status = "okay";
+	bus-width = <1>;          // 1-bit SD mode
+	clk-pin = <14>;           // GPIO14 - SD CLK
+	cmd-pin = <15>;           // GPIO15 - SD CMD
+	d0-pin = <2>;             // GPIO2  - SD DAT0
+	pinctrl-0 = <&sdhc0_default>;
+	pinctrl-names = "default";
+
+	mmc {
+		compatible = "zephyr,sdmmc-disk";
+		disk-name = "SD";
+		status = "okay";
+	};
 };
 
 &timer0 {
