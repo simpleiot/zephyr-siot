@@ -20,6 +20,7 @@
 		i2c-0 = &i2c0;
 		sw0 = &button0;
 		watchdog0 = &wdt0;
+		sdhc0 = &sdhc1;
 	};
 
 	buttons {
@@ -38,6 +39,7 @@
 		zephyr,flash = &flash0;
 		zephyr,code-partition = &slot0_partition;
 		zephyr,bt-hci = &esp32_bt_hci;
+		zephyr,sdhc = &sdhc1;
 	};
 };
 
@@ -84,11 +86,38 @@
 };
 
 &spi2 {
+	status = "disabled";
 	#address-cells = <1>;
 	#size-cells = <0>;
 	status = "okay";
 	pinctrl-0 = <&spim2_default>;
 	pinctrl-names = "default";
+};
+
+
+// Native SD controller (SDMMC) configuration
+// Note: GPIO14 (CLK) and GPIO15 (CMD) conflict with SPI2 configuration above.
+// Disable SPI2 if you need to use the SD controller.
+&sdhc {
+	sdhc1: sdhc@1 {
+		status = "okay";
+
+		pinctrl-0 = <&sdhc0_default>;
+		pinctrl-names = "default";
+		power-delay-ms = <100>;
+		max-bus-freq = <52000000>;
+		bus-width = <1>;
+
+		clk-pin = <14>;
+		cmd-pin = <15>;
+		d0-pin = <2>;
+
+		mmc {
+			compatible = "zephyr,sdmmc-disk";
+			disk-name = "SD";
+			status = "okay";
+		};
+	};
 };
 
 &timer0 {
