@@ -58,6 +58,10 @@
 			pinmux = <SMI_MDC_GPIO23>,
 				 <SMI_MDIO_GPIO18>;
 		};
-	};	
+	};
+
+	sdhc0_default: sdhc0_default {
+		/* ESP32 SDMMC uses dedicated IO MUX pins, configured via clk-pin, cmd-pin, d0-pin properties */
+	};
 };
 
