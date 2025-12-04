@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <app_version.h>
 
-#if defined(CONFIG_FILE_SYSTEM)
+#if defined(CONFIG_FAT_FILESYSTEM_ELM)
 #include <zephyr/fs/fs.h>
 #include <zephyr/storage/disk_access.h>
 #include <ff.h>
@@ -41,7 +41,7 @@ static void net_event_handler(struct net_mgmt_event_callback *cb, uint64_t mgmt_
 // ==================================================
 // SD Card
 
-#if defined(CONFIG_FILE_SYSTEM)
+#if defined(CONFIG_FAT_FILESYSTEM_ELM)
 static FATFS fat_fs;
 static struct fs_mount_t mp = {
 	.type = FS_FATFS,
@@ -144,7 +144,7 @@ int main(void)
 
 	nvs_init(nvs_pts, ARRAY_SIZE(nvs_pts));
 
-#if defined(CONFIG_FILE_SYSTEM)
+#if defined(CONFIG_FAT_FILESYSTEM_ELM)
 	sd_card_init();
 #endif
 
