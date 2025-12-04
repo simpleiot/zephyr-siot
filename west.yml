@@ -12,8 +12,8 @@ manifest:
       url-base: https://github.com/cbrake
   projects:
     - name: zephyr
-      remote: zephyr-cbrake
-      revision: v4.2.0-cb0
+      remote: zephyrproject-rtos
+      revision: v4.3.0
       import:
         name-allowlist:
           - hal_espressif
