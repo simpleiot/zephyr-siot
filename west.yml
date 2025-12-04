@@ -20,6 +20,7 @@ manifest:
           - hal_stm32
           - hal_rpi_pico
           - cmsis
+          - cmsis_6
           - mbedtls
           - picolibc
           - fatfs
