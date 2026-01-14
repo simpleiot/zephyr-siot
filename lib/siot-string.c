@@ -1,4 +1,5 @@
 #include <siot-string.h>
+#include <stdint.h>
 
 void ftoa(float num, char *str, int precision)
 {
@@ -119,6 +120,33 @@ char *itoa(int num, char *str, int base)
 	return str;
 }
 
+char *utoa64(uint64_t num, char *str, int base)
+{
+
+	int i = 0;
+
+	// Handle 0 explicitly
+	if (num == 0) {
+		str[i++] = '0';
+		str[i] = '\0';
+		return str;
+	}
+
+	// Process individual digits
+	while (num != 0) {
+		int rem = num % base;
+		str[i++] = (rem > 9) ? (rem - 10) + 'a' : rem + '0';
+		num = num / base;
+	}
+
+	str[i] = '\0';
+
+	// Reverse the string
+	reverse(str, i);
+
+	return str;
+}
+
 int atoi(const char *str)
 {
 	int result = 0;
@@ -179,4 +207,27 @@ float atof(const char *str)
 	}
 
 	return sign * result;
+}
+
+uint64_t atou64(const char *str)
+{
+	uint64_t result = 0;
+	int i = 0;
+
+	// Handle negative numbers
+	if (str[0] == '-') {
+		return 0;
+	}
+
+	// Convert each digit
+	while (str[i] != '\0') {
+		if (str[i] >= '0' && str[i] <= '9') {
+			result = result * 10 + (str[i] - '0');
+		} else {
+			break; // Stop at non-digit character
+		}
+		i++;
+	}
+
+	return result;
 }

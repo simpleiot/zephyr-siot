@@ -161,6 +161,18 @@ siot_build_esp32_wrover() {
 	west build -b esp32_devkitc_wrover/esp32/procpu "${APP}"
 }
 
+siot_build_nrf9151_feather() {
+	APP=$1
+	west build -b circuitdojo_feather_nrf9151/nrf9151/ns "${APP}" --sysbuild
+}
+
+# Hold bootsel during poweron to put MCU in uf2 mode, then use
+# siot_flash_uf2
+siot_build_rpi_pico2() {
+	APP=$1
+	west build -b rpi_pico2/rp2350a/m33 "${APP}"
+}
+
 # following can be used for STM32 targets + Jlink
 siot_flash() {
 	west flash
@@ -176,7 +188,17 @@ siot_flash_esp() {
 	west flash --esp-device="$PORT"
 }
 
-siot_flash_esp_cliff() {
+siot_flash_nrf() {
+	west flash --runner pyocd
+}
+
+siot_flash_uf2() {
+	west flash --runner uf2
+}
+
+# The Olimex devices use the CH341 USB serial port adapater which does not have a unique
+# ID, so all devices show up at the following address
+siot_flash_olimex_esp32_poe() {
 	siot_flash_esp /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
 }
 

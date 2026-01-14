@@ -12,15 +12,18 @@ manifest:
       url-base: https://github.com/cbrake
   projects:
     - name: zephyr
-      remote: zephyr-cbrake
-      revision: v4.1.0-cb0
-      import: 
+      remote: zephyrproject-rtos
+      revision: v4.3.0
+      import:
         name-allowlist:
           - hal_espressif
           - hal_stm32
+          - hal_rpi_pico
           - cmsis
+          - cmsis_6
           - mbedtls
           - picolibc
+          - fatfs
     - name: zephyr-snmp
       remote: simpleiot
       revision: main
