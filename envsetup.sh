@@ -83,9 +83,14 @@ siot_build_native_sim() {
 	west build -b native_sim "${APP}"
 }
 
-# run all library tests on host platform
+# run all library tests on host platform using Zephyr CI docker container
 siot_test_native() {
-	siot_build_native_sim tests && ./build/zephyr/zephyr.exe
+	docker run --rm \
+		-u "$(id -u):$(id -g)" \
+		-v "$(pwd)/..:/workdir" \
+		-w /workdir/siot \
+		ghcr.io/zephyrproject-rtos/ci:v0.28.7 \
+		bash -c "west build -b native_sim tests && ./build/zephyr/zephyr.exe"
 }
 
 # See https://community.tmpdir.org/t/zephyr-on-the-esp32/1310 for a comparison of ESP hardware
