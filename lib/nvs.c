@@ -101,7 +101,7 @@ int nvs_init(const struct nvs_point *nvs_pts_in, size_t len)
 			if (rc < 0) {
 				LOG_ERR("Error reading %s: %i, setting zero value",
 					npt->point_def->type, rc);
-				zms_write(&fs, npt->nvs_id, 0, sizeof(float_buf));
+				zms_write(&fs, npt->nvs_id, &float_buf, sizeof(float_buf));
 			}
 			point_put_float(&p, float_buf);
 			break;
@@ -112,7 +112,7 @@ int nvs_init(const struct nvs_point *nvs_pts_in, size_t len)
 			if (rc < 0) {
 				LOG_ERR("Error reading %s: %i, setting zero value",
 					npt->point_def->type, rc);
-				zms_write(&fs, npt->nvs_id, 0, sizeof(uint32_buf));
+				zms_write(&fs, npt->nvs_id, &uint32_buf, sizeof(uint32_buf));
 			}
 			point_put_int(&p, uint32_buf);
 

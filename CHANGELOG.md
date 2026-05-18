@@ -14,6 +14,9 @@ and this project adheres to
 - add `nucleo_h743zi` flash overlay with a 256 KiB storage partition so ZMS
   persistence works on that board
 - add `full_name` to custom board definitions (required by Zephyr v4.4.0)
+- fix persisted-point default initialization: the first-boot default write
+  passed a NULL data pointer, so int/float defaults were never stored and
+  the "Error reading <type>" message repeated on every boot
 - add `siot_update_west` helper to envsetup.sh
 - upgrade to Zephyr v4.1.0
 - add West Debug Tools
