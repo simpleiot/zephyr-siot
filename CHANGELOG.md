@@ -18,8 +18,6 @@ and this project adheres to
   passed a NULL data pointer, so int/float defaults were never stored and
   the "Error reading <type>" message repeated on every boot
 - add `siot_update_west` helper to envsetup.sh
-- upgrade to Zephyr v4.1.0
-- add West Debug Tools
 
 ## [0.0.1] - 2025-03-11
 
