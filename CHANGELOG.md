@@ -17,6 +17,8 @@ and this project adheres to
 - fix persisted-point default initialization: the first-boot default write
   passed a NULL data pointer, so int/float defaults were never stored and
   the "Error reading <type>" message repeated on every boot
+- add `siot-simple` app: minimal serial-shell target exercising lib siot
+  and ZMS persistence (boot-count smoke test), no networking
 - add `siot_update_west` helper to envsetup.sh
 
 ## [0.0.1] - 2025-03-11
