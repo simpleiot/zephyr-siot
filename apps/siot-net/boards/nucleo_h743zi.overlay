@@ -1,0 +1,29 @@
+/*
+ * STM32H743ZI flash repartition for siot-net.
+ *
+ * The STM32H743 has 128 KiB flash erase sectors. ZMS (lib/nvs.c) needs at
+ * least 2 erase sectors, so the stock board `storage_partition` (128 KiB =
+ * a single sector) is too small and point persistence is disabled there.
+ *
+ * The stock board layout only defines partitions through 0xE0000, leaving
+ * the upper ~1.1 MiB of the 2 MiB flash unused. This overlay relocates
+ * `storage_partition` into that unused region and grows it to 256 KiB
+ * (2 x 128 KiB sectors) so ZMS can mount.
+ *
+ * mcuboot / slot0 / slot1 / scratch are left exactly as defined by the
+ * board DTS. The application still runs from slot0 (zephyr,code-partition,
+ * 0x40000), so app boot and the MCUboot image-slot layout are unchanged.
+ * The old 0x20000 region is intentionally left as an unused gap.
+ */
+
+/delete-node/ &storage_partition;
+
+&flash0 {
+	partitions {
+		/* storage: 256 KiB = 2 x 128 KiB erase sectors for ZMS */
+		storage_partition: partition@e0000 {
+			label = "storage";
+			reg = <0x000e0000 DT_SIZE_K(256)>;
+		};
+	};
+};

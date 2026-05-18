@@ -8,6 +8,12 @@ siot_setup() {
 	npm install
 }
 
+# Update the west meta-tool itself to the latest release (the pip package,
+# not the modules). Run "siot_setup" / "west update" afterward to sync modules.
+siot_update_west() {
+	pip install --upgrade west
+}
+
 ############################
 # Utility functions
 ############################

@@ -1,5 +1,6 @@
 board:
   name: esp32_poe
+  full_name: Olimex ESP32-POE
   vendor: olimex
   socs:
   - name: esp32
