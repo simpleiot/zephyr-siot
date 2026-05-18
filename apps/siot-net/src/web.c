@@ -1,7 +1,7 @@
 #include <point.h>
 
 #include <zephyr/data/json.h>
-#include <zephyr/fs/nvs.h>
+#include <zephyr/kvss/nvs.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/net/http/server.h>
@@ -83,7 +83,7 @@ HTTP_RESOURCE_DEFINE(index_js_gz_resource, siot_http_service, "/index.js",
 // 	JSON_OBJ_DESCR_FIELD(point_js, key, JSON_TOK_STRING),
 // };
 
-static int v1_handler(struct http_client_ctx *client, enum http_data_status status,
+static int v1_handler(struct http_client_ctx *client, enum http_transaction_status status,
 		      const struct http_request_ctx *request_ctx, struct http_response_ctx *resp,
 		      void *user_data)
 {
@@ -104,12 +104,12 @@ static int v1_handler(struct http_client_ctx *client, enum http_data_status stat
 		cursor += request_ctx->data_len;
 	}
 
-	if (status == HTTP_SERVER_DATA_ABORTED) {
+	if (status == HTTP_SERVER_TRANSACTION_ABORTED) {
 		cursor = 0;
 		return 0;
 	}
 
-	if (status == HTTP_SERVER_DATA_FINAL) {
+	if (status == HTTP_SERVER_REQUEST_DATA_FINAL) {
 		if (strcmp(client->url_buffer, "/v1/points") == 0) {
 			if (client->method == HTTP_GET) {
 				k_mutex_lock(&web_points_lock, K_FOREVER);

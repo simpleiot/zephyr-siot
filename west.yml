@@ -4,16 +4,10 @@ manifest:
       url-base: https://github.com/simpleiot
     - name: zephyrproject-rtos
       url-base: https://github.com/zephyrproject-rtos
-    - name: zephyr-sylvio
-      url-base: https://github.com/sylvioalves
-    - name: zephyr-iwasz
-      url-base: https://github.com/iwasz
-    - name: zephyr-cbrake
-      url-base: https://github.com/cbrake
   projects:
     - name: zephyr
       remote: zephyrproject-rtos
-      revision: v4.3.0
+      revision: v4.4.0
       import:
         name-allowlist:
           - hal_espressif

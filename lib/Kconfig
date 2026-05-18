@@ -9,7 +9,8 @@ config LIB_SIOT
 	select ZBUS_RUNTIME_OBSERVERS
 	select ZBUS_MSG_SUBSCRIBER
 	select FLASH
-	select NVS
+	select FLASH_PAGE_LAYOUT
+	select ZMS
 
 if LIB_SIOT
 

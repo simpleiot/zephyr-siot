@@ -1,0 +1,14 @@
+sample:
+  description: Minimal SIOT app exercising lib siot + ZMS over a serial shell
+  name: siot-simple
+common:
+  tags: siot
+  harness: console
+  harness_config:
+    type: one_line
+    regex:
+      - "siot-simple: (.*)"
+tests:
+  app.siot-simple:
+    platform_allow:
+      - native_sim

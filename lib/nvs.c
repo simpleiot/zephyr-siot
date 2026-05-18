@@ -4,7 +4,7 @@
 #include <sys/cdefs.h>
 
 #include <zephyr/kernel.h>
-#include <zephyr/fs/nvs.h>
+#include <zephyr/kvss/zms.h>
 #include <zephyr/zbus/zbus.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/flash.h>
@@ -18,11 +18,12 @@ LOG_MODULE_REGISTER(nvs_store, LOG_LEVEL_DBG);
 
 ZBUS_CHAN_DECLARE(point_chan);
 
-static struct nvs_fs fs;
+static struct zms_fs fs;
 
 #define NVS_PARTITION        storage_partition
-#define NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(NVS_PARTITION)
-#define NVS_PARTITION_OFFSET FIXED_PARTITION_OFFSET(NVS_PARTITION)
+#define NVS_PARTITION_DEVICE PARTITION_DEVICE(NVS_PARTITION)
+#define NVS_PARTITION_OFFSET PARTITION_OFFSET(NVS_PARTITION)
+#define NVS_PARTITION_SIZE   PARTITION_SIZE(NVS_PARTITION)
 
 static const struct nvs_point *nvs_pts;
 static size_t nvs_pts_count = 0;
@@ -46,10 +47,17 @@ int nvs_init(const struct nvs_point *nvs_pts_in, size_t len)
 	struct flash_pages_info info;
 	int rc = 0;
 
-	/* define the nvs file system by settings with:
-	 *	sector_size equal to the pagesize,
-	 *	3 sectors
+	/* Configure the storage so it stays strictly within storage_partition:
+	 *	sector_size = flash erase-page size
+	 *	sector_count = how many whole sectors fit in the partition
 	 *	starting at NVS_PARTITION_OFFSET
+	 *
+	 * ZMS requires at least 2 sectors. On targets whose erase-page size is
+	 * large relative to the storage partition (e.g. STM32H743: 128 KiB
+	 * pages, 128 KiB partition => only 1 sector) we bail out *before*
+	 * mounting so ZMS never erases flash outside the partition. The device
+	 * then runs without persistence rather than corrupting adjacent
+	 * partitions (the application image).
 	 */
 	fs.flash_device = NVS_PARTITION_DEVICE;
 	if (!device_is_ready(fs.flash_device)) {
@@ -63,9 +71,16 @@ int nvs_init(const struct nvs_point *nvs_pts_in, size_t len)
 		return -1;
 	}
 	fs.sector_size = info.size;
-	fs.sector_count = 3U;
+	fs.sector_count = NVS_PARTITION_SIZE / info.size;
 
-	rc = nvs_mount(&fs);
+	if (fs.sector_count < 2) {
+		LOG_ERR("storage_partition (%zu bytes) too small for ZMS: needs "
+			">= 2 erase sectors of %u bytes; persistence disabled",
+			(size_t)NVS_PARTITION_SIZE, info.size);
+		return -1;
+	}
+
+	rc = zms_mount(&fs);
 	if (rc) {
 		LOG_ERR("Flash Init failed\n");
 		return -1;
@@ -82,38 +97,38 @@ int nvs_init(const struct nvs_point *nvs_pts_in, size_t len)
 		switch (npt->point_def->data_type) {
 		case POINT_DATA_TYPE_FLOAT:
 			float_buf = 0;
-			rc = nvs_read(&fs, npt->nvs_id, &float_buf, sizeof(float_buf));
+			rc = zms_read(&fs, npt->nvs_id, &float_buf, sizeof(float_buf));
 			if (rc < 0) {
 				LOG_ERR("Error reading %s: %i, setting zero value",
 					npt->point_def->type, rc);
-				nvs_write(&fs, npt->nvs_id, 0, sizeof(float_buf));
+				zms_write(&fs, npt->nvs_id, &float_buf, sizeof(float_buf));
 			}
 			point_put_float(&p, float_buf);
 			break;
 
 		case POINT_DATA_TYPE_INT:
 			uint32_buf = 0;
-			rc = nvs_read(&fs, npt->nvs_id, &uint32_buf, sizeof(uint32_buf));
+			rc = zms_read(&fs, npt->nvs_id, &uint32_buf, sizeof(uint32_buf));
 			if (rc < 0) {
 				LOG_ERR("Error reading %s: %i, setting zero value",
 					npt->point_def->type, rc);
-				nvs_write(&fs, npt->nvs_id, 0, sizeof(uint32_buf));
+				zms_write(&fs, npt->nvs_id, &uint32_buf, sizeof(uint32_buf));
 			}
 			point_put_int(&p, uint32_buf);
 
 			if (strcmp(POINT_TYPE_BOOT_COUNT, npt->point_def->type) == 0) {
 				LOG_DBG("Boot count: %i", uint32_buf);
 				uint32_buf++;
-				nvs_write(&fs, npt->nvs_id, &uint32_buf, sizeof(uint32_buf));
+				zms_write(&fs, npt->nvs_id, &uint32_buf, sizeof(uint32_buf));
 			}
 			break;
 
 		case POINT_DATA_TYPE_STRING:
 			string_buf[0] = 0;
-			rc = nvs_read(&fs, npt->nvs_id, &string_buf, sizeof(string_buf));
+			rc = zms_read(&fs, npt->nvs_id, &string_buf, sizeof(string_buf));
 			if (rc < 0) {
 				LOG_ERR("Error reading %s: %i", npt->point_def->type, rc);
-				nvs_write(&fs, npt->nvs_id, "", sizeof(""));
+				zms_write(&fs, npt->nvs_id, "", sizeof(""));
 			}
 			point_put_string(&p, string_buf);
 			break;
@@ -154,7 +169,7 @@ void nvs_store_handle_point(point *p)
 
 	LOG_DBG_POINT("Writing point to NVS", p);
 
-	ssize_t cnt = nvs_write(&fs, nvs_id, p->data, len);
+	ssize_t cnt = zms_write(&fs, nvs_id, p->data, len);
 	// 0 indicates value is already written and nothing to do
 	if (cnt != 0 && (cnt < 0 || cnt != len)) {
 		LOG_ERR("Error writing setting: %s, len: %i, written: %zu", p->type, len, cnt);

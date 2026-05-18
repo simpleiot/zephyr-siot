@@ -9,6 +9,24 @@ connected MCU.
 
 ![ui](assets/image-20250130111410493.png)
 
+## Building
+
+The web UI assets are compressed and embedded into the firmware binary at build
+time, so the frontend must be built **before** the firmware. In a fresh
+workspace this is a required first step:
+
+```bash
+siot_net_frontend_build              # generates apps/siot-net/frontend/dist/
+siot_build_nucleo_h743zi apps/siot-net/
+```
+
+Substitute the appropriate `siot_build_<board>` command for your target (see the
+build matrix in the [top-level CLAUDE.md](../../CLAUDE.md) or `envsetup.sh`).
+
+Rebuild the frontend whenever you change anything under `frontend/` and want it
+reflected in flashed firmware (the dev server below avoids reflashing during
+frontend development).
+
 ## Web UI Frontend
 
 The web UI for the project is a single-page application (SPA) written in Elm

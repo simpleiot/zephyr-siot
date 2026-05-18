@@ -1,5 +1,6 @@
 board:
   name: esp32_poe_wrover
+  full_name: Olimex ESP32-POE (WROVER module)
   vendor: olimex
   socs:
   - name: esp32
