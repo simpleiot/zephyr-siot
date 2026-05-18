@@ -8,12 +8,13 @@ that sets up to build the SIOT Zephyr application.
 
 - install Zephyr dependencies as outlined in the
   [Getting Started Guide](https://docs.zephyrproject.org/latest/develop/getting_started/index.html#)
-- `mkdir zephyr-siot`
-- `cd zephyr-siot`
-- Choose mainline Zephyr or nRF SDK
-  - **mainline**: `west init -m https://github.com/simpleiot/zephyr-siot.git`
+- Choose mainline Zephyr or nRF SDK (the `zephyr-siot` directory is created
+  automatically)
+  - **mainline**:
+    `west init -m https://github.com/simpleiot/zephyr-siot.git zephyr-siot`
   - **nRF**:
-    `west init -m https://github.com/simpleiot/zephyr-siot.git --mf west-nrf.yml`
+    `west init -m https://github.com/simpleiot/zephyr-siot.git --mf west-nrf.yml zephyr-siot-nrf`
+- `cd zephyr-siot` (or `cd zephyr-siot-nrf` for the nRF setup)
 - `west update`
 - `cd siot`
 - `. envsetup.sh` (notice leading `.`)
