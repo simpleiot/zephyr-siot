@@ -5,7 +5,7 @@ manifest:
   projects:
     - name: nfed
       url: https://github.com/circuitdojo/nrf9160-feather-examples-and-drivers
-      revision: v2.7.x
+      revision: v3.2.x
       import: true
     - name: west-debug-tools
       revision: main
