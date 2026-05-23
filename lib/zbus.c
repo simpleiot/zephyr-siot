@@ -1,6 +1,7 @@
 #include "zephyr/kernel.h"
 #include <point.h>
 #include <zephyr/zbus/zbus.h>
+#include <zephyr/init.h>
 #include "app_version.h"
 
 ZBUS_CHAN_DEFINE(point_chan, point, NULL, NULL, ZBUS_OBSERVERS_EMPTY, ZBUS_MSG_INIT(0));
@@ -22,7 +23,7 @@ int bus_init()
 
 	point p;
 
-	point_set_type_key(&p, POINT_TYPE_BOARD, "0");
+	point_init(&p, POINT_TYPE_BOARD, "0");
 	point_put_string(&p, CONFIG_BOARD_TARGET);
 	zbus_chan_pub(&point_chan, &p, K_MSEC(500));
 
@@ -31,7 +32,7 @@ int bus_init()
 		dev = true;
 	}
 
-	point_set_type_key(&p, POINT_TYPE_VERSION_FW, "0");
+	point_init(&p, POINT_TYPE_VERSION_FW, "0");
 	if (dev) {
 		point_put_string(&p, APP_VERSION_EXTENDED_STRING);
 	} else {

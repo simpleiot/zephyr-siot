@@ -139,7 +139,7 @@ int nvs_init(const struct nvs_point *nvs_pts_in, size_t len)
 			continue;
 		}
 
-		point_set_type_key(&p, npt->point_def->type, npt->key);
+		point_init(&p, npt->point_def->type, npt->key);
 		zbus_chan_pub(&point_chan, &p, K_MSEC(500));
 	}
 
