@@ -27,4 +27,22 @@ config SIOT_LOG_LEVEL
 		4: Debug
 		5: Verbose
 
-endif #LIB_SIOT
+config NVS_EVENT_QUEUE_SIZE
+	int "NVS Event Queue Size"
+	default 10
+	help
+		Defines the size of persisted events in the event history thread
+
+config RAM_EVENT_QUEUE_SIZE
+	int "RAM Event Queue Size"
+	default 20
+	help
+		Defines the size of volatile events in the event history thread
+
+config EVENTS_ENABLED
+	bool "Enable events thread"
+	default y
+	help
+		Enable the events history thread in the mylib module.
+
+endif # LIB_SIOT
