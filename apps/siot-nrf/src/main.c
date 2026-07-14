@@ -62,14 +62,8 @@ int main(void)
 		return err;
 	}
 
-	/* Init lte_lc*/
-	err = lte_lc_init();
-	if (err < 0) {
-		LOG_ERR("Failed to init. Err: %i", err);
-		return err;
-	}
-
-	/* Power saving is turned on */
+	/* Power saving is turned on (lte_lc_init was removed in NCS v3.x —
+	 * lte_lc_connect now performs initialization internally). */
 	lte_lc_psm_req(true);
 
 	/* Connect */

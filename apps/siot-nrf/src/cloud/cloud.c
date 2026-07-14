@@ -44,7 +44,7 @@ int tls_setup(int fd)
 
 	/* Cipher suite */
 	// Cipher Suite: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 (0xc02b)
-	nrf_sec_cipher_t cipher_list[] = {0xc02b};
+	int cipher_list[] = {0xc02b};
 
 	/* Set options */
 	err = setsockopt(fd, SOL_TLS, TLS_PEER_VERIFY, &verify, sizeof(verify));
@@ -167,14 +167,14 @@ clean_up:
 	}
 }
 
-static void response_cb(struct http_response *rsp, enum http_final_call final_data, void *user_data)
+static int response_cb(struct http_response *rsp, enum http_final_call final_data, void *user_data)
 {
 
 	LOG_INF("HTTP Status %d", rsp->http_status_code);
 
 	/* Check status */
 	if (rsp->http_status_code != 200 && rsp->http_status_code != 201) {
-		return;
+		return 0;
 	}
 
 	if (final_data == HTTP_DATA_FINAL) {
@@ -182,7 +182,7 @@ static void response_cb(struct http_response *rsp, enum http_final_call final_da
 
 		if (!rsp->body_found) {
 			LOG_ERR("Body not found");
-			return;
+			return 0;
 		}
 
 		/* TODO: Decode and do something! */
@@ -196,6 +196,8 @@ static void response_cb(struct http_response *rsp, enum http_final_call final_da
 			cloud_callback(&data);
 		}
 	}
+
+	return 0;
 }
 
 int cloud_publish(struct device_data *data)
