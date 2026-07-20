@@ -42,10 +42,6 @@ int tls_setup(int fd)
 		CONFIG_CLOUD_TLS_SEC_TAG,
 	};
 
-	/* Cipher suite */
-	// Cipher Suite: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 (0xc02b)
-	nrf_sec_cipher_t cipher_list[] = {0xc02b};
-
 	/* Set options */
 	err = setsockopt(fd, SOL_TLS, TLS_PEER_VERIFY, &verify, sizeof(verify));
 	if (err) {
@@ -64,12 +60,10 @@ int tls_setup(int fd)
 		return err;
 	}
 
-	err = setsockopt(fd, SOL_TLS, TLS_CIPHERSUITE_LIST, cipher_list, sizeof(cipher_list));
-	if (err) {
-		err = -errno;
-		LOG_ERR("Failed to setup TLS cipher, err %d", errno);
-		return err;
-	}
+	/* The cipher suite is left unset so the modem negotiates from its full
+	 * supported list. Pinning a single suite restricts the server to a matching
+	 * certificate key type, which surfaces as an opaque handshake failure.
+	 */
 
 	err = setsockopt(fd, SOL_TLS, TLS_HOSTNAME, CONFIG_CLOUD_HOSTNAME,
 			 sizeof(CONFIG_CLOUD_HOSTNAME) - 1);
@@ -104,8 +98,11 @@ static int socket_setup()
 	LOG_INF("Looking up %s", CONFIG_CLOUD_HOSTNAME);
 	err = getaddrinfo(CONFIG_CLOUD_HOSTNAME, NULL, &hints, &res);
 	if (err) {
-		LOG_ERR("getaddrinfo() failed. Err: %i", errno);
-		return err;
+		/* getaddrinfo() reports positive EAI_* codes. Callers distinguish a
+		 * socket from an error by sign, so return a negative errno.
+		 */
+		LOG_ERR("getaddrinfo() failed. Err: %i, errno: %i", err, errno);
+		return -EIO;
 	}
 
 	((struct sockaddr_in *)res->ai_addr)->sin_port = htons(CONFIG_CLOUD_PORT);
@@ -167,23 +164,26 @@ clean_up:
 	}
 }
 
-static void response_cb(struct http_response *rsp, enum http_final_call final_data, void *user_data)
+static int response_cb(struct http_response *rsp, enum http_final_call final_data, void *user_data)
 {
-
-	LOG_INF("HTTP Status %d", rsp->http_status_code);
+	/* Called once per received chunk, so only report on the last one. */
+	if (final_data == HTTP_DATA_FINAL) {
+		LOG_INF("HTTP status %d", rsp->http_status_code);
+	}
 
 	/* Check status */
 	if (rsp->http_status_code != 200 && rsp->http_status_code != 201) {
-		return;
+		return 0;
 	}
 
 	if (final_data == HTTP_DATA_FINAL) {
-		LOG_HEXDUMP_INF(rsp->recv_buf, rsp->recv_buf_len, "Response data");
-
 		if (!rsp->body_found) {
 			LOG_ERR("Body not found");
-			return;
+			return 0;
 		}
+
+		LOG_INF("Response body (%zu bytes): %.*s", rsp->body_frag_len,
+			(int)rsp->body_frag_len, rsp->body_frag_start);
 
 		/* TODO: Decode and do something! */
 		/* Start of body is rsp->body_frag_start */
@@ -196,13 +196,18 @@ static void response_cb(struct http_response *rsp, enum http_final_call final_da
 			cloud_callback(&data);
 		}
 	}
+
+	return 0;
 }
 
 int cloud_publish(struct device_data *data)
 {
 	int fd = -1;
 	int ret = 0;
-	uint8_t recv_buf_ipv4[256] = {0};
+	/* Sized to hold the response headers plus a small body in one pass. This
+	 * lives on the caller's stack, so CONFIG_MAIN_STACK_SIZE covers it.
+	 */
+	uint8_t recv_buf_ipv4[1024] = {0};
 
 	LOG_INF("Publish path: %s%s", CONFIG_CLOUD_HOSTNAME, CONFIG_CLOUD_PUBLISH_PATH);
 
@@ -224,10 +229,10 @@ int cloud_publish(struct device_data *data)
 	/* Setup socket */
 	fd = socket_setup();
 	if (fd < 0) {
-		k_free(msg);
+		cJSON_free(msg);
 
-		LOG_ERR("Unable to setup socket. Err: %i", ret);
-		return ret;
+		LOG_ERR("Unable to setup socket. Err: %i", fd);
+		return fd;
 	}
 
 	LOG_INF("Socket setup complete");
@@ -253,9 +258,6 @@ int cloud_publish(struct device_data *data)
 	req.header_fields = (const char **)headers;
 
 	ret = http_client_req(fd, &req, timeout, NULL);
-	if (ret < 0) {
-		LOG_ERR("Unable to send data to cloud. Err: %i", ret);
-	}
 
 	/* Close connection */
 	(void)close(fd);
@@ -263,7 +265,12 @@ int cloud_publish(struct device_data *data)
 	/* Free data */
 	cJSON_free(msg);
 
-	LOG_INF("Data sent to cloud");
+	if (ret < 0) {
+		LOG_ERR("Unable to send data to cloud. Err: %i", ret);
+		return ret;
+	}
+
+	LOG_INF("Data sent to cloud (%i bytes)", ret);
 
 	return 0;
 }

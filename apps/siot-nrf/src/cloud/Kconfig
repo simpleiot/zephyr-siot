@@ -5,8 +5,12 @@ config CLOUD_TLS_SEC_TAG
     default 42
 
 config CLOUD_HOSTNAME
-	string "Base URL"
-	default "www.circuitdojo.com"
+    string "Base URL"
+    default "postman-echo.com"
+    help
+      Host to publish to. The default is a public request-echo service, useful
+      for bring-up. The host's certificate must chain to the CA provisioned to
+      the modem (see src/cloud/isrg-root-x1.pem).
 
 config CLOUD_PORT
     int "Port"
@@ -14,4 +18,6 @@ config CLOUD_PORT
 
 config CLOUD_PUBLISH_PATH
     string "Publish Path"
-    default "/some/path"
+    default "/post"
+    help
+      Path to POST to. "/post" is the echo endpoint on the default host.
