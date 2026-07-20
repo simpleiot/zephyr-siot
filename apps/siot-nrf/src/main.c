@@ -6,6 +6,7 @@
 
 #include <zephyr/kernel.h>
 #include <zephyr/pm/device.h>
+#include <zephyr/shell/shell.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(main);
 
@@ -41,6 +42,22 @@ static void timeout_handler(struct k_timer *timer_id)
 	LOG_INF("Timeout");
 	k_sem_give(&thread_sem);
 }
+
+/* Publish runs on the main thread rather than the shell thread, which has a
+ * much smaller stack than the TLS handshake and HTTP request need.
+ */
+static int cmd_publish(const struct shell *sh, size_t argc, char **argv)
+{
+	ARG_UNUSED(argc);
+	ARG_UNUSED(argv);
+
+	shell_print(sh, "Requesting publish");
+	k_sem_give(&thread_sem);
+
+	return 0;
+}
+
+SHELL_CMD_REGISTER(publish, NULL, "Publish device data to the cloud now", cmd_publish);
 
 int main(void)
 {
@@ -82,10 +99,10 @@ int main(void)
 	while (1) {
 		k_sem_take(&thread_sem, K_FOREVER);
 
-		// the following is crashing
-		// /* Publish and sleep .. */
-		// err = cloud_publish(&data);
-		// if (err < 0)
-		//     LOG_ERR("Unable to publish. Err: %i", err);
+		/* Publish and sleep .. */
+		err = cloud_publish(&data);
+		if (err < 0) {
+			LOG_ERR("Unable to publish. Err: %i", err);
+		}
 	}
 }
