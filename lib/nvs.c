@@ -86,7 +86,7 @@ int nvs_init(const struct nvs_point *nvs_pts_in, size_t len)
 		return -1;
 	}
 
-	point p;
+	point p = {};
 	uint32_t uint32_buf;
 	float float_buf;
 	char string_buf[sizeof(p.data)];
@@ -189,7 +189,7 @@ void nvs_store_thread(void *arg1, void *arg2, void *arg3)
 	}
 
 	const struct zbus_channel *chan;
-	point p;
+	point p = {};
 
 	while (!zbus_sub_wait_msg(&state_sub, &chan, &p, K_FOREVER)) {
 		if (chan == &point_chan) {

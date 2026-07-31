@@ -17,6 +17,12 @@ typedef struct {
 
 // TODO: find a way to initialize new points with key set to "0"
 
+// Points carry a timestamp only when a host supplied one; this MCU has no
+// clock of its own. Any value below this floor (2020-01-01T00:00:00Z in
+// nanoseconds) is treated as an uninitialized point struct rather than a
+// timestamp, since a host always sends the current time.
+#define POINT_TIME_MIN 1577836800000000000ULL
+
 // Point Data Types should match those in SIOT (not merged to master yet)
 // https://github.com/simpleiot/simpleiot/blob/feat/js-subject-point-changes/data/point.go
 
@@ -80,6 +86,7 @@ void point_put_float(point *p, const float v);
 void point_put_string(point *p, const char *v);
 
 int point_data_len(point *p);
+int point_data_to_string(point *p, char *buf, size_t buf_len);
 int point_dump(point *p, char *buf, size_t len);
 int points_dump(point *pts, size_t pts_len, char *buf, size_t len);
 int points_merge(point *pts, size_t pts_len, point *p);
