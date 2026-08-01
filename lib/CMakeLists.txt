@@ -7,5 +7,7 @@ if(CONFIG_LIB_SIOT)
     zbus.c
     nvs.c
     siot-string.c
+    timeconv.c
   )
+  zephyr_library_sources_ifdef(CONFIG_SIOT_POINT_CACHE point-cache.c)
 endif()

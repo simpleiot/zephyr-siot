@@ -176,7 +176,7 @@ void web_thread(void *arg1, void *arg2, void *arg3)
 	LOG_INF("siot web thread");
 	http_server_start();
 
-	point p;
+	point p = {};
 
 	const struct zbus_channel *chan;
 	while (!zbus_sub_wait_msg(&web_sub, &chan, &p, K_FOREVER)) {

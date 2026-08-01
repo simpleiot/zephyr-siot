@@ -1,5 +1,6 @@
 #include <point.h>
 #include <siot-string.h>
+#include <timeconv.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -86,6 +87,35 @@ int point_data_len(point *p)
 	}
 
 	return 0;
+}
+
+// point_data_to_string renders a point's value as the text used on the wire,
+// for both the JSON encoder and the shell point emitter. Keeping one copy of
+// this switch means the two encodings cannot drift apart.
+// Returns 0 on success, <0 if the data type is not renderable.
+int point_data_to_string(point *p, char *buf, size_t buf_len)
+{
+	if (buf == NULL || buf_len == 0) {
+		return -1;
+	}
+
+	switch (p->data_type) {
+	case POINT_DATA_TYPE_FLOAT:
+		// snprintf has caused problems in the past, so use a leaner custom version
+		ftoa(point_get_float(p), buf, 4);
+		return 0;
+	case POINT_DATA_TYPE_INT:
+		itoa(point_get_int(p), buf, 10);
+		return 0;
+	case POINT_DATA_TYPE_STRING:
+	case POINT_DATA_TYPE_JSON:
+		strncpy(buf, p->data, buf_len - 1);
+		buf[buf_len - 1] = '\0';
+		return 0;
+	}
+
+	buf[0] = '\0';
+	return -1;
 }
 
 // point_dump generates a human readable description of the point
@@ -219,25 +249,36 @@ void point_to_point_js(point *p, struct point_js *p_js, char *buf, size_t buf_le
 	switch (p->data_type) {
 	case POINT_DATA_TYPE_FLOAT:
 		p_js->dt = POINT_DATA_TYPE_FLOAT_S;
-		// snprintf has caused problems in the past, so use a leaner custom version
-		ftoa(point_get_float(p), buf, 4);
+		point_data_to_string(p, buf, buf_len);
 		p_js->d.start = buf;
 		p_js->d.length = strlen(buf);
 		break;
 	case POINT_DATA_TYPE_INT:
 		p_js->dt = POINT_DATA_TYPE_INT_S;
-		itoa(point_get_int(p), buf, 10);
+		point_data_to_string(p, buf, buf_len);
 		p_js->d.start = buf;
 		p_js->d.length = strlen(buf);
 		break;
 	case POINT_DATA_TYPE_STRING:
 		p_js->dt = POINT_DATA_TYPE_STRING_S;
-		strncpy(buf, p->data, buf_len);
+		point_data_to_string(p, buf, buf_len);
+		p_js->d.start = buf;
+		p_js->d.length = strlen(buf);
+		break;
+	case POINT_DATA_TYPE_JSON:
+		p_js->dt = POINT_DATA_TYPE_JSON_S;
+		point_data_to_string(p, buf, buf_len);
 		p_js->d.start = buf;
 		p_js->d.length = strlen(buf);
 		break;
 	default:
-		p_js->d.start = NULL;
+		// Every point_js field must be populated or the JSON encoder
+		// crashes. Leaving dt unset and d.start NULL here was reachable
+		// from the HTTP path, because points_merge stores an incoming
+		// point of unknown type into an empty slot without checking it.
+		p_js->dt = POINT_DATA_TYPE_STRING_S;
+		buf[0] = '\0';
+		p_js->d.start = buf;
 		p_js->d.length = 0;
 	}
 }
@@ -274,6 +315,11 @@ int point_js_to_point(struct point_js *p_js, point *p)
 		int cnt = MIN(p_js->d.length, sizeof(p->data) - 1);
 		memcpy(p->data, p_js->d.start, cnt);
 		// make sure string is null terminated
+		p->data[cnt] = 0;
+	} else if (strncmp(p_js->dt, POINT_DATA_TYPE_JSON_S, 3) == 0) {
+		p->data_type = POINT_DATA_TYPE_JSON;
+		int cnt = MIN(p_js->d.length, sizeof(p->data) - 1);
+		memcpy(p->data, p_js->d.start, cnt);
 		p->data[cnt] = 0;
 	} else {
 		p->data_type = POINT_DATA_TYPE_UNKNOWN;
@@ -406,9 +452,8 @@ int points_merge(point *pts, size_t pts_len, point *p)
 
 static int handle_sendpoint(const struct shell *shell, size_t argc, char **argv)
 {
-	/* Handle shell command: "sendtrap <ip address>" */
 	if (argc < 5) {
-		shell_print(shell, "Usage: p <type> <key> <INT|FLT|STR> <data>");
+		shell_print(shell, "Usage: p <type> <key> <INT|FLT|STR|JSN> <data> [<time>]");
 		return -1;
 	}
 
@@ -420,7 +465,7 @@ static int handle_sendpoint(const struct shell *shell, size_t argc, char **argv)
 	p_js.d.start = argv[4];
 	p_js.d.length = strlen(argv[4]);
 
-	point p;
+	point p = {};
 	int ret = point_js_to_point(&p_js, &p);
 
 	if (ret != 0) {
@@ -428,9 +473,25 @@ static int handle_sendpoint(const struct shell *shell, size_t argc, char **argv)
 		return -1;
 	}
 
+	// An optional RFC3339 timestamp. The MCU has no clock of its own; it
+	// stores whatever the host sent and hands it back unchanged when the
+	// point is emitted. That round trip is what lets the host recognize its
+	// own writes coming back and avoid an endless echo loop.
+	//
+	// Applied after point_js_to_point, which zeroes p.time.
+	if (argc >= 6) {
+		uint64_t t = timeconv_epoch_ns_from_rfc3339(argv[5], strlen(argv[5]));
+		if (t == 0) {
+			shell_print(shell, "Invalid time: %s", argv[5]);
+			return -1;
+		}
+		p.time = t;
+	}
+
 	zbus_chan_pub(&point_chan, &p, K_MSEC(500));
 
 	return 0;
 }
 
-SHELL_CMD_REGISTER(p, NULL, "Sends a point", handle_sendpoint);
+SHELL_CMD_REGISTER(p, NULL, "Sends a point: p <type> <key> <INT|FLT|STR|JSN> <data> [<time>]",
+		   handle_sendpoint);

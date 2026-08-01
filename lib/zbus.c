@@ -20,7 +20,7 @@ int bus_init()
 {
 	k_timer_start(&ticker, K_MSEC(500), K_MSEC(500));
 
-	point p;
+	point p = {};
 
 	point_set_type_key(&p, POINT_TYPE_BOARD, "0");
 	point_put_string(&p, CONFIG_BOARD_TARGET);

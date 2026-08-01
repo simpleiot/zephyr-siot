@@ -27,4 +27,45 @@ config SIOT_LOG_LEVEL
 		4: Debug
 		5: Verbose
 
+config SIOT_POINT_CACHE
+	bool "Point cache"
+	help
+		Maintain a cache of the most recent value of every point
+		published on zbus point_chan, updated by a subscriber thread.
+
+		Gives any subsystem needing the whole current state one place
+		to read it from, rather than tracking points itself.
+
+if SIOT_POINT_CACHE
+
+config SIOT_POINT_CACHE_SIZE
+	int "Number of points the cache holds"
+	default 40
+	range 1 47
+	help
+		Must not exceed POINT_JS_ARRAY_MAX (47), since
+		points_json_encode refuses to encode more points than that.
+
+config SIOT_POINT_CACHE_THREAD_STACK
+	int "Point cache thread stack size"
+	default 2048
+
+config SIOT_POINT_CACHE_THREAD_PRIO
+	int "Point cache thread priority"
+	default 7
+
+config SIOT_POINT_SHELL
+	bool "Point shell streaming"
+	depends on SHELL
+	help
+		Register the `siot` shell command and allow points to be
+		streamed to the console as they change, one ASCII line per
+		point.
+
+		This is what a host running Simple IoT consumes when a serial
+		node is configured for the shell protocol, and it is readable
+		by a developer watching the same console.
+
+endif # SIOT_POINT_CACHE
+
 endif #LIB_SIOT
