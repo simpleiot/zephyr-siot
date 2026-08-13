@@ -2,18 +2,29 @@
 #define __POINT_H_
 
 #include "zephyr/kernel.h"
+#include <stddef.h>
 #include <stdint.h>
 
 // The point datatype is used to represent most configuration and sensor data in the system
-// One point is 73 bytes long. We currently allocate 24K of flash to NVS storage, so that
-// allows us to store ~300 points.
+// One point is 80 bytes long (76 bytes of fields, padded out for the 8 byte time field).
+// We currently allocate 24K of flash to NVS storage, so that allows us to store ~300 points.
+//
+// The key field is 23 bytes rather than 20 so that data lands on a 4 byte
+// boundary. point_put_int() and point_put_float() write through an int/float
+// pointer into data, and at the natural offset of 53 that store raises a
+// UsageFault on Cortex-M4. Anything that changes the size of a field ahead of
+// data needs to keep the offset aligned; the build assert below checks it.
 typedef struct {
 	uint64_t time;
 	char type[24];
-	char key[20];
+	char key[23];
 	uint8_t data_type;
 	char data[20];
 } point;
+
+BUILD_ASSERT(offsetof(point, data) % 4 == 0,
+	     "point.data must be 4 byte aligned, or point_put_int/point_put_float fault on "
+	     "targets that require aligned access");
 
 // TODO: find a way to initialize new points with key set to "0"
 
