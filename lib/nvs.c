@@ -129,6 +129,12 @@ int nvs_init(const struct nvs_point *nvs_pts_in, size_t len)
 			if (rc < 0) {
 				LOG_ERR("Error reading %s: %i", npt->point_def->type, rc);
 				zms_write(&fs, npt->nvs_id, "", sizeof(""));
+			} else {
+				// A record written by an older build can fill the
+				// buffer without leaving room for a terminator,
+				// and everything downstream reads it as a C
+				// string.
+				string_buf[sizeof(string_buf) - 1] = '\0';
 			}
 			point_put_string(&p, string_buf);
 			break;
