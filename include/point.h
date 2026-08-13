@@ -51,6 +51,11 @@ BUILD_ASSERT(offsetof(point, data) % 4 == 0,
 #define POINT_DATA_TYPE_STRING_S "STR"
 #define POINT_DATA_TYPE_JSON_S   "JSN"
 
+// Size of the scratch buffer a caller must supply for the rendered data field
+// of one point in JSON. Sized for a string point in which every character needs
+// an escape, which is the longest a rendered value can get.
+#define POINT_JSON_DATA_BUF_SIZE (sizeof(((point *)0)->data) * 2)
+
 // ==================================================
 // Point types
 // These defines should match those in the SIOT schema
