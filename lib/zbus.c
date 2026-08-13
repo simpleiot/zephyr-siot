@@ -9,6 +9,16 @@
 ZBUS_CHAN_DEFINE(point_chan, point, NULL, NULL, ZBUS_OBSERVERS_EMPTY, ZBUS_MSG_INIT(0));
 ZBUS_CHAN_DEFINE(ticker_chan, uint8_t, NULL, NULL, ZBUS_OBSERVERS_EMPTY, ZBUS_MSG_INIT(0));
 
+#if defined(CONFIG_ZBUS_MSG_SUBSCRIBER) && defined(CONFIG_ZBUS_MSG_SUBSCRIBER_BUF_ALLOC_STATIC)
+// A publish copies the whole message into the buffer it was handed, and the
+// fixed pool hands out buffers of one size. Undersizing that against the
+// largest channel message overruns the buffer at the first publish, so catch it
+// while the application is still being configured.
+BUILD_ASSERT(CONFIG_ZBUS_MSG_SUBSCRIBER_NET_BUF_STATIC_DATA_SIZE >= sizeof(point),
+	     "CONFIG_ZBUS_MSG_SUBSCRIBER_NET_BUF_STATIC_DATA_SIZE must be at least "
+	     "sizeof(point), or a publish to point_chan overruns its buffer");
+#endif
+
 // The ticker publishes from a thread rather than from the timer expiry
 // function. A k_timer callback runs in interrupt context, where the only legal
 // timeout is K_NO_WAIT. With CONFIG_ZBUS_MSG_SUBSCRIBER enabled every publish
