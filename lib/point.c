@@ -27,20 +27,38 @@ const point_def point_def_temperature = {POINT_TYPE_TEMPERATURE, POINT_DATA_TYPE
 const point_def point_def_board = {POINT_TYPE_BOARD, POINT_DATA_TYPE_STRING};
 const point_def point_def_boot_count = {POINT_TYPE_BOOT_COUNT, POINT_DATA_TYPE_INT};
 
+// The string fields of a point are fixed length and adjacent to each other in
+// the struct, so a source that does not fit must still leave a null terminator
+// behind. strncpy() alone does not: given a longer source it fills the field to
+// the last byte and stops, and every later reader then runs past the field into
+// the next one. Truncating a name is recoverable; corrupting the point is not.
+static void copy_str_field(char *dest, const char *src, size_t dest_len)
+{
+	if (strlen(src) >= dest_len) {
+		// Truncation is safe but silent, and the shortened name looks
+		// like a real one downstream. Say so, since the fix is either a
+		// shorter string or a wider field.
+		LOG_WRN("point string truncated to %u bytes: %s", (unsigned)(dest_len - 1), src);
+	}
+
+	strncpy(dest, src, dest_len - 1);
+	dest[dest_len - 1] = '\0';
+}
+
 void point_set_type(point *p, const char *t)
 {
-	strncpy(p->type, t, sizeof(p->type));
+	copy_str_field(p->type, t, sizeof(p->type));
 }
 
 void point_set_key(point *p, const char *k)
 {
-	strncpy(p->key, k, sizeof(p->key));
+	copy_str_field(p->key, k, sizeof(p->key));
 }
 
 void point_set_type_key(point *p, const char *t, const char *k)
 {
-	strncpy(p->type, t, sizeof(p->type));
-	strncpy(p->key, k, sizeof(p->key));
+	copy_str_field(p->type, t, sizeof(p->type));
+	copy_str_field(p->key, k, sizeof(p->key));
 }
 
 int point_get_int(point *p)
@@ -55,7 +73,11 @@ float point_get_float(point *p)
 
 void point_get_string(point *p, char *dest, int len)
 {
-	strncpy(dest, p->data, len);
+	if (len <= 0) {
+		return;
+	}
+
+	copy_str_field(dest, p->data, (size_t)len);
 }
 
 void point_put_int(point *p, const int v)
@@ -73,7 +95,7 @@ void point_put_float(point *p, const float v)
 void point_put_string(point *p, const char *v)
 {
 	p->data_type = POINT_DATA_TYPE_STRING;
-	strncpy(p->data, v, sizeof(p->data));
+	copy_str_field(p->data, v, sizeof(p->data));
 }
 
 int point_data_len(point *p)
@@ -293,8 +315,8 @@ int point_js_to_point(struct point_js *p_js, point *p)
 		return -1;
 	}
 
-	strncpy(p->type, p_js->t, sizeof(p->type));
-	strncpy(p->key, p_js->k, sizeof(p->key));
+	copy_str_field(p->type, p_js->t, sizeof(p->type));
+	copy_str_field(p->key, p_js->k, sizeof(p->key));
 
 	if (strncmp(p_js->dt, POINT_DATA_TYPE_FLOAT_S, 3) == 0) {
 		p->data_type = POINT_DATA_TYPE_FLOAT;
