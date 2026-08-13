@@ -46,7 +46,11 @@ int bus_init()
 	point p = {};
 
 	point_set_type_key(&p, POINT_TYPE_BOARD, "0");
-	point_put_string(&p, CONFIG_BOARD_TARGET);
+	// CONFIG_BOARD rather than CONFIG_BOARD_TARGET: the target adds the SoC
+	// and core qualifier, as in esp32_devkitc/esp32/procpu, which overruns
+	// the 20 byte point data field and is reported truncated mid-name. The
+	// board name alone identifies the hardware and fits.
+	point_put_string(&p, CONFIG_BOARD);
 	zbus_chan_pub(&point_chan, &p, K_MSEC(500));
 
 	bool dev = false;
