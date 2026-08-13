@@ -27,20 +27,38 @@ const point_def point_def_temperature = {POINT_TYPE_TEMPERATURE, POINT_DATA_TYPE
 const point_def point_def_board = {POINT_TYPE_BOARD, POINT_DATA_TYPE_STRING};
 const point_def point_def_boot_count = {POINT_TYPE_BOOT_COUNT, POINT_DATA_TYPE_INT};
 
+// The string fields of a point are fixed length and adjacent to each other in
+// the struct, so a source that does not fit must still leave a null terminator
+// behind. strncpy() alone does not: given a longer source it fills the field to
+// the last byte and stops, and every later reader then runs past the field into
+// the next one. Truncating a name is recoverable; corrupting the point is not.
+static void copy_str_field(char *dest, const char *src, size_t dest_len)
+{
+	if (strlen(src) >= dest_len) {
+		// Truncation is safe but silent, and the shortened name looks
+		// like a real one downstream. Say so, since the fix is either a
+		// shorter string or a wider field.
+		LOG_WRN("point string truncated to %u bytes: %s", (unsigned)(dest_len - 1), src);
+	}
+
+	strncpy(dest, src, dest_len - 1);
+	dest[dest_len - 1] = '\0';
+}
+
 void point_set_type(point *p, const char *t)
 {
-	strncpy(p->type, t, sizeof(p->type));
+	copy_str_field(p->type, t, sizeof(p->type));
 }
 
 void point_set_key(point *p, const char *k)
 {
-	strncpy(p->key, k, sizeof(p->key));
+	copy_str_field(p->key, k, sizeof(p->key));
 }
 
 void point_set_type_key(point *p, const char *t, const char *k)
 {
-	strncpy(p->type, t, sizeof(p->type));
-	strncpy(p->key, k, sizeof(p->key));
+	copy_str_field(p->type, t, sizeof(p->type));
+	copy_str_field(p->key, k, sizeof(p->key));
 }
 
 int point_get_int(point *p)
@@ -55,7 +73,11 @@ float point_get_float(point *p)
 
 void point_get_string(point *p, char *dest, int len)
 {
-	strncpy(dest, p->data, len);
+	if (len <= 0) {
+		return;
+	}
+
+	copy_str_field(dest, p->data, (size_t)len);
 }
 
 void point_put_int(point *p, const int v)
@@ -73,7 +95,7 @@ void point_put_float(point *p, const float v)
 void point_put_string(point *p, const char *v)
 {
 	p->data_type = POINT_DATA_TYPE_STRING;
-	strncpy(p->data, v, sizeof(p->data));
+	copy_str_field(p->data, v, sizeof(p->data));
 }
 
 int point_data_len(point *p)
@@ -153,7 +175,7 @@ int point_dump(point *p, char *buf, size_t len)
 		remaining -= cnt;
 		break;
 	case POINT_DATA_TYPE_FLOAT:
-		cnt = snprintf(buf + offset, remaining, "INT: %f", (double)point_get_float(p));
+		cnt = snprintf(buf + offset, remaining, "FLT: %f", (double)point_get_float(p));
 		offset += cnt;
 		remaining -= cnt;
 		break;
@@ -237,10 +259,130 @@ static const struct json_obj_descr point_js_array_descr[] = {
 				 point_js_descr, ARRAY_SIZE(point_js_descr)),
 };
 
+// The data field is encoded as an opaque JSON token, which Zephyr writes
+// between quotes exactly as given. A quote or backslash in the data would close
+// the string early and produce a document the receiver cannot parse, so escape
+// those two characters on the way out.
+//
+// Output is truncated on a character boundary when it does not fit, so the
+// result is always a complete escape sequence rather than a trailing lone
+// backslash. Returns the number of characters written, excluding the null
+// terminator.
+static size_t json_escape_string(const char *src, size_t src_len, char *dst, size_t dst_len)
+{
+	size_t di = 0;
+
+	if (dst_len == 0) {
+		return 0;
+	}
+
+	// src is a fixed length field that a caller may have filled without
+	// leaving room for a terminator, so bound the read by src_len as well.
+	for (size_t si = 0; si < src_len && src[si] != '\0'; si++) {
+		char c = src[si];
+		size_t needed = (c == '"' || c == '\\') ? 2 : 1;
+
+		if (di + needed >= dst_len) {
+			break;
+		}
+
+		if (needed == 2) {
+			dst[di++] = '\\';
+		}
+
+		dst[di++] = c;
+	}
+
+	dst[di] = '\0';
+
+	return di;
+}
+
+// The inverse of json_escape_string. Zephyr hands an opaque token back as the
+// raw span between the quotes, escapes included, so a value has to be unescaped
+// on the way in or a point that makes a round trip through JSON grows a
+// backslash on each pass.
+//
+// The short escapes defined by JSON are recognized. Anything else, \u included,
+// is copied through unchanged, since point data is a 20 byte field with no room
+// for the multi-byte results of a unicode escape.
+//
+// Returns the number of characters written, excluding the null terminator.
+static size_t json_unescape_string(const char *src, size_t src_len, char *dst, size_t dst_len)
+{
+	size_t di = 0;
+
+	if (dst_len == 0) {
+		return 0;
+	}
+
+	for (size_t si = 0; si < src_len && src[si] != '\0'; si++) {
+		char c = src[si];
+
+		if (c == '\\' && si + 1 < src_len) {
+			char next = src[si + 1];
+			char decoded;
+
+			switch (next) {
+			case '"':
+			case '\\':
+			case '/':
+				decoded = next;
+				break;
+			case 'b':
+				decoded = '\b';
+				break;
+			case 'f':
+				decoded = '\f';
+				break;
+			case 'n':
+				decoded = '\n';
+				break;
+			case 'r':
+				decoded = '\r';
+				break;
+			case 't':
+				decoded = '\t';
+				break;
+			default:
+				// Not an escape this decoder knows, so the
+				// backslash is part of the value.
+				decoded = c;
+				break;
+			}
+
+			if (di + 1 >= dst_len) {
+				break;
+			}
+
+			dst[di++] = decoded;
+
+			if (decoded != c) {
+				si++;
+			}
+
+			continue;
+		}
+
+		if (di + 1 >= dst_len) {
+			break;
+		}
+
+		dst[di++] = c;
+	}
+
+	dst[di] = '\0';
+
+	return di;
+}
+
 // point_js has pointers to strings, so the buf is used to store these strings
 // Note: this functions assumes the input point will be valid for the duration of
 // of the p_js lifecycle, as we are populating points to strings in the original
 // p.
+//
+// buf must be at least POINT_JSON_DATA_BUF_SIZE bytes, which allows for every
+// character of a string point being escaped.
 void point_to_point_js(point *p, struct point_js *p_js, char *buf, size_t buf_len)
 {
 	p_js->t = p->type;
@@ -249,27 +391,27 @@ void point_to_point_js(point *p, struct point_js *p_js, char *buf, size_t buf_le
 	switch (p->data_type) {
 	case POINT_DATA_TYPE_FLOAT:
 		p_js->dt = POINT_DATA_TYPE_FLOAT_S;
+		// A rendered number never contains a character that needs
+		// escaping, so it goes into the buffer as is.
 		point_data_to_string(p, buf, buf_len);
 		p_js->d.start = buf;
-		p_js->d.length = strlen(buf);
+		p_js->d.length = strnlen(buf, buf_len);
 		break;
 	case POINT_DATA_TYPE_INT:
 		p_js->dt = POINT_DATA_TYPE_INT_S;
 		point_data_to_string(p, buf, buf_len);
 		p_js->d.start = buf;
-		p_js->d.length = strlen(buf);
+		p_js->d.length = strnlen(buf, buf_len);
 		break;
 	case POINT_DATA_TYPE_STRING:
 		p_js->dt = POINT_DATA_TYPE_STRING_S;
-		point_data_to_string(p, buf, buf_len);
 		p_js->d.start = buf;
-		p_js->d.length = strlen(buf);
+		p_js->d.length = json_escape_string(p->data, sizeof(p->data), buf, buf_len);
 		break;
 	case POINT_DATA_TYPE_JSON:
 		p_js->dt = POINT_DATA_TYPE_JSON_S;
-		point_data_to_string(p, buf, buf_len);
 		p_js->d.start = buf;
-		p_js->d.length = strlen(buf);
+		p_js->d.length = json_escape_string(p->data, sizeof(p->data), buf, buf_len);
 		break;
 	default:
 		// Every point_js field must be populated or the JSON encoder
@@ -288,13 +430,15 @@ int point_js_to_point(struct point_js *p_js, point *p)
 	char buf[30];
 	p->time = 0;
 
-	if (p_js->t == NULL || p_js->k == NULL) {
-		LOG_ERR("Refusing to decode point with null type or key");
+	// dt is checked alongside type and key because the comparisons below
+	// dereference it, and JSON that simply omits the field leaves it null.
+	if (p_js->t == NULL || p_js->k == NULL || p_js->dt == NULL) {
+		LOG_ERR("Refusing to decode point with null type, key or data type");
 		return -1;
 	}
 
-	strncpy(p->type, p_js->t, sizeof(p->type));
-	strncpy(p->key, p_js->k, sizeof(p->key));
+	copy_str_field(p->type, p_js->t, sizeof(p->type));
+	copy_str_field(p->key, p_js->k, sizeof(p->key));
 
 	if (strncmp(p_js->dt, POINT_DATA_TYPE_FLOAT_S, 3) == 0) {
 		p->data_type = POINT_DATA_TYPE_FLOAT;
@@ -312,15 +456,11 @@ int point_js_to_point(struct point_js *p_js, point *p)
 		*(int *)p->data = atoi(buf);
 	} else if (strncmp(p_js->dt, POINT_DATA_TYPE_STRING_S, 3) == 0) {
 		p->data_type = POINT_DATA_TYPE_STRING;
-		int cnt = MIN(p_js->d.length, sizeof(p->data) - 1);
-		memcpy(p->data, p_js->d.start, cnt);
-		// make sure string is null terminated
-		p->data[cnt] = 0;
+		// json_unescape_string null terminates within the field
+		json_unescape_string(p_js->d.start, p_js->d.length, p->data, sizeof(p->data));
 	} else if (strncmp(p_js->dt, POINT_DATA_TYPE_JSON_S, 3) == 0) {
 		p->data_type = POINT_DATA_TYPE_JSON;
-		int cnt = MIN(p_js->d.length, sizeof(p->data) - 1);
-		memcpy(p->data, p_js->d.start, cnt);
-		p->data[cnt] = 0;
+		json_unescape_string(p_js->d.start, p_js->d.length, p->data, sizeof(p->data));
 	} else {
 		p->data_type = POINT_DATA_TYPE_UNKNOWN;
 		p->data[0] = 0;
@@ -335,7 +475,7 @@ int point_json_encode(point *p, char *buf, size_t len)
 {
 	struct point_js p_js = {};
 
-	char data_buf[20];
+	char data_buf[POINT_JSON_DATA_BUF_SIZE];
 
 	point_to_point_js(p, &p_js, data_buf, sizeof(data_buf));
 
@@ -365,26 +505,51 @@ int point_json_decode(char *json, size_t json_len, point *p)
 	return 0;
 }
 
+// Scratch buffers for the rendered data fields, one per point in the array.
+// These are static rather than automatic because the array is large enough to
+// overrun the stack of the threads that encode points, which are sized for the
+// modest needs of an HTTP handler. The mutex is what makes that safe: it keeps
+// two threads encoding at once from writing over each other's buffers.
+static char data_buf[POINT_JS_ARRAY_MAX][POINT_JSON_DATA_BUF_SIZE];
+static K_MUTEX_DEFINE(points_json_encode_mutex);
+
 int points_json_encode(point *pts_in, int count, char *buf, size_t len)
 {
-	// buffers for data types and fields
-	char data_buf[POINT_JS_ARRAY_MAX][20];
 	struct point_js_array pts_out = {.len = 0};
 
 	if (count > POINT_JS_ARRAY_MAX) {
 		return -ENOMEM;
 	}
 
+	k_mutex_lock(&points_json_encode_mutex, K_FOREVER);
+
 	for (int i = 0; i < count; i++) {
 		// make sure it is not an empty point
-		if (pts_in[i].type[0] != 0) {
-			point_to_point_js(&pts_in[i], &pts_out.points[pts_out.len],
-					  data_buf[pts_out.len], sizeof(data_buf[pts_out.len]));
-			pts_out.len++;
+		if (pts_in[i].type[0] == 0) {
+			continue;
 		}
+
+		// A point whose data type is out of range has nothing the
+		// encoder can render, and including it would put an empty value
+		// in the output under a type the receiver does not recognize.
+		// Leave it out and say which point it was.
+		if (pts_in[i].data_type == POINT_DATA_TYPE_UNKNOWN ||
+		    pts_in[i].data_type >= POINT_DATA_TYPE_END) {
+			LOG_DBG("Skipping point with invalid data_type: %s:%s, type:%i",
+				pts_in[i].type, pts_in[i].key, pts_in[i].data_type);
+			continue;
+		}
+
+		point_to_point_js(&pts_in[i], &pts_out.points[pts_out.len], data_buf[pts_out.len],
+				  sizeof(data_buf[pts_out.len]));
+		pts_out.len++;
 	}
 
-	return json_arr_encode_buf(point_js_array_descr, &pts_out, buf, len);
+	int ret = json_arr_encode_buf(point_js_array_descr, &pts_out, buf, len);
+
+	k_mutex_unlock(&points_json_encode_mutex);
+
+	return ret;
 }
 
 // returns the number of points decoded, or less than 0 for error

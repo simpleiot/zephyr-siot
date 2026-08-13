@@ -2,6 +2,8 @@
 #include "zephyr/ztest_assert.h"
 #include <point.h>
 
+#include <stddef.h>
+#include <string.h>
 #include <zephyr/data/json.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
@@ -358,4 +360,91 @@ ZTEST(point_tests, decode_point_invalid_json)
 
 	int ret = point_json_decode(buf, sizeof(test_point1_invalid_json), &p);
 	zassert(ret != 0, "decode should have returned an error");
+}
+
+ZTEST(point_tests, data_field_is_aligned)
+{
+	// point_put_int and point_put_float write through an int/float pointer
+	// into the data field, which faults on targets that require aligned
+	// access if the offset is not a multiple of 4.
+	zassert_equal(0, offsetof(point, data) % 4, "point.data is not 4 byte aligned");
+}
+
+ZTEST(point_tests, set_type_key_truncates_and_terminates)
+{
+	point p = {};
+
+	// Longer than either field, so both have to truncate.
+	char long_str[64];
+	memset(long_str, 'a', sizeof(long_str) - 1);
+	long_str[sizeof(long_str) - 1] = '\0';
+
+	point_set_type_key(&p, long_str, long_str);
+
+	zassert_equal(sizeof(p.type) - 1, strlen(p.type),
+		      "type is not terminated within its field");
+	zassert_equal(sizeof(p.key) - 1, strlen(p.key), "key is not terminated within its field");
+}
+
+ZTEST(point_tests, put_string_truncates_and_terminates)
+{
+	point p = {};
+
+	char long_str[64];
+	memset(long_str, 'b', sizeof(long_str) - 1);
+	long_str[sizeof(long_str) - 1] = '\0';
+
+	point_put_string(&p, long_str);
+
+	zassert_equal(sizeof(p.data) - 1, strlen(p.data),
+		      "data is not terminated within its field");
+}
+
+ZTEST(point_tests, encode_point_string_with_quotes)
+{
+	point p = {};
+	point_set_type_key(&p, POINT_TYPE_DESCRIPTION, "");
+	point_put_string(&p, "a \"b\" c");
+
+	char buf[128];
+	int ret = point_json_encode(&p, buf, sizeof(buf));
+	zassert_ok(ret, "encode returned error");
+
+	LOG_DBG("Encoded: %s", buf);
+
+	// The quotes must arrive escaped, or the value closes the JSON string
+	// early and the document does not parse.
+	zassert_not_null(strstr(buf, "\\\"b\\\""), "quotes in string data were not escaped");
+
+	// Round trip it to confirm the escaping produces parseable JSON.
+	point decoded = {};
+	ret = point_json_decode(buf, strlen(buf), &decoded);
+	zassert_ok(ret, "decode of escaped point returned error");
+
+	char data[sizeof(decoded.data)];
+	point_get_string(&decoded, data, sizeof(data));
+	zassert_str_equal(data, "a \"b\" c", "escaped string did not survive the round trip");
+}
+
+ZTEST(point_tests, encode_points_skips_invalid_data_type)
+{
+	point pts[2] = {};
+
+	point_set_type_key(&pts[0], POINT_TYPE_TEMPERATURE, "0");
+	point_put_float(&pts[0], 22.5);
+
+	// A point that carries a type and key but a data type the encoder
+	// cannot render, as reaches the cache from an unrecognized message.
+	point_set_type_key(&pts[1], POINT_TYPE_DESCRIPTION, "0");
+	pts[1].data_type = POINT_DATA_TYPE_END;
+
+	char buf[256];
+	int ret = points_json_encode(pts, ARRAY_SIZE(pts), buf, sizeof(buf));
+	zassert_ok(ret, "encode returned error");
+
+	LOG_DBG("Encoded: %s", buf);
+
+	zassert_not_null(strstr(buf, POINT_TYPE_TEMPERATURE), "valid point is missing");
+	zassert_is_null(strstr(buf, POINT_TYPE_DESCRIPTION),
+			"point with invalid data type was encoded");
 }
