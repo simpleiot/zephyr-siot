@@ -175,7 +175,7 @@ int point_dump(point *p, char *buf, size_t len)
 		remaining -= cnt;
 		break;
 	case POINT_DATA_TYPE_FLOAT:
-		cnt = snprintf(buf + offset, remaining, "INT: %f", (double)point_get_float(p));
+		cnt = snprintf(buf + offset, remaining, "FLT: %f", (double)point_get_float(p));
 		offset += cnt;
 		remaining -= cnt;
 		break;
